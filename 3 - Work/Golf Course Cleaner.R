@@ -57,3 +57,22 @@ print(head(clean_data))
 write_csv(clean_data, "Golf_Courses_Cleaned.csv")
 
 print("Cleaning complete. File saved as 'Golf_Courses_Cleaned.csv'")
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Bottom Text Information // Extra Garbage
+
+# For editing the Missing Data
+#na_rows <- clean_data %>% 
+#  filter(if_any(everything(), is.na))
+#write_csv(na_rows, "Golf_Courses_For_Editing.csv", na = "")
