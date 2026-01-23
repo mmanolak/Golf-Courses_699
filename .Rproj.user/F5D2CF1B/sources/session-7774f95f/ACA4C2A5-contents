@@ -1,20 +1,17 @@
 library(tidyverse)
 
+
+# Stage 1: Staging and Importing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Set the working directory
 setwd('G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)/3 - Work/Cleaned Data')
 
-# STEP 1: sample data
-# Replace with: raw_data <- read_csv("your_file.csv", col_names = FALSE)
-raw_data <- tribble(
-  ~X1, ~X2, ~X3, ~X4,
-  -151.820102, 59.773222, "Fireweed Meadows Golf Course-Anchor Point,AK", "(Public) (9 Holes), Mylofritz Ave, Anchor Point,AK 99556, (907) 226-2582",
-  -149.814495, 61.127089, "Anchorage Golf Course-Anchorage,AK", "(Public) (18 Holes), 3651 Omalley Rd, Anchorage,AK 99507-4266, (907) 522-3363",
-  -149.788303, 61.206435, "Russian Jack Springs Golf Course-Anchorage,AK", "(Municipal) (9 Holes), 1600 Lidia Selkregg Ln, Anchorage,AK 99508-3131, (907) 343-6992"
-)
+# CSV Summoning
+raw_data <- read_csv("Golf Courses-USA.csv", col_names = FALSE, show_col_types = FALSE)
 
-# STEP 2: CLEANING PIPELINE
-
+# Stage 2: The Golf Pipeline ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 clean_data <- raw_data %>%
-  # 1. Rename coordinates
+  # 1. Rename coordinates (Assumes columns are in the order: Long, Lat, Name-Loc, Details)
   rename(
     longitude = X1,
     latitude = X2,
@@ -43,6 +40,7 @@ clean_data <- raw_data %>%
     zip_code = str_extract(raw_details, "\\b\\d{5}(?:-\\d{4})?\\b"),
     
     # Street Address: 
+    # Logic: Look for text AFTER the "), " and BEFORE the next comma ","
     street_address = str_extract(raw_details, "(?<=\\), ).+?(?=,)")
   ) %>%
   
@@ -50,4 +48,12 @@ clean_data <- raw_data %>%
   select(course_name, street_address, city, state, zip_code, course_type, holes, phone, longitude, latitude)
 
 
-print(clean_data)
+# Stage 3: Results ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Check the first few rows to ensure it worked
+print(head(clean_data))
+
+# Save the cleaned data to a new file in the same folder
+write_csv(clean_data, "Golf_Courses_Cleaned.csv")
+
+print("Cleaning complete. File saved as 'Golf_Courses_Cleaned.csv'")
