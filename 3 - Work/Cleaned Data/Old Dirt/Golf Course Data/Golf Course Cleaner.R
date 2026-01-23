@@ -59,20 +59,27 @@ write_csv(clean_data, "Golf_Courses_Cleaned.csv")
 print("Cleaning complete. File saved as 'Golf_Courses_Cleaned.csv'")
 
 
-
-
-
-
-
-
-
-
-
-
-
 # Bottom Text Information // Extra Garbage
 
 # For editing the Missing Data
 #na_rows <- clean_data %>% 
 #  filter(if_any(everything(), is.na))
 #write_csv(na_rows, "Golf_Courses_For_Editing.csv", na = "")
+
+# We now Merger it back in
+original_full <- read_csv("Golf_Courses_Cleaned.csv")
+fixed_subset <- read_csv("Golf_Courses_For_Editing.csv")
+
+# 1. Create a "Good Only" set from the original
+# We remove ANY row that has an NA. These are the rows you didn't need to touch.
+original_good_only <- original_full %>%
+  drop_na()
+
+final_dataset <- bind_rows(original_good_only, fixed_subset)
+
+print(paste("Remaining NAs:", sum(is.na(final_dataset))))
+
+print(paste("Original Row Count:", nrow(original_full)))
+print(paste("Final Row Count:   ", nrow(final_dataset)))
+
+write_csv(final_dataset, "Golf_Courses_Final_Master.csv")
