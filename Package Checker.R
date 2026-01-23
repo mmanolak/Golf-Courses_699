@@ -3,20 +3,8 @@ packages <- c("tidyverse", "wooldridge", "plotly", "sf", "leaflet", "tidycensus"
 
 
 missing_packages <- packages[!sapply(packages, requireNamespace, quietly = TRUE)]
-missing_packages
 
-#windowsOS checker for dependent directory
-if (Sys.info()['sysname'] == "Windows") {
-  if (Sys.info()['nodename'] == "DegreeLaptop" || Sys.getenv('USERNAME') == "Degree Laptop") { 
-    setwd("C:/Users/Degree Laptop/Desktop/Spring 2025/3 - Econ 256 (Data Vis)/exercise1")} 
-  else if (Sys.info()['nodename'] == "Michael" || Sys.getenv('USERNAME') == "Michael") { 
-    setwd("C:/Users/Michael/Desktop/Spring 2025/3 - Econ 256/R Studio Files/Econ256/exercise1")}
-  #LinuxOS Checker
-} else if (Sys.info()['sysname'] == "Linux") {
-  setwd("~/Desktop/R Files/Econ256")
-  #macOS check
-} else if (Sys.info()['sysname'] == "Darwin") {
-  setwd("~/Desktop/Spring 2025/3 - Econ 256")}
+setwd("G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)")
 
 #Output the result for packages
 if (length(missing_packages) > 0) {
@@ -26,8 +14,3 @@ if (length(missing_packages) > 0) {
 } else {
   print("There are no missing packages.")
 }
-
-osdisplay<-switch(Sys.info()[['sysname']],
-                  Windows= {print("I'm a PC.")},
-                  Linux  = {print("I'm a penguin.")},
-                  Darwin = {print("I'm a Mac.")})
