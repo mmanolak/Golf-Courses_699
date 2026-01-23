@@ -1,59 +1,15 @@
-library(tidyverse)
+# List of packages to install and verify
+packages <- c("tidyverse", "wooldridge", "plotly", "sf", "leaflet", "tidycensus", "readxl")
 
 
-# Stage 1: Staging and Importing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+missing_packages <- packages[!sapply(packages, requireNamespace, quietly = TRUE)]
 
-# Set the working directory
-setwd('G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)/3 - Work/Cleaned Data')
+#Output the result for packages
+if (length(missing_packages) > 0) {
+  print("The following packages are missing:")
+  print(missing_packages)
+  stop("Required packages are missing. Please install them and try again.")
+} else {
+  print("There are no missing packages.")
+}
 
-# CSV Summoning
-raw_data <- read_csv("Golf Courses-USA.csv", col_names = FALSE, show_col_types = FALSE)
-
-# Stage 2: The Golf Pipeline ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-clean_data <- raw_data %>%
-  # 1. Rename coordinates (Assumes columns are in the order: Long, Lat, Name-Loc, Details)
-  rename(
-    longitude = X1,
-    latitude = X2,
-    raw_name_loc = X3,
-    raw_details = X4
-  ) %>%
-  
-  # 2. Split Name, City, State from Column C
-  separate(raw_name_loc, into = c("course_name", "location_temp"), sep = "-(?=[^-]+$)", extra = "merge") %>%
-  separate(location_temp, into = c("city", "state"), sep = ",") %>%
-  
-  # 3. Extract Details from Column D
-  mutate(
-    # Type: Text inside first parens
-    course_type = str_extract(raw_details, "^\\(.*?\\)"),
-    course_type = str_remove_all(course_type, "[()]"),
-    
-    # Holes: Text inside second parens
-    holes = str_extract(raw_details, "(?<=\\)\\s)\\((.*?)\\)"),
-    holes = str_remove_all(holes, "[()]"),
-    
-    # Phone: Pattern at end of string
-    phone = str_extract(raw_details, "\\(?\\d{3}\\)?[-. ]?\\d{3}[-. ]?\\d{4}$"),
-    
-    # Zip Code: Look for 5 digits, optional dash, 4 digits
-    zip_code = str_extract(raw_details, "\\b\\d{5}(?:-\\d{4})?\\b"),
-    
-    # Street Address: 
-    # Logic: Look for text AFTER the "), " and BEFORE the next comma ","
-    street_address = str_extract(raw_details, "(?<=\\), ).+?(?=,)")
-  ) %>%
-  
-  # 4. Final Selection & Ordering
-  select(course_name, street_address, city, state, zip_code, course_type, holes, phone, longitude, latitude)
-
-
-# Stage 3: Results ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Check the first few rows to ensure it worked
-print(head(clean_data))
-
-# Save the cleaned data to a new file in the same folder
-write_csv(clean_data, "Golf_Courses_Cleaned.csv")
-
-print("Cleaning complete. File saved as 'Golf_Courses_Cleaned.csv'")
