@@ -1,20 +1,20 @@
 course_name,street_address,city,state,zip_code,course_type,holes,phone,longitude,latitude
-Highland Park Golf Course,3300 Highland Ave S,Birmingham,AL,35205-1411,Public,,(205) 322-1902,-86.779392,33.512479
-The Links At Tuscaloosa,1800 Links Blvd,Tuscaloosa,AL,35405-4871,Public,18 Holes,,-87.560594,33.155844
-Sewailo Golf Club,5655 West Valencia Rd,Tucson,AZ,,Public,18,(520) 838-6623,-111.084889,32.128102
-Snowcreek Resort Golf Course,Old Mammoth Road & Fairway Drive,Mammoth Lakes,CA,93546,Public,9 Holes,,-118.972552,37.63124
-Trona Golf Course,82700 Trona Rd,Trona,CA,82700,Public,9 Holes,,-117.382146,35.755466
-"TPC Colorado, Berthoud,CO",2375 TPC Pkwy,,,80513,Private,18 Holes,(970) 663-5063,-105.103458,40.333201
-Newtown Country Club,Country Club Road,Newtown,CT,,Private,9 Holes,(203) 426-9371,-73.297642,41.401087
-Quinnatisset Country Club,RR 241 County Home Road,Thompson,CT,,Private,18 Holes,(860) 928-7516,-71.864671,41.937599
-Green Woods Country Club,300 Torringford Street,Winsted,CT,,Public,9 Holes,(860) 379-8302,-73.06601,41.888294
-Woodstock Golf Course & Driving Range,204 Roseland Park Road,Woodstock,CT,,Public,9 Holes,(860) 928-4130,-71.958555,41.952713
+Highland Park Golf Course,3300 Highland Ave S,Birmingham,AL,35205-1411,Public,18 Holes,(205) 322-1902,-86.779392,33.512479
+The Links At Tuscaloosa,1800 Links Blvd,Tuscaloosa,AL,35405-4871,Public,18 Holes,(205) 247-9990,-87.560594,33.155844
+Sewailo Golf Club,5655 West Valencia Rd,Tucson,AZ,93546,Public,18 Holes,(520) 838-6623,-111.084889,32.128102
+Snowcreek Resort Golf Course,Old Mammoth Road & Fairway Drive,Mammoth Lakes,CA,93546,Public,9 Holes,(760) 934-6633,-118.972552,37.63124
+Trona Golf Course,82700 Trona Rd,Trona,CA,82700,Public,9 Holes,(760) 372-5159,-117.382146,35.755466
+TPC Colorado,2375 TPC Pkwy,Berthoud,CO,80513,Private,18 Holes,(970) 663-5063,-105.103458,40.333201
+Newtown Country Club,Country Club Road,Newtown,CT,06470,Private,9 Holes,(203) 426-9371,-73.297642,41.401087
+Quinnatisset Country Club,RR 241 County Home Road,Thompson,CT,06277,Private,18 Holes,(860) 928-7516,-71.864671,41.937599
+Green Woods Country Club,300 Torringford Street,Winsted,CT,06098,Public,9 Holes,(860) 379-8302,-73.06601,41.888294
+Woodstock Golf Course & Driving Range,204 Roseland Park Road,Woodstock,CT,06281,Public,9 Holes,(860) 928-4130,-71.958555,41.952713
 Nicholas Golf Course,138 SW Peacock Blvd # 20-207,Port Saint Lucie,FL,34986-4504,Private,18 Holes,,-80.408698,27.306615
-Turtle Creek Golf Club,1279 Admiralty Blvd,Rockledge,FL,32955-5201,,18 Holes,(321) 632-2520,-80.733029,28.291904
-Streamsong Resort,3000 Dunes Pass,Streamsong,FL,33834,Public,,(863) 428-1000,-81.932338,27.6778
-Kealohi Golf Course,Bldg 2105 McClelland Road,Hickham Afb,HI,96853,Public,9 Holes,,-157.952012,21.334663
-"Ironwood Hills Golf Club Kualapuu, Molokai,HI",Kalae Highway  Kualapuu,,,96757,Public,9 Holes,(808) 567-6000,-157.036599,21.15191
-Weber Park Golf Course,9300 Weber Park Pl,Skokie,IL,60077-4200,Municipal,9 Holes,,-87.750399,42.04833
+Turtle Creek Golf Club,1279 Admiralty Blvd,Rockledge,FL,32955-5201,Public,18 Holes,(321) 632-2520,-80.733029,28.291904
+Streamsong Resort,3000 Dunes Pass,Streamsong,FL,33834,Public,54 Holes,(863) 428-1000,-81.932338,27.6778
+Kealohi Golf Course,Bldg 2105 McClelland Road,Hickham Afb,HI,96853,Public,9 Holes,(808) 448-2318,-157.952012,21.334663
+Ironwood Hills Golf Club,Kalae Highway  Kualapuu,Kualapuu,HI,96757,Public,9 Holes,(808) 567-6000,-157.036599,21.15191
+Weber Park Golf Course,9300 Weber Park Pl,Skokie,IL,60077-4200,Municipal,9 Holes,(847) 929-8600,-87.750399,42.04833
 Baldwin Golf Course,1500 South St,Baldwin City,KS,66006-4020,Municipal,9 Holes,,-95.200294,38.772264
 Cannonball Golf Course,Highway 54,Greensburg,KS,67054,Private,9 Holes,,-99.312859,37.606119
 Haddam Community Golf Course,Deer Road,Haddam,KS,66944,Public,9 Holes,,-97.294229,39.85936
