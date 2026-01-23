@@ -3,7 +3,6 @@ library(tidyverse)
 
 # Stage 1: Staging and Importing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 # Set the working directory
 setwd('G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)/3 - Work/Cleaned Data')
 
@@ -11,7 +10,6 @@ setwd('G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 
 raw_data <- read_csv("Golf Courses-USA.csv", col_names = FALSE, show_col_types = FALSE)
 
 # Stage 2: The Golf Pipeline ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 clean_data <- raw_data %>%
   # 1. Rename coordinates (Assumes columns are in the order: Long, Lat, Name-Loc, Details)
   rename(
