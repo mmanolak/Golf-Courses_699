@@ -4,7 +4,6 @@ packages <- c("tidyverse", "wooldridge", "plotly", "sf", "leaflet", "tidycensus"
 
 missing_packages <- packages[!sapply(packages, requireNamespace, quietly = TRUE)]
 
-setwd("G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)")
 
 #Output the result for packages
 if (length(missing_packages) > 0) {

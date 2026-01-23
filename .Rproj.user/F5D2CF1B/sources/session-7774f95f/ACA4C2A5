@@ -3,7 +3,7 @@
     "path": "G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)/Package Checker.R",
     "project_path": "Package Checker.R",
     "type": "r_source",
-    "hash": "2337895795",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1769200686712.0,
@@ -13,15 +13,15 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "15,1",
+        "cursorPosition": "14,1",
         "scrollLine": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1769201655,
+    "lastKnownWriteTime": 1769201821,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1769201655430,
+    "last_content_update": 1769201821866,
     "read_only": false,
     "read_only_alternatives": []
 }
