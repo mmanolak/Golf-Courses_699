@@ -1,6 +1,7 @@
 # List of packages to install and verify
-packages <- c("tidyverse", "wooldridge", "plotly", "sf", "leaflet", "tidycensus", "readxl")
+packages <- c("tidyverse", "wooldridge", "plotly", "sf", "leaflet", "tidycensus", "readxl", "osmdata")
 
+setwd("G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)")
 # Function to check and install missing packages
 install_and_verify <- function(pkg_list) {
   # Install missing packages
