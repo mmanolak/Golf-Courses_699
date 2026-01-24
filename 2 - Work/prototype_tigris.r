@@ -1,3 +1,8 @@
+library(tidyverse)
+library(tigris)
+library(sf)
+setwd("G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)/2 - Work")
+
 # CONTROL PANEL
 # Adjust the parameters in this section to control the script's behavior.
 
@@ -16,11 +21,6 @@ CENSUS_SEARCH_PATTERN <- "(?i)Golf Course|Golf Club|Country Club"
 
 # SCRIPT EXECUTION
 # You should not need to edit below this line.
-
-# STEP 0: LOAD LIBRARIES
-library(tidyverse)
-library(tigris)
-library(sf)
 
 # Configuration
 options(tigris_use_cache = TRUE)

@@ -1,22 +1,22 @@
+library(tidyverse)
+library(sf)
+library(osmdata)
+setwd("G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 (Golf Course)/2 - Work")
+
 # CONTROL PANEL
 # Adjust the parameters in this section to control the script's behavior.
 
 # 1. File Paths
 INPUT_CSV_PATH  <- "Golf_Courses_Final_Master.csv"
-# I've updated the output name to prevent overwriting the old, incomplete file.
-OUTPUT_CSV_PATH <- "Golf_Courses_With_Acreage_OSM.csv"
+OUTPUT_CSV_PATH <- "Golf_Courses_With_Acreage_OSM_Final.csv"
 
 # 2. Matching Logic
 # The maximum distance (in meters) to accept a match.
 DISTANCE_THRESHOLD_METERS <- 500
 
+
 # SCRIPT EXECUTION
 # You should not need to edit below this line.
-
-# STEP 0: LOAD LIBRARIES
-library(tidyverse)
-library(sf)
-library(osmdata) # The key package for querying OpenStreetMap
 
 # STEP 1: LOAD YOUR MASTER DATA
 if (!file.exists(INPUT_CSV_PATH)) {
@@ -28,6 +28,7 @@ results_list <- list()
 states_to_process <- unique(na.omit(df_master$state))
 
 print(paste("Found", length(states_to_process), "states to process using OpenStreetMap data."))
+print(paste("Distance Threshold set to:", DISTANCE_THRESHOLD_METERS, "meters."))
 
 # STEP 2: THE STATE-BY-STATE PROCESSING LOOP
 
@@ -35,12 +36,12 @@ for (st in states_to_process) {
   
   print(paste("Processing state:", st, "..."))
   
-  # A. Filter points for the current state
+  # A. Filter points for the current state and convert to a spatial object
   state_points <- df_master %>%
     filter(state == st) %>%
     st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
   
-  # B. Get the bounding box for the entire state's points.
+  # B. Get the bounding box for the state's points to define the search area.
   state_bbox <- st_bbox(state_points)
   
   # C. Query OpenStreetMap for golf course polygons within the bounding box.
@@ -73,8 +74,7 @@ for (st in states_to_process) {
   }
   
   # D. Prepare OSM Polygons for Matching
-  # We add st_make_valid() to automatically repair geometric errors
-  # like the "duplicate vertex" issue that caused the crash in Colorado.
+  # Use st_make_valid() to automatically repair geometric errors in the OSM data.
   osm_polygons <- osm_polygons %>%
     st_make_valid() %>% 
     st_transform(crs = 4326) %>%
@@ -89,7 +89,7 @@ for (st in states_to_process) {
   # F. Attach Data
   state_points <- state_points %>%
     mutate(
-      osm_name = osm_polygons$name[nearest_idx], # OSM uses a 'name' column
+      osm_name = osm_polygons$name[nearest_idx],
       raw_acres = osm_polygons$calc_acres[nearest_idx],
       dist_meters = as.numeric(dists),
       final_acres = ifelse(dist_meters < DISTANCE_THRESHOLD_METERS, raw_acres, NA)
