@@ -1,0 +1,148 @@
+year,state_abbr,measure_type,value_numeric
+2025,AL,Cropland,4550
+2025,AL,Total Ag Land (Incl Buildings),4150
+2025,AL,Pastureland,3400
+2025,AZ,Cropland,8150
+2025,AZ,Total Ag Land (Incl Buildings),4180
+2025,AZ,Pastureland,950
+2025,AR,Cropland,3720
+2025,AR,Total Ag Land (Incl Buildings),4250
+2025,AR,Pastureland,3370
+2025,CA,Cropland,17940
+2025,CA,Total Ag Land (Incl Buildings),13700
+2025,CA,Pastureland,4080
+2025,CO,Cropland,2880
+2025,CO,Total Ag Land (Incl Buildings),2290
+2025,CO,Pastureland,1150
+2025,CT,Cropland,22700
+2025,CT,Total Ag Land (Incl Buildings),14400
+2025,CT,Pastureland,12700
+2025,DE,Cropland,9300
+2025,DE,Total Ag Land (Incl Buildings),9550
+2025,DE,Pastureland,7650
+2025,FL,Cropland,10550
+2025,FL,Total Ag Land (Incl Buildings),8700
+2025,FL,Pastureland,7400
+2025,GA,Cropland,4520
+2025,GA,Total Ag Land (Incl Buildings),4720
+2025,GA,Pastureland,4900
+2025,ID,Cropland,6050
+2025,ID,Total Ag Land (Incl Buildings),4580
+2025,ID,Pastureland,2400
+2025,IL,Cropland,9850
+2025,IL,Total Ag Land (Incl Buildings),8930
+2025,IL,Pastureland,4200
+2025,IN,Cropland,8250
+2025,IN,Total Ag Land (Incl Buildings),8850
+2025,IN,Pastureland,2790
+2025,IA,Cropland,10300
+2025,IA,Total Ag Land (Incl Buildings),9790
+2025,IA,Pastureland,3650
+2025,KS,Cropland,3440
+2025,KS,Total Ag Land (Incl Buildings),3100
+2025,KS,Pastureland,2270
+2025,KY,Cropland,6450
+2025,KY,Total Ag Land (Incl Buildings),5480
+2025,KY,Pastureland,3900
+2025,LA,Cropland,3570
+2025,LA,Total Ag Land (Incl Buildings),3850
+2025,LA,Pastureland,3490
+2025,ME,Cropland,4600
+2025,ME,Total Ag Land (Incl Buildings),3350
+2025,ME,Pastureland,2600
+2025,MD,Cropland,8990
+2025,MD,Total Ag Land (Incl Buildings),9750
+2025,MD,Pastureland,8100
+2025,MA,Cropland,26000
+2025,MA,Total Ag Land (Incl Buildings),14900
+2025,MA,Pastureland,15100
+2025,MI,Cropland,6350
+2025,MI,Total Ag Land (Incl Buildings),6800
+2025,MI,Pastureland,3100
+2025,MN,Cropland,7000
+2025,MN,Total Ag Land (Incl Buildings),6790
+2025,MN,Pastureland,2300
+2025,MS,Cropland,3960
+2025,MS,Total Ag Land (Incl Buildings),3580
+2025,MS,Pastureland,3220
+2025,MO,Cropland,5150
+2025,MO,Total Ag Land (Incl Buildings),5000
+2025,MO,Pastureland,2750
+2025,MT,Cropland,1320
+2025,MT,Total Ag Land (Incl Buildings),1230
+2025,MT,Pastureland,920
+2025,NE,Cropland,6800
+2025,NE,Total Ag Land (Incl Buildings),4250
+2025,NE,Pastureland,1510
+2025,NV,Cropland,3030
+2025,NV,Total Ag Land (Incl Buildings),1200
+2025,NV,Pastureland,850
+2025,NH,Cropland,9900
+2025,NH,Total Ag Land (Incl Buildings),6500
+2025,NH,Pastureland,7850
+2025,NJ,Cropland,16400
+2025,NJ,Total Ag Land (Incl Buildings),16600
+2025,NJ,Pastureland,15200
+2025,NM,Cropland,2020
+2025,NM,Total Ag Land (Incl Buildings),725
+2025,NM,Pastureland,630
+2025,NY,Cropland,4010
+2025,NY,Total Ag Land (Incl Buildings),4300
+2025,NY,Pastureland,1950
+2025,NC,Cropland,5360
+2025,NC,Total Ag Land (Incl Buildings),5470
+2025,NC,Pastureland,6050
+2025,ND,Cropland,2710
+2025,ND,Total Ag Land (Incl Buildings),2360
+2025,ND,Pastureland,1140
+2025,OH,Cropland,9750
+2025,OH,Total Ag Land (Incl Buildings),9350
+2025,OH,Pastureland,4150
+2025,OK,Cropland,2470
+2025,OK,Total Ag Land (Incl Buildings),2540
+2025,OK,Pastureland,2100
+2025,OR,Cropland,4440
+2025,OR,Total Ag Land (Incl Buildings),3780
+2025,OR,Pastureland,1080
+2025,NA,Cropland,0
+2025,NA,Total Ag Land (Incl Buildings),0
+2025,NA,Pastureland,0
+2025,PA,Cropland,9560
+2025,PA,Total Ag Land (Incl Buildings),8490
+2025,PA,Pastureland,4240
+2025,RI,Cropland,32900
+2025,RI,Total Ag Land (Incl Buildings),22500
+2025,RI,Pastureland,16900
+2025,SC,Cropland,4000
+2025,SC,Total Ag Land (Incl Buildings),4740
+2025,SC,Pastureland,4300
+2025,SD,Cropland,4610
+2025,SD,Total Ag Land (Incl Buildings),2970
+2025,SD,Pastureland,1340
+2025,TN,Cropland,6050
+2025,TN,Total Ag Land (Incl Buildings),6150
+2025,TN,Pastureland,5600
+2025,TX,Cropland,2710
+2025,TX,Total Ag Land (Incl Buildings),2970
+2025,TX,Pastureland,2300
+2025,UT,Cropland,5790
+2025,UT,Total Ag Land (Incl Buildings),3500
+2025,UT,Pastureland,1900
+2025,VT,Cropland,4350
+2025,VT,Total Ag Land (Incl Buildings),4400
+2025,VT,Pastureland,2830
+2025,VA,Cropland,6170
+2025,VA,Total Ag Land (Incl Buildings),6100
+2025,VA,Pastureland,5300
+2025,WA,Cropland,3480
+2025,WA,Total Ag Land (Incl Buildings),3710
+2025,WA,Pastureland,960
+2025,WV,Cropland,4220
+2025,WV,Total Ag Land (Incl Buildings),3520
+2025,WV,Pastureland,2330
+2025,WI,Cropland,7250
+2025,WI,Total Ag Land (Incl Buildings),6420
+2025,WI,Pastureland,3300
+2025,WY,Cropland,2000
+2025,WY,Total Ag Land (Incl Buildings),1000
+2025,WY,Pastureland,755
