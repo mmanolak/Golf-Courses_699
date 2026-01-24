@@ -8,7 +8,7 @@ setwd("G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 
 
 # 1. File Paths
 INPUT_CSV_PATH  <- "Golf_Courses_Final_Master.csv"
-OUTPUT_CSV_PATH <- "Golf_Courses_With_Acreage_OSM_Final.csv"
+OUTPUT_CSV_PATH <- "Golf_Courses_With_Acreage_OSM.csv"
 
 # 2. Matching Logic
 # The maximum distance (in meters) to accept a match.
