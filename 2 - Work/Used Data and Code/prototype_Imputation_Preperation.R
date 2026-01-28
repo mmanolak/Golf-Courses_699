@@ -78,9 +78,9 @@ imputation_data <- imputation_data %>%
 
 # Step 5: Save the Prepared Data
 
-write_csv(imputation_data, "Imputation_Ready_Data.csv")
+write_csv(imputation_data, "Imputation_Preperation.csv")
 
 print(paste0(
   "Process complete. Final dataset has ", nrow(imputation_data), 
-  " rows and is saved as 'Imputation_Ready_Data.csv'"
+  " rows and is saved as 'Imputation_Preperation.csv'"
 ))
