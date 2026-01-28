@@ -7,9 +7,9 @@ setwd("G:/Shared drives/School Stuff/Old Sessions/9 - Spring 2026/02 - Econ 699 
 options(tigris_use_cache = TRUE)
 options(tigris_class = "sf")
 
-# -------------------------------------------------------------------------
+
 # STEP 1: LOAD YOUR MASTER DATA
-# -------------------------------------------------------------------------
+
 # Replace with your actual master file
 df_master <- read_csv("Golf_Courses_Final_Master.csv")
 
@@ -22,9 +22,7 @@ states_to_process <- unique(na.omit(df_master$state))
 
 print(paste("Found", length(states_to_process), "states to process."))
 
-# -------------------------------------------------------------------------
 # STEP 2: THE STATE LOOP
-# -------------------------------------------------------------------------
 
 for (st in states_to_process) {
   
@@ -92,9 +90,7 @@ for (st in states_to_process) {
   results_list[[st]] <- state_points %>% st_drop_geometry()
 }
 
-# -------------------------------------------------------------------------
 # STEP 3: COMBINE AND SAVE
-# -------------------------------------------------------------------------
 
 # Combine all state results into one big table
 final_acreage_df <- bind_rows(results_list)
