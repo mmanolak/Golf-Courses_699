@@ -14,12 +14,12 @@
 
 # === 1. LIBRARIES ===
 
-using CSV, DataFrames, GeoDataFrames, ArchGDAL, Downloads, XLSX, Printf, Statistics
+    using CSV, DataFrames, GeoDataFrames, ArchGDAL, Downloads, XLSX, Printf, Statistics
 
 
-# === 2. GLOBALS & PATHS ===
+    # === 2. GLOBALS & PATHS ===
 
-ENV["JULIA_NUM_THREADS"] = "24"
+    ENV["JULIA_NUM_THREADS"] = "24"
 
 SCRIPT_DIR = @__DIR__
 ROOT_DIR   = joinpath(SCRIPT_DIR, "..")
