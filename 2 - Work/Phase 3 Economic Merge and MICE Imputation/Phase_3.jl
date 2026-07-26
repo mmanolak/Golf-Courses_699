@@ -40,7 +40,7 @@ const PREDICTOR_COLS = [:Holes, :Course_Type, :county_type, :Longitude, :Latitud
 
 # === 3. FUNCTIONS ===
 
-function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = 5)
+function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = 100)
     # 1. Load ----------------------------------------------------------------
     println("--- 1  Loading Phase 2 acreage-matched dataset ---")
 
@@ -122,7 +122,7 @@ function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = 5)
     end
 end
 
-function run_pooling(in_dir::String, out_csv::String; m_datasets::Int = 5)
+function run_pooling(in_dir::String, out_csv::String; m_datasets::Int = 100)
     aggregates  = Float64[]
     within_vars = Float64[]
 
@@ -228,7 +228,7 @@ function pool_acreage(x::AbstractVector{<:Real})
     )
 end
 
-function run_acreage_summary(in_dir::String, out_csv::String; m_datasets::Int = 5)
+function run_acreage_summary(in_dir::String, out_csv::String; m_datasets::Int = 100)
     fmt(x) = replace(@sprintf("%d", round(Int, x)), r"(?<=\d)(?=(\d{3})+$)" => ",")
 
     println("--- 1  Loading imputed datasets and computing acreage totals ---\n")

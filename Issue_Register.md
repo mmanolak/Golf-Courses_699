@@ -34,12 +34,12 @@ still a wrong published number.
 |---|---|---|---|---|---|
 | Cross-cutting | 1 | 2 | 0 | 0 | 3 |
 | Phase 1 | 0 | 1 | 2 | 0 | 3 |
-| Phase 2 | 0 | 0 | 2 | 0 | 2 |
+| Phase 2 | 0 | 0 | 3 | 0 | 3 |
 | Phase 3 | 2 | 1 | 3 | 0 | 6 |
 | Phase 4 | 0 | 2 | 1 | 0 | 3 |
 | Phase 5 | 0 | 2 | 3 | 0 | 5 |
 | Phase 6 | 0 | 2 | 1 | 0 | 3 |
-| **Total** | **3** | **10** | **12** | **0** | **25** |
+| **Total** | **3** | **10** | **13** | **0** | **26** |
 
 ---
 
@@ -143,7 +143,7 @@ strictly smaller and its acreage values come from a partly different source. Tra
 Phase 2 level as schema; tracked at **X-02** as the thing that actually bites.
 
 ### P2-02 — "Final data profile heading into Phase 3" table is pre-fallback and contradicts everything else
-**Severity:** Minor · **Status:** Open · **Locus:** Docs
+**Severity:** Minor · **Status:** Confirmed · **Locus:** Docs (code is correct)
 
 `01_-_Phase2_Documentation.md` §"Phase 2 Refinement" reports:
 
@@ -158,9 +158,55 @@ statement in the corpus — the summary, §Step 2, Phase 3's missing-data profil
 of 6,147 courses. The `03_Finalize_Acreage.R` output being described here appears to skip the
 Tier-1b fallback entirely.
 
-**Question:** is `R_Phase2_Acreage_Matched_v2.csv` genuinely missing the nearest-neighbour tier,
-or is the table simply transcribed from the wrong console block? If the former, R's Phase 3
-input is wrong and the whole R arm shifts.
+**Resolved (Parity Audit C-2, 2026-07-24):** `VERIFIED` by reading the actual on-disk
+`Phase 2 .../Data/R/R_Phase2_Acreage_Matched_v2.csv` (mtime 2026-06-12, the file
+`Phase_3.R:36-40` actually reads): `acreage_source` counts are `OSM 11,605 / MICE_Target 4,687`
+— matching the post-fallback figure exactly, not the 5,458/10,834 pre-fallback one. Cross-checked
+same-day Python and Julia `Data/{python,Julia}/*_Phase2_Acreage_Matched*.csv` outputs (same
+2026-06-12 run): Python `OSM 11,610 / MICE_Target 4,687`, Julia `OSM 11,605 / MICE_Target 4,687`
+— all three in close parity, confirming the 500 m nearest-neighbour fallback (`Phase_2.R:291-313`,
+`Phase_2.py:169-185`, `Phase_2.jl:170-220`) is present and functioning identically across all
+three languages, and that **R's live Phase 3 input does include the fallback tier.**
+
+The `5,458/10,834` table was never wrong about the code — it genuinely describes
+`Bulk Tests/R/03_Finalize_Acreage.R`, a separate legacy script that writes its own
+`R_Phase2_Acreage_Matched_v2.csv` to `Bulk Tests/R/`, a different path from the one
+`Phase_3.R` reads (`Phase 2 .../Data/R/`). The documentation table was transcribed from the
+legacy script's console output, not the consolidated `Phase_2.R`'s. Root cause is `Docs`, not
+`Code`: no fix needed in `Phase_2.R`; the doc table should be corrected in the post-freeze
+documentation pass (**out of scope now** — do not edit `01_-_Phase2_Documentation.md` per
+`CLAUDE.md` §2.2). See new **P2-03** for a related but distinct finding surfaced during this
+check.
+
+### P2-03 — R's Tigris fallback tier (Tier 2) recovered zero courses in the current on-disk data
+**Severity:** Minor · **Status:** Open · **Locus:** Code (likely environmental, not verified)
+**Relates to:** **P2-01**, **X-02**
+
+Surfaced while resolving P2-02 above. In the current `Data/R/R_Phase2_Acreage_Matched_v2.csv`
+(2026-06-12 run), `acreage_source` has exactly two observed values — `OSM` (11,605) and
+`MICE_Target` (4,687) — and zero rows are labeled `Tigris`. `final_acreage` is `NA` for all
+4,687 `MICE_Target` rows and, since Tigris contributed nothing, is otherwise identical to
+`osm_acreage` for every row in this snapshot.
+
+`READ`, `Phase_2.R:391-395`: Tier 2 live-downloads Census `tigris::landmarks(type="area")` for
+every state and filters to golf-related `FULLNAME`s; if the combined download yields zero
+polygons, it hits `warning("No Tigris golf landmarks downloaded -- check internet / tigris
+version. Skipping Tier 2.")` and Tier 2 is skipped entirely — which is consistent with what the
+data shows. `INFERRED`: this looks like exactly that branch firing on the day this file was
+generated (network hiccup, `tigris` cache state, or a Census landmarks API change), not a logic
+bug in the fallback code itself — but this wasn't run today to confirm, per `CLAUDE.md` §2.1.
+
+**Why it matters:** `final_acreage` vs `osm_acreage` (**X-02**) is already an escalated,
+author-decides question. This finding means that *as things currently stand*, the two are
+identical in practice for R (Tigris tier is contributing nothing), so the "3-tier vs 2-tier"
+structural difference (**P2-01**) is currently latent, not live. But it is fragile: a future
+run of `Phase_2.R` on a day when the live Tigris fetch succeeds would silently repopulate the
+`Tigris` tier and change `final_acreage` for some subset of the 4,687 currently-`MICE_Target`
+rows — meaning the R arm's Phase 3 input could shift between runs for reasons having nothing to
+do with any code change, purely from Census landmark-service availability on run day. Same
+non-reproducibility shape as **A-3**'s RUCC live-fetch risk. Recommend: before the frozen
+re-run, either vendor the Tigris landmarks extract too, or deliberately decide (author call) that
+Tier 2 is disabled/removed so R's acreage pipeline is not weather-dependent.
 
 ---
 
@@ -505,7 +551,10 @@ Recorded so the register isn't read as a list of everything that was looked at.
    $1.3B.
 3. **P5-02** — Was the `sf` P-1 re-run actually performed? The Summary says yes; the
    Documentation says no.
-4. **P2-02** — Does R's Phase 3 input include the 500 m nearest-neighbour tier?
+4. ~~**P2-02** — Does R's Phase 3 input include the 500 m nearest-neighbour tier?~~ **Answered
+   2026-07-24: yes**, confirmed against the live on-disk data. See P2-02.
 5. **X-02** — Is R's `final_acreage` (OSM+Tigris) intended as the R arm's permanent input, or
-   should the parity comparison run on `osm_acreage` across all three?
+   should the parity comparison run on `osm_acreage` across all three? (Now sharper per **P2-03**:
+   currently the two are identical in practice, because Tigris is contributing zero rows — but
+   that could change on any future run depending on live Census landmark-service availability.)
 6. **X-03** — Which tier (`Bulk Tests/` vs `Data/`) produced the currently published tables?
