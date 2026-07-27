@@ -1056,6 +1056,22 @@ message instead of a silent blank CSV cell. This does not claim to fix the under
 consistent with `CLAUDE.md` §4's evidence-tagging standard, an unreproduced hypothesis is not
 presented as a resolved defect.
 
+**Root cause confirmed, `VERIFIED`, 2026-07-28 (same day, next cascade run) — the defensive
+logging fix above paid off immediately.** The 2026-07-28 RF re-run cascade hit this again on
+Phase 1/2, and this time the warning surfaced the real exception: `UndefVarError: read not
+defined in Main` (with Julia's own hint: "two or more modules export different bindings with
+this name, resulting in ambiguity"). `_git()` calls the bare `read(cmd, String)`; Phase 1 and
+Phase 2 both `using` GIS-heavy packages (`ArchGDAL`, `GeoDataFrames`) that export their own
+`read` bindings, ambiguating the unqualified call at `Main` scope once `include()`'d. Phase 3-6
+never hit this because their package sets don't produce the same export collision — this was
+never a subprocess-spawn timing issue (the original, now-retired hypothesis); it's a Julia name
+resolution collision, fully deterministic given each phase's `using` list. **Not fixed yet, by
+design** — the standing instruction for this specific finding was to diagnose during the cascade
+but fix only after it completes, since a mid-run edit carries no benefit (Phase 1/2 already ran;
+Phase 3-6 never call this path) and only the discipline of waiting was asked for. **Actual fix,
+to apply post-cascade:** qualify the call as `Base.read(cmd, String)` in `provenance.jl`'s
+`_git()`.
+
 ### P1-10 — `extract_holes()`'s ultimate fallback still returns fabricated `18` in Python/Julia, `NA` in R (dormant — P1-01's fix means it's currently unreachable)
 **Severity:** Minor (dormant — 0/16,297 rows currently reach this branch) · **Status:** Open · **Locus:** Code
 
