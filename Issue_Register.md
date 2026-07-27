@@ -853,6 +853,16 @@ full 1–9 RUCC range with no gap or overlap, and is implemented identically. Mi
 specifically, since `NA %in% x` in R is `FALSE` rather than `NA` — a common R gotcha — but
 `case_when`'s fall-through still lands on the correct `NA_character_` result either way).
 
+**Constraint on future finer-geography relaxation (2026-07-27, advisor feedback investigation):**
+if `Baseline_Value_Per_Acre` is ever relaxed from county-uniform to a finer geography (tract or
+ZIP), the Urban/FHFA side has a viable finer national source (Census ACS tract/block-group
+median value, or Zillow ZHVI at ZIP resolution) but the Rural/USDA side does not — no finer
+national agricultural land-value product was found to exist. A finer-geography relaxation would
+therefore be **structurally asymmetric by construction** (finer for Urban, still county-uniform
+for Rural), not a uniform resolution upgrade. This is a substantive scope constraint for the
+advisor to weigh, not just an implementation detail — see the finer-geography investigation
+report (2026-07-27) for the full reasoning.
+
 **One dormant divergence found, not currently live:** on a non-integer `RUCC_2023` value, R's
 `as.integer(Value)` (`Phase_1.R:173`) truncates (e.g. `3.5` → `3` → classified `Urban`), while
 Python's `pd.to_numeric` (`Phase_1.py:161`) would preserve `3.5` and have it match neither
