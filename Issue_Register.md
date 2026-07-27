@@ -572,6 +572,51 @@ run time.** All spatial/administrative reference data is read from `00 - Data So
 
 ---
 
+### X-10 — Julia's Phase 3 `mice()` call specifies no imputation method and silently defaults to predictive mean matching (PMM), not random forest — R and Python both use random forest
+**Severity:** Critical · **Status:** Confirmed, escalated (not fixed) · **Locus:** Code
+
+**`READ`, `Phase_3.jl:95`:** `mice(imp_df, m = m_datasets, visitsequence = string.(IMPUTE_COLS),
+iter = 10)` — no `methods` (or equivalent) argument is passed. R's `Phase_3.R` passes
+`method = "rf"` explicitly (random forest via `ranger`). Python's `Phase_3.py` uses
+`miceforest.ImputationKernel`, which is LightGBM-backed random forest. Julia supplies nothing, so
+`Mice.jl` falls back to its own default.
+
+**`READ`, `Mice.jl` package source, confirmed against the installed depot copy
+(`~/.julia/packages/Mice/41x4x/src/makefunctions.jl:29-31`), docstring and code both, quoted
+verbatim, not inferred:**
+```
+Returns an AxisVector of strings defining the method by which each variable in `data`
+should be imputed in the `mice()` function. The default method is predictive mean matching
+(pmm).
+...
+# Use pmm for all variables by default
+methods = AxisArray(fill("pmm", no), names)
+```
+
+**Finding: Julia has never been running the same imputation algorithm as R and Python.** PMM
+(donor-based nearest-neighbor matching on predicted values) and random forest (tree-ensemble
+regression) are different statistical methods, not different implementations of one method — this
+is exactly the class of divergence `CLAUDE.md` §1 exists to catch, one level deeper than any
+single-language bug found so far in this audit. It plausibly explains, in one mechanism: (a) the
+large speed gap observed in the 2026-07-28 cascade (Julia's Phase 3, M=100/maxit=10, completed in
+53-62s against R's 218s and Python's 272s — PMM's donor-matching is far cheaper per iteration than
+fitting hundreds of RF trees), and (b) a meaningful share of the cross-language pooled-total spread
+(see `Expected_Deltas.md`'s post-cascade correction — the fresh cascade's spread widened to 2.03%
+from the Jun-12 baseline's 1.61%, and Julia's total moved +$4.07B against Python's +$2.79B and R's
+essentially-flat +$0.05B, an asymmetry PMM-vs-RF is a strong candidate to explain, though not yet
+isolated from other candidates by a controlled test).
+
+**Not fixed — escalated per `CLAUDE.md` §5.** Whether Julia should be switched to a `Mice.jl`
+random-forest method (if one exists in the package), and if so whether that requires re-running
+the entire Julia cascade (M=100 imputation is the expensive step), is a methodology decision for
+the author, not a bug fix a parity audit should apply unilaterally — this changes what Julia's
+"independent implementation" has been estimating, not how correctly it computes an agreed-upon
+target. Recommend as the author's next question: does `Mice.jl` support a random-forest method
+comparable to `ranger`/LightGBM, and if so, is switching to it worth invalidating and re-running
+Julia's cascade output.
+
+---
+
 ## Phase 1 — Spatial Parsing & Economic Baseline Valuation
 
 ### P1-01 — `extract_holes()` fabricates `Holes = 18` on regex failure (Python AND Julia)

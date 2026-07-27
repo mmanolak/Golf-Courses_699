@@ -149,3 +149,23 @@ narrows by only a token amount — that is itself informative: it would mean can
 backend differences: `ranger` vs LightGBM vs `Mice.jl`) or #5 (Phase 1 vintage skew) are carrying
 more of the divergence than P3-01 currently credits them for, and should be promoted ahead of
 "leading candidate: R's imputation model" in the next revision of that entry.
+
+---
+
+## Post-cascade correction (2026-07-28) — the P1-01 prediction was mis-specified, not the result
+
+**R's fresh total: $935.573B (+$0.052B vs. Jun-12's $935.521B — essentially flat). R's Holes
+coefficient: 0.0527 (vs. 0.0530 baseline — essentially unmoved).** This document's central
+prediction — that closing R's 4-variable-vs-2-variable imputation-model divergence would produce
+a non-trivial move and narrow the spread — did not happen, and on reflection the prediction was
+wrong on its own terms, not the cascade: R was only ever imputing `Holes` for 9 rows and
+`Ownership_Type` for 1, out of 16,292 (0.06% of the dataset). A mechanism touching 10 rows out of
+16,292 was never going to move a national total materially, however structurally real the
+imputation-model divergence was. This document should have sized the mechanism before predicting
+a "non-trivial" move from it, and didn't. Logging the correction here, not quietly revising the
+prediction above — a wrong prediction that's honestly recorded is worth more than a right one.
+
+**The cross-language spread widened, not narrowed: 1.61% (Jun-12) → 2.03% (fresh).** R
+essentially flat, Python +$2.787B, Julia +$4.071B. Full reconciliation, including a new and far
+more consequential finding about Julia's actual imputation method, is in the post-cascade
+diff report (chat record, 2026-07-28) and `Issue_Register.md`.
