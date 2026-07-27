@@ -10,6 +10,8 @@
 import gc
 import pathlib
 import pickle
+import sys
+import time
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -19,6 +21,11 @@ import statsmodels.formula.api as smf
 # === 2. GLOBALS & PATHS ===
 
 SCRIPT_DIR    = pathlib.Path(__file__).parent
+
+PROV_START = time.time()
+sys.path.insert(0, str(SCRIPT_DIR.parent))
+import provenance
+
 PHASE3_DIR    = (
     SCRIPT_DIR.parent
     / "Phase 3 Economic Merge and MICE Imputation"
@@ -248,3 +255,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    provenance.record_provenance("Phase 4", "Phase_4.py", SCRIPT_DIR, PROV_START)

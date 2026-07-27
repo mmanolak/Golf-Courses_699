@@ -49,6 +49,10 @@ suppressPackageStartupMessages({
 # === 2. GLOBALS & PATHS ===
 
 SCRIPT_DIR <- this.path::this.dir()
+
+PROV_START <- Sys.time()
+source(file.path(SCRIPT_DIR, "..", "provenance.R"))
+
 INPUT_CSV  <- file.path(
   SCRIPT_DIR, "..",
   "Phase 2 Spatial Polygons and True Acreage",
@@ -359,3 +363,6 @@ for (i in 1:M) {
 }
 cat("  - R_Rubins_Rules_Summary.csv\n")
 cat("  - R_National_Acreage_Summary.csv\n")
+
+record_provenance("Phase 3", "Phase_3.R", SCRIPT_DIR, PROV_START,
+                   M = M, maxit = 10, n_workers = SAFE_WORKERS, seed = 42)

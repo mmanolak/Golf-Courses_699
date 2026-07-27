@@ -91,6 +91,9 @@ SQ_FT_PER_ACRE <- 43560
 SCRIPT_DIR <- this.path::this.dir()
 ROOT_DIR   <- normalizePath(file.path(SCRIPT_DIR, ".."), mustWork = FALSE)
 
+PROV_START <- Sys.time()
+source(file.path(SCRIPT_DIR, "..", "provenance.R"))
+
 PBF_FILE     <- file.path(ROOT_DIR, "00 - Data Sources", "Original Data", "us-260413.osm.pbf")
 PY_GPKG      <- file.path(SCRIPT_DIR, "Data", "python", "Py_Phase2_OSM_Golf_Polygons.gpkg")
 OSM_GPKG_OUT <- file.path(SCRIPT_DIR, "Data", "R", "R_Phase2_OSM_Golf_Polygons.gpkg")
@@ -466,3 +469,6 @@ cat(sprintf(
 print_separator()
 cat("PHASE 2 COMPLETE\n")
 print_separator()
+
+record_provenance("Phase 2", "Phase_2.R", SCRIPT_DIR, PROV_START,
+                   n_workers = SAFE_WORKERS)

@@ -36,6 +36,10 @@ suppressPackageStartupMessages({
 # === 2. GLOBALS & PATHS ===
 
 SCRIPT_DIR  <- this.path::this.dir()
+
+PROV_START <- Sys.time()
+source(file.path(SCRIPT_DIR, "..", "provenance.R"))
+
 PHASE3_DIR  <- file.path(
   SCRIPT_DIR, "..", "Phase 3 Economic Merge and MICE Imputation", "Data", "R"
 )
@@ -304,3 +308,5 @@ cat("============================================================\n")
 cat(sprintf("[+] Model results (RDS) : %s\n", MODEL_RDS))
 cat(sprintf("[+] Regression table (CSV) : %s\n", OUT_CSV))
 cat("\n[DONE] Phase 4 R version complete.\n")
+
+record_provenance("Phase 4", "Phase_4.R", SCRIPT_DIR, PROV_START)

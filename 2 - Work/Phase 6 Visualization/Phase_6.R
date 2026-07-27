@@ -51,6 +51,10 @@ suppressPackageStartupMessages({
 # (Paths and constants are defined per-function inside each run_X_() Section 2
 #  block, using this.path::this.dir() for script-relative root resolution.)
 
+SCRIPT_DIR <- this.path::this.dir()
+PROV_START <- Sys.time()
+source(file.path(SCRIPT_DIR, "..", "provenance.R"))
+
 # Colors for UH Manoa
 UHM_GREEN <- "#024731"     #- [Green]
 UHM_GOLD <- "#B3995D"      #- [Gold]
@@ -3115,3 +3119,5 @@ run_9_Oahu_Opportunity_Cost_Map()
 run_9b_Oahu_OC_Rural_USDA_Sensitivity()
 run_15_Residual_Map()
 run_16_Magnitude_Chart()
+
+record_provenance("Phase 6", "Phase_6.R", SCRIPT_DIR, PROV_START)

@@ -53,6 +53,9 @@ ROOT_DIR     <- file.path(SCRIPT_DIR, "..")
 DATA_DIR     <- file.path(ROOT_DIR, "00 - Data Sources", "Original Data")
 OUTPUT_DIR   <- file.path(SCRIPT_DIR, "Data", "R")
 
+PROV_START <- Sys.time()
+source(file.path(SCRIPT_DIR, "..", "provenance.R"))
+
 SAFE_WORKERS <- min(availableCores() - 6, 20)
 plan(multisession, workers = SAFE_WORKERS)
 
@@ -268,3 +271,6 @@ cat(sprintf("    Max:    $%14s\n", formatC(max(bv),    format = "f", digits = 2,
 
 write_csv(courses_df, OUT_BASELINE)
 cat(sprintf("\n  [OK] Final Baseline saved -> %s\n", OUT_BASELINE))
+
+record_provenance("Phase 1", "Phase_1.R", SCRIPT_DIR, PROV_START,
+                   n_workers = SAFE_WORKERS)

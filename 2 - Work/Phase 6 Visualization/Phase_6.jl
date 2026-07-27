@@ -42,6 +42,8 @@ using CSV, CairoMakie, DataFrames, Printf, Colors
 # === 2. GLOBALS & PATHS ===
 
 const SCRIPT_DIR  = @__DIR__
+const PROV_START = time()
+include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
 const WORK_DIR    = normpath(joinpath(SCRIPT_DIR, ".."))
 const PHASE2_CSV  = joinpath(
     WORK_DIR, "Phase 2 Spatial Polygons and True Acreage", "Data", "Julia",
@@ -2129,3 +2131,4 @@ function main()
 end
 
 main()
+record_provenance("Phase 6", "Phase_6.jl", SCRIPT_DIR, PROV_START)

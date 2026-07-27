@@ -13,6 +13,9 @@ settings.local.json
 *.zip
 *.idx
 *.csv
+!Run_Provenance_*.csv
+__pycache__/
+*.pyc
 *.png
 .claude
 Gone Golfing.Rproj

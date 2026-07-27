@@ -31,6 +31,8 @@ using Printf
 # === 2. GLOBALS & PATHS ===
 
 const SCRIPT_DIR        = @__DIR__
+const PROV_START = time()
+include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
 const WORK_DIR          = normpath(joinpath(@__DIR__, ".."))
 const HONOLULU_DATA_DIR = joinpath(WORK_DIR, "00 - Data Sources", "Honolulu")
 const OUT_DIR           = joinpath(SCRIPT_DIR, "Data", "Julia")
@@ -549,4 +551,5 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
+    record_provenance("Phase 5", "Phase_5.jl", SCRIPT_DIR, PROV_START)
 end

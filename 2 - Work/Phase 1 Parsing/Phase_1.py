@@ -15,6 +15,8 @@
 # === 1. LIBRARIES ===
 
 import re
+import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -30,6 +32,10 @@ DATA_DIR   = ROOT_DIR / "00 - Data Sources" / "Original Data"
 OUTPUT_DIR = SCRIPT_DIR / "Data" / "python"
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+PROV_START = time.time()
+sys.path.insert(0, str(ROOT_DIR))
+import provenance
 
 RAW_CSV    = DATA_DIR / "Golf Courses-USA.csv"
 USDA_IN    = DATA_DIR / "2022 - USDA County Data - Ag Use.csv"
@@ -250,3 +256,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    provenance.record_provenance("Phase 1", "Phase_1.py", SCRIPT_DIR, PROV_START)

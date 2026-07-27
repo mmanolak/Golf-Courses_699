@@ -30,6 +30,8 @@ using CSV, DataFrames, GeoDataFrames, ArchGDAL, Statistics
 # === 2. GLOBALS & PATHS ===
 
 const SCRIPT_DIR   = @__DIR__
+const PROV_START = time()
+include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
 const PY_GPKG      = joinpath(SCRIPT_DIR, "Data", "python", "Py_Phase2_OSM_Golf_Polygons.gpkg")
 const OSM_GPKG_OUT = joinpath(SCRIPT_DIR, "Data", "Julia",  "Jl_Phase2_OSM_Golf_Polygons.gpkg")
 const PHASE1_CSV   = joinpath(SCRIPT_DIR, "..", "Phase 1 Parsing", "Data", "Julia",
@@ -268,4 +270,5 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
+    record_provenance("Phase 2", "Phase_2.jl", SCRIPT_DIR, PROV_START)
 end

@@ -33,6 +33,9 @@ ROOT_DIR   = joinpath(SCRIPT_DIR, "..")
 DATA_DIR   = joinpath(ROOT_DIR, "00 - Data Sources", "Original Data")
 OUTPUT_DIR = joinpath(SCRIPT_DIR, "Data", "Julia")
 
+const PROV_START = time()
+include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
+
 RAW_CSV    = joinpath(DATA_DIR, "Golf Courses-USA.csv")
 USDA_IN    = joinpath(DATA_DIR, "2022 - USDA County Data - Ag Use.csv")
 FHFA_IN    = joinpath(DATA_DIR, "2024 - FHFA June 20 Land Prices.xlsx")
@@ -420,4 +423,5 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
+    record_provenance("Phase 1", "Phase_1.jl", SCRIPT_DIR, PROV_START)
 end

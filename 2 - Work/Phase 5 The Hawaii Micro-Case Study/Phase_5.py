@@ -20,6 +20,8 @@
 import gc
 import pathlib
 import re
+import sys
+import time
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -29,6 +31,10 @@ import geopandas as gpd
 
 SCRIPT_DIR        = pathlib.Path(__file__).parent
 WORK_DIR          = SCRIPT_DIR.parent
+
+PROV_START = time.time()
+sys.path.insert(0, str(WORK_DIR))
+import provenance
 HONOLULU_DATA_DIR = WORK_DIR / "00 - Data Sources" / "Honolulu"
 BULK_PYTHON_DIR   = SCRIPT_DIR / "Bulk Tests" / "python"
 DATA_PYTHON_DIR   = SCRIPT_DIR / "Data" / "python"
@@ -712,3 +718,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    provenance.record_provenance("Phase 5", "Phase_5.py", SCRIPT_DIR, PROV_START)

@@ -13,6 +13,8 @@
 import gc
 import multiprocessing
 import pathlib
+import sys
+import time
 
 import miceforest as mf
 import numpy as np
@@ -25,6 +27,11 @@ warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
 # === 2. GLOBALS & PATHS ===
 
 SCRIPT_DIR = pathlib.Path(__file__).parent
+
+PROV_START = time.time()
+sys.path.insert(0, str(SCRIPT_DIR.parent))
+import provenance
+
 INPUT_CSV  = (
     SCRIPT_DIR.parent
     / "Phase 2 Spatial Polygons and True Acreage"
@@ -320,3 +327,5 @@ if __name__ == "__main__":
     run_pooling(OUT_DIR, OUT_RUBINS_CSV, M)
     print("\n=== STEP 3: NATIONAL ACREAGE SUMMARY ===")
     run_acreage_summary(OUT_DIR, OUT_ACREAGE_CSV, M)
+    provenance.record_provenance("Phase 3", "Phase_3.py", SCRIPT_DIR, PROV_START,
+                                  M=M, maxit=10, n_workers=N_CORES, seed=42)

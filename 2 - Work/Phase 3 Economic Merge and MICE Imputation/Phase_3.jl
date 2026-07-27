@@ -28,6 +28,8 @@ using CategoricalArrays, CSV, DataFrames, Mice, Printf, Random, Statistics
 # === 2. GLOBALS & PATHS ===
 
 const SCRIPT_DIR = @__DIR__
+const PROV_START = time()
+include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
 const INPUT_CSV  = joinpath(
     SCRIPT_DIR, "..",
     "Phase 2 Spatial Polygons and True Acreage",
@@ -348,4 +350,6 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
+    record_provenance("Phase 3", "Phase_3.jl", SCRIPT_DIR, PROV_START;
+                       M = M, maxit = 10, seed = 42)
 end

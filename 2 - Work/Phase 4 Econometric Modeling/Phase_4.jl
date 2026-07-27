@@ -24,6 +24,8 @@ using Distributions
 # === 2. GLOBALS & PATHS ===
 
 const SCRIPT_DIR    = @__DIR__
+const PROV_START = time()
+include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
 const PHASE3_DIR    = joinpath(
     SCRIPT_DIR, "..", "Phase 3 Economic Merge and MICE Imputation", "Data", "Julia"
 )
@@ -299,4 +301,5 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
+    record_provenance("Phase 4", "Phase_4.jl", SCRIPT_DIR, PROV_START)
 end

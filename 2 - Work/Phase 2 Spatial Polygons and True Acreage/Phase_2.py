@@ -11,6 +11,7 @@
 
 # === 1. LIBRARIES ===
 
+import sys
 import time
 from pathlib import Path
 import pandas as pd
@@ -23,6 +24,10 @@ import osmium
 
 SCRIPT_DIR = Path(__file__).parent
 ROOT_DIR   = SCRIPT_DIR.parent
+
+PROV_START = time.time()
+sys.path.insert(0, str(ROOT_DIR))
+import provenance
 
 PBF_FILE   = ROOT_DIR / "00 - Data Sources" / "Original Data" / "us-260413.osm.pbf"
 OUT_GPKG   = SCRIPT_DIR / "Data" / "python" / "Py_Phase2_OSM_Golf_Polygons.gpkg"
@@ -254,3 +259,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    provenance.record_provenance("Phase 2", "Phase_2.py", SCRIPT_DIR, PROV_START)

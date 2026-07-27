@@ -49,6 +49,9 @@ suppressPackageStartupMessages({
 SCRIPT_DIR    <- this.path::this.dir()
 WORK_DIR      <- normalizePath(file.path(SCRIPT_DIR, ".."), mustWork = FALSE)
 OUTPUT_DIR    <- file.path(SCRIPT_DIR, "Data", "R")
+
+PROV_START <- Sys.time()
+source(file.path(SCRIPT_DIR, "..", "provenance.R"))
 if (!dir.exists(OUTPUT_DIR)) dir.create(OUTPUT_DIR, recursive = TRUE)
 
 PHASE1_IN     <- file.path(
@@ -450,3 +453,5 @@ cat("PHASE 5 COMPLETE\n")
 cat("All outputs successfully saved to:\n")
 cat(sprintf("  %s\n", OUTPUT_DIR))
 cat("======================================================================\n")
+
+record_provenance("Phase 5", "Phase_5.R", SCRIPT_DIR, PROV_START)
