@@ -1,10 +1,14 @@
+# X-08/Decision 1 (2026-07-27): pinned environment, not the machine's global one.
+import Pkg
+Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
+
 using Printf
 
 # Purpose: Generate all Julia-based Phase 6 statistical visualization outputs.
-#          Runs the complete pipeline end-to-end for scripts 5, 6, and 10.
-# Inputs:  Phase 4 Econometric Modeling/Data/[Python|R|Julia]/[Py|R|Jl]_Regression_Results.csv
+#          Runs the complete pipeline end-to-end for scripts 5, 6, and 10-14.
+# Inputs:  Phase 4 Econometric Modeling/Data/[python|R|Julia]/[Py|R|Jl]_Regression_Results.csv
 #          Phase 2 Spatial Polygons and True Acreage/Data/Julia/Jl_Phase2_Acreage_Matched.csv
-#          Phase 3 Economic Merge and MICE Imputation/Data/Python/Py_Imputed_Dataset_{1..100}.csv
+#          Phase 3 Economic Merge and MICE Imputation/Data/python/Py_Imputed_Dataset_{1..100}.csv
 #          Phase 3 Economic Merge and MICE Imputation/Data/R/R_Imputed_Dataset_{1..100}.csv
 #          Phase 3 Economic Merge and MICE Imputation/Data/Julia/Jl_Imputed_Dataset_{1..100}.csv
 #          Phase 1 Parsing/Data/Julia/Jl_Phase1_Baseline_Golf_Valuation.csv
@@ -93,7 +97,7 @@ function plot_forest(py_reg::DataFrame, r_reg::DataFrame, jl_reg::DataFrame, out
     fig = Figure(size = (1050, 450))
     ax  = Axis(fig[1, 1];
         yticks        = (1:n, sorted_labels),
-        xlabel        = "Coefficient  [Dependent variable: log(Opportunity_Cost)]",
+        xlabel        = "Coefficient  [Dependent variable: log(1 + Opportunity_Cost)]",
         title         = "Regression Coefficients - Tri-Language MICE-Pooled Models",
         subtitle      = "Each dot = Rubin-pooled OLS estimate (M=100 imputations). Outer bar = 99% CI · Inner bar = 95% CI.\n" *
                         "Three estimates per predictor, dodged vertically: \n Python (green) · R (blue) · Julia (purple).",
@@ -148,7 +152,7 @@ function plot_forest(py_reg::DataFrame, r_reg::DataFrame, jl_reg::DataFrame, out
     )
 
     Label(fig[2, 1:2],
-        "Dependent variable: log(Opportunity_Cost). Each dot is a Rubin-pooled OLS coefficient estimated " *
+        "Dependent variable: log(1 + Opportunity_Cost). Each dot is a Rubin-pooled OLS coefficient estimated " *
         "from M = 100 MICE imputations; outer bar = 99% CI, inner bar = 95% CI. " *
         "The three languages use independent MICE backends (LightGBM, Random Forest, Mice.jl); " *
         "near-identical estimates across all three languages demonstrate robustness to imputation backend choice.";
@@ -447,7 +451,7 @@ function plot_marginal(marginal_df::DataFrame, med_holes::Float64, out_path::Str
     ylims!(ax, 0.0, maximum(hi_vals) * 1.25)
 
     Label(fig[2, 1],
-        "Model: log(Opportunity_Cost) = β₀ + β₁·Holes + β₂·I(Urban). " *
+        "Model: log(1 + Opportunity_Cost) = β₀ + β₁·Holes + β₂·I(Urban). " *
         "OC (USD) = exp(ŷ); converted to millions. Grand Mean of Py/R/Jl Rubin-pooled estimates. " *
         "Error bars: 99% CI (delta method; covariance terms omitted).";
         fontsize = 10, color = "#024731", halign = :left, tellwidth = false, word_wrap = true
@@ -477,8 +481,8 @@ function plot_raincloud(cloud_df::DataFrame, imp_indices::NamedTuple, out_path::
     ax  = Axis(fig[1, 1];
         xticks        = (1:n_groups, group_levels),
         yticks        = (log10_breaks, log10_labels),
-        ylabel        = "log₁₀(Acreage) - input to log(Opportunity_Cost)",
-        title         = "MICE Imputation Diagnostic - log(Opportunity_Cost) Acreage Inputs",
+        ylabel        = "log₁₀(Acreage) - input to log(1 + Opportunity_Cost)",
+        title         = "MICE Imputation Diagnostic - log(1 + Opportunity_Cost) Acreage Inputs",
         subtitle      = "1 imputation per language drawn at seed $(RAINCLOUD_SEED)  │  " *
                         "Py (green), R (blue), Jl (purple)  │  Imputed parcels only",
         titlesize = 14, subtitlesize = 12, subtitlecolor = "#024731", xgridvisible = false, ygridvisible = true,
@@ -569,9 +573,10 @@ function main()
 
     med_holes = median([Float64(x) for x in phase2_df.Holes if !ismissing(x)])
 
-    # Predicted log(Opportunity_Cost) at median holes (Rural = no Urban premium).
-    # The regression DV is log(Opportunity_Cost) in dollars, so exp(ŷ) is already
-    # the predicted OC in dollars - no bvpa multiplication needed or correct.
+    # Predicted log(1 + Opportunity_Cost) at median holes (Rural = no Urban premium).
+    # The regression DV is log(1 + Opportunity_Cost) in dollars, so exp(ŷ) is already
+    # the predicted OC in dollars (the "+1" is negligible at these magnitudes) -
+    # no bvpa multiplication needed or correct.
     log_hat_rural = b0 + b_holes * med_holes
     log_hat_urban = b0 + b_holes * med_holes + b_urban
 

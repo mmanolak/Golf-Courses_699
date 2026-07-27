@@ -18,6 +18,10 @@
 
 # === 1. LIBRARIES ===
 
+# X-08/Decision 1 (2026-07-27): pinned environment, not the machine's global one.
+import Pkg
+Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
+
 using CategoricalArrays, CSV, DataFrames, Mice, Printf, Random, Statistics
 
 
@@ -40,7 +44,7 @@ const PREDICTOR_COLS = [:Holes, :Course_Type, :county_type, :Longitude, :Latitud
 
 # === 3. FUNCTIONS ===
 
-function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = 100)
+function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = M)
     # 1. Load ----------------------------------------------------------------
     println("--- 1  Loading Phase 2 acreage-matched dataset ---")
 
@@ -71,7 +75,12 @@ function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = 10
     Random.seed!(42)  # [METHODOLOGY] reproducibility seed for stochastic MICE imputation
     # [METHODOLOGY] Mice.jl MICE - m=100 multiply-imputed datasets, iter=10;
     #               see Van Buuren (2018) for methodology
-    imputed_list = mice(imp_df, m = m_datasets, iter = 10)
+    # [METHODOLOGY] explicit visitsequence (P1-01/D-2) - Mice.jl imputes every missing value
+    # by default; restricting the visit sequence to IMPUTE_COLS keeps predictors as
+    # predictors regardless of what Phase 1 does or doesn't leave missing upstream.
+    # mice()'s visitsequence::Vector{String} signature requires String, not Symbol -
+    # IMPUTE_COLS is declared as Symbols (used elsewhere for DataFrame column selection).
+    imputed_list = mice(imp_df, m = m_datasets, visitsequence = string.(IMPUTE_COLS), iter = 10)
 
     # 4. Save each imputed dataset -------------------------------------------
     println("\n--- 4  Saving $m_datasets imputed datasets ---")
@@ -122,7 +131,7 @@ function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = 10
     end
 end
 
-function run_pooling(in_dir::String, out_csv::String; m_datasets::Int = 100)
+function run_pooling(in_dir::String, out_csv::String; m_datasets::Int = M)
     aggregates  = Float64[]
     within_vars = Float64[]
 
@@ -228,7 +237,7 @@ function pool_acreage(x::AbstractVector{<:Real})
     )
 end
 
-function run_acreage_summary(in_dir::String, out_csv::String; m_datasets::Int = 100)
+function run_acreage_summary(in_dir::String, out_csv::String; m_datasets::Int = M)
     fmt(x) = replace(@sprintf("%d", round(Int, x)), r"(?<=\d)(?=(\d{3})+$)" => ",")
 
     println("--- 1  Loading imputed datasets and computing acreage totals ---\n")

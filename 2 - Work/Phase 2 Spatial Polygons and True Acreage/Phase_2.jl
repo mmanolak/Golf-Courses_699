@@ -20,13 +20,17 @@
 
 # === 1. LIBRARIES ===
 
+# X-08/Decision 1 (2026-07-27): pinned environment, not the machine's global one.
+import Pkg
+Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
+
 using CSV, DataFrames, GeoDataFrames, ArchGDAL, Statistics
 
 
 # === 2. GLOBALS & PATHS ===
 
 const SCRIPT_DIR   = @__DIR__
-const PY_GPKG      = joinpath(SCRIPT_DIR, "Data", "Python", "Py_Phase2_OSM_Golf_Polygons.gpkg")
+const PY_GPKG      = joinpath(SCRIPT_DIR, "Data", "python", "Py_Phase2_OSM_Golf_Polygons.gpkg")
 const OSM_GPKG_OUT = joinpath(SCRIPT_DIR, "Data", "Julia",  "Jl_Phase2_OSM_Golf_Polygons.gpkg")
 const PHASE1_CSV   = joinpath(SCRIPT_DIR, "..", "Phase 1 Parsing", "Data", "Julia",
                                 "Jl_Phase1_Baseline_Golf_Valuation.csv")
@@ -178,14 +182,19 @@ function main()
         px          = ArchGDAL.getx(pt, 0)
         py          = ArchGDAL.gety(pt, 0)
         match_found = false
+        best_area   = -Inf
 
+        # [METHODOLOGY] tie-break: when a point falls inside >1 candidate polygon,
+        # keep the largest-area match (matches R's explicit largest-area-wins rule)
         for j in 1:nrow(osm_golf_geo)
             env = poly_envelopes[j]
             if px >= env.MinX && px <= env.MaxX && py >= env.MinY && py <= env.MaxY
                 if ArchGDAL.intersects(pt, poly_geoms[j])
-                    acreage_results[i] = poly_acres[j]
+                    if poly_acres[j] > best_area
+                        acreage_results[i] = poly_acres[j]
+                        best_area          = poly_acres[j]
+                    end
                     match_found = true
-                    break
                 end
             end
         end
@@ -198,7 +207,9 @@ function main()
                 if px >= (env.MinX - MAX_NEAREST_M) && px <= (env.MaxX + MAX_NEAREST_M) &&
                    py >= (env.MinY - MAX_NEAREST_M) && py <= (env.MaxY + MAX_NEAREST_M)
                     dist = ArchGDAL.distance(pt, poly_geoms[j])
-                    if dist <= MAX_NEAREST_M && dist < min_dist
+                    # [METHODOLOGY] tie-break: among equidistant candidates, keep the largest-area match
+                    if dist <= MAX_NEAREST_M &&
+                       (dist < min_dist || (dist == min_dist && best_idx > 0 && poly_acres[j] > poly_acres[best_idx]))
                         min_dist = dist
                         best_idx = j
                     end

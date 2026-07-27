@@ -23,7 +23,6 @@ import re
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import pygris
 
 
 # === 2. GLOBALS & PATHS ===
@@ -32,24 +31,28 @@ SCRIPT_DIR        = pathlib.Path(__file__).parent
 WORK_DIR          = SCRIPT_DIR.parent
 HONOLULU_DATA_DIR = WORK_DIR / "00 - Data Sources" / "Honolulu"
 BULK_PYTHON_DIR   = SCRIPT_DIR / "Bulk Tests" / "python"
-DATA_PYTHON_DIR   = SCRIPT_DIR / "Data" / "Python"
+DATA_PYTHON_DIR   = SCRIPT_DIR / "Data" / "python"
 
 # --- Step 1 inputs ---
 PHASE1_IN  = (
     WORK_DIR
     / "Phase 1 Parsing"
     / "Data"
-    / "Python"
+    / "python"
     / "Py_Phase1_Baseline_Golf_Valuation.csv"
 )
 OSM_IN     = (
     WORK_DIR
     / "Phase 2 Spatial Polygons and True Acreage"
     / "Data"
-    / "Python"
+    / "python"
     / "Py_Phase2_OSM_Golf_Polygons.gpkg"
 )
 PARCELS_IN = HONOLULU_DATA_DIR / "All_Parcels_6378200148342636690.gpkg"
+# Vendored 2026-07-27 (X-08/Gate-3 policy: no master script performs a network fetch at
+# run time). Same TIGER/Line file Phase 1 uses -- source
+# https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip
+COUNTY_SHP = WORK_DIR / "00 - Data Sources" / "Original Data" / "tl_2022_us_county.shp"
 
 # --- Intermediate files (shared by steps 1-5) ---
 TARGET_GOLF_GPKG    = BULK_PYTHON_DIR / "Target_Golf_Polygons.gpkg"
@@ -60,7 +63,7 @@ GEO_BREAKDOWN_CSV   = DATA_PYTHON_DIR / "Py_Phase5_Step5_Geographic_Breakdown.cs
 
 # --- Step 3 inputs ---
 PHASE3_DATA_DIR = (
-    WORK_DIR / "Phase 3 Economic Merge and MICE Imputation" / "Data" / "Python"
+    WORK_DIR / "Phase 3 Economic Merge and MICE Imputation" / "Data" / "python"
 )
 IMPUTED_PATHS = [
     PHASE3_DATA_DIR / f"Py_Imputed_Dataset_{i}.csv" for i in range(1, 101)
@@ -123,10 +126,10 @@ def run_step1():
     # [METHODOLOGY] gpd.read_file - spatial read of Honolulu cadastral parcel layer
     parcels_geo  = gpd.read_file(PARCELS_IN)
 
-    print("Downloading Oahu boundary...")
+    print("Reading Oahu boundary (vendored TIGER/Line)...")
     oahu_boundary_geo = (
-        pygris.counties(state="HI", cb=True)
-        .query("NAME == 'Honolulu'")
+        gpd.read_file(COUNTY_SHP)
+        .query("STATEFP == '15' and NAME == 'Honolulu'")
         # [METHODOLOGY] .to_crs - reproject county boundary to match OSM CRS
         .to_crs(osm_golf_geo.crs)
     )
@@ -654,7 +657,7 @@ def run_step6():
 
     # [METHODOLOGY] gpd.overlay(how='intersection') - clips zoning polygons to golf
     #               boundaries, quantifying which zone classes cover the golf footprint.
-    print("\n[Step 3] Performing spatial intersection (golf courses ∩ zoning)...")
+    print("\n[Step 3] Performing spatial intersection (golf courses x zoning)...")
     golf_sub   = golf_gdf[[golf_gdf.geometry.name]]
     zoning_sub = zoning_gdf[["zone_class", "zoning_description", zoning_gdf.geometry.name]]
     intersection_gdf = gpd.overlay(golf_sub, zoning_sub, how="intersection", keep_geom_type=False)

@@ -13,6 +13,23 @@
 
 
 # === 1. LIBRARIES ===
+
+# X-08/Decision 1 (2026-07-27): activate the pinned renv project library before
+# loading any packages, so this script runs against the versions in renv.lock,
+# not whatever happens to be in this machine's personal R library.
+local({
+    cmd_args <- commandArgs(trailingOnly = FALSE)
+    m <- grep("^--file=", cmd_args)
+    if (length(m) == 0) return(invisible(NULL))
+    script_path <- normalizePath(sub("^--file=", "", cmd_args[m]))
+    proj_dir <- dirname(dirname(script_path))
+    activate_r <- file.path(proj_dir, "renv", "activate.R")
+    if (file.exists(activate_r)) {
+        Sys.setenv(RENV_PROJECT = proj_dir)
+        source(activate_r)
+    }
+})
+
 suppressPackageStartupMessages({
     library(biscale)
     library(cowplot)
@@ -326,13 +343,15 @@ run_1_Macro_Maps <- function() {
     }
 
 
-    #  Step 3: Download state boundaries (shared between both maps)
-    # [METHODOLOGY] tigris::states(cb = TRUE) downloads the Census Bureau's cartographic
-    #               boundary file (1:500k). Territories are excluded. shift_geometry()
-    #               repositions Alaska and Hawaii as insets below the lower 48.
+    #  Step 3: Read state boundaries (shared between both maps)
+    # [METHODOLOGY] vendored Census cartographic boundary file (1:500k, GENZ2022).
+    #               Territories are excluded. shift_geometry() repositions Alaska and
+    #               Hawaii as insets below the lower 48.
 
-    cat("\n[Step 3] Downloading state boundaries via tigris...\n")
-    states_sf <- tigris::states(cb = TRUE, progress_bar = FALSE) |>
+    cat("\n[Step 3] Reading state boundaries (vendored, cb_2022_us_state_500k)...\n")
+    STATE_500K_SHP <- file.path(WORK_DIR, "00 - Data Sources", "Secondary",
+                                 "cb_2022_us_state_500k", "cb_2022_us_state_500k.shp")
+    states_sf <- st_read(STATE_500K_SHP, quiet = TRUE) |>
         filter(!STUSPS %in% TERRITORY_EXCLUDE) |>
         shift_geometry() |>
         st_transform(5070)
@@ -571,13 +590,15 @@ run_2_County_Map <- function() {
     }
 
 
-    #  Step 3: Download county and state boundaries (shared between both maps)
-    # [METHODOLOGY] tigris::counties(cb = TRUE) downloads the 1:500k cartographic
-    #               boundary file. Territories are excluded by STATEFP code.
-    #               shift_geometry() repositions Alaska and Hawaii as insets.
+    #  Step 3: Read county and state boundaries (shared between both maps)
+    # [METHODOLOGY] vendored Census cartographic boundary file (1:500k, GENZ2022).
+    #               Territories are excluded by STATEFP code. shift_geometry()
+    #               repositions Alaska and Hawaii as insets.
 
-    cat("\n[Step 3] Downloading county boundaries via tigris...\n")
-    counties_sf <- tigris::counties(cb = TRUE, progress_bar = FALSE) |>
+    cat("\n[Step 3] Reading county boundaries (vendored, cb_2022_us_county_500k)...\n")
+    COUNTY_500K_SHP <- file.path(WORK_DIR, "00 - Data Sources", "Secondary",
+                                  "cb_2022_us_county_500k", "cb_2022_us_county_500k.shp")
+    counties_sf <- st_read(COUNTY_500K_SHP, quiet = TRUE) |>
         filter(!STATEFP %in% TERRITORY_STATEFP) |>
         shift_geometry() |>
         st_transform(5070)
@@ -1296,19 +1317,24 @@ run_7_Bivariate_Econometric_Map <- function() {
     }
 
 
-    #  Step 4: Download county and state boundaries (shared between both maps)
+    #  Step 4: Read county and state boundaries (shared between both maps)
 
-    cat("\n[Step 4] Downloading county and state boundaries via tigris...\n")
-    # [METHODOLOGY] shift_geometry() repositions AK and HI as insets; st_transform
+    cat("\n[Step 4] Reading county and state boundaries (vendored, GENZ2022 500k)...\n")
+    # [METHODOLOGY] vendored Census cartographic boundary files (1:500k, GENZ2022);
+    #               shift_geometry() repositions AK and HI as insets; st_transform
     #               to EPSG 5070 (NAD83 / Conus Albers) for equal-area national display.
-    counties_sf <- tigris::counties(cb = TRUE, progress_bar = FALSE) |>
+    COUNTY_500K_SHP <- file.path(WORK_DIR, "00 - Data Sources", "Secondary",
+                                  "cb_2022_us_county_500k", "cb_2022_us_county_500k.shp")
+    STATE_500K_SHP  <- file.path(WORK_DIR, "00 - Data Sources", "Secondary",
+                                  "cb_2022_us_state_500k", "cb_2022_us_state_500k.shp")
+    counties_sf <- st_read(COUNTY_500K_SHP, quiet = TRUE) |>
         filter(!STATEFP %in% TERRITORY_EXCLUDE_FP) |>
         shift_geometry() |>
         st_transform(5070)
     cat(sprintf("  %d counties loaded with AK/HI insets (EPSG 5070).\n", nrow(counties_sf)))
 
     # [METHODOLOGY] Same CRS pipeline applied to state boundaries for overlay alignment.
-    states_sf <- tigris::states(cb = TRUE, progress_bar = FALSE) |>
+    states_sf <- st_read(STATE_500K_SHP, quiet = TRUE) |>
         filter(!STATEFP %in% TERRITORY_EXCLUDE_FP) |>
         shift_geometry() |>
         st_transform(5070)
@@ -2735,6 +2761,10 @@ run_15_Residual_Map <- function() {
                     predicted_log = b0 + b_holes * Holes + b_urban * is_urban,
                     # [METHODOLOGY] log-residual: log(actual OC) - predicted log(OC).
                     #   acreage > 1 guard ensures log() receives a value >= 0 on the log scale.
+                    #   NOTE: predicted_log's coefficients (b0/b_holes/b_urban) were fit on
+                    #   log1p(OC) in Phase 4; this residual compares against plain log(actual OC),
+                    #   not log1p(actual OC) - a "+1" mismatch, negligible at real OC magnitudes
+                    #   (P6-06).
                     log_residual  = log(acreage * Baseline_Value_Per_Acre) - predicted_log,
                     dollar_resid  = (acreage * Baseline_Value_Per_Acre) - exp(predicted_log)
                 ) |>
@@ -2855,12 +2885,15 @@ run_15_Residual_Map <- function() {
     ))
 
 
-    #  Step 4: Download county boundaries
+    #  Step 4: Read county boundaries
 
-    cat("\n[Step 4] Downloading county boundaries via tigris...\n")
-    # [METHODOLOGY] shift_geometry() repositions AK and HI as insets; st_transform
+    cat("\n[Step 4] Reading county boundaries (vendored, cb_2022_us_county_500k)...\n")
+    # [METHODOLOGY] vendored Census cartographic boundary file (1:500k, GENZ2022);
+    #               shift_geometry() repositions AK and HI as insets; st_transform
     #               to EPSG 5070 (NAD83 / Conus Albers) for equal-area national display.
-    counties_sf <- tigris::counties(cb = TRUE, progress_bar = FALSE) |>
+    COUNTY_500K_SHP <- file.path(WORK_DIR, "00 - Data Sources", "Secondary",
+                                  "cb_2022_us_county_500k", "cb_2022_us_county_500k.shp")
+    counties_sf <- st_read(COUNTY_500K_SHP, quiet = TRUE) |>
         filter(!STATEFP %in% TERRITORY_STATEFP) |>
         shift_geometry() |>
         st_transform(5070)
@@ -2885,13 +2918,13 @@ run_15_Residual_Map <- function() {
         fill_col = "Mean_Log_Residual",
         title = "OLS Spatial Diagnostics: Mean Log-Residuals by County",
         subtitle = paste0(
-            "log(Actual OC) − log(Predicted OC) per county  │  ",
+            "log(1 + Actual OC) − log(1 + Predicted OC) per county  │  ",
             "Red = county OC exceeds prediction (model underpredicts)  │  ",
             "Blue = county OC falls short of prediction (model overpredicts) \n",
             "Grand Mean of three Rubin-pooled estimates (Python · R · Julia, M = 100 each)"
         ),
         caption_text = paste0(
-            "OLS model: log(Opportunity_Cost) = β₀ + β₁·Holes + β₂·I(Urban). ",
+            "OLS model: log(1 + Opportunity_Cost) = β₀ + β₁·Holes + β₂·I(Urban). ",
             "Each county's value = mean of course-level log-residuals for courses in that county. ",
             "No systematic geographic pattern in residuals indicates the model is spatially unbiased. ",
             "Gray counties contain no golf courses in the Phase 1 dataset.\n",

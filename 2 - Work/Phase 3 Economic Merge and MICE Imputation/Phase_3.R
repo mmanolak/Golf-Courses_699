@@ -19,6 +19,22 @@
 
 # === 1. LIBRARIES ===
 
+# X-08/Decision 1 (2026-07-27): activate the pinned renv project library before
+# loading any packages, so this script runs against the versions in renv.lock,
+# not whatever happens to be in this machine's personal R library.
+local({
+  cmd_args <- commandArgs(trailingOnly = FALSE)
+  m <- grep("^--file=", cmd_args)
+  if (length(m) == 0) return(invisible(NULL))
+  script_path <- normalizePath(sub("^--file=", "", cmd_args[m]))
+  proj_dir <- dirname(dirname(script_path))
+  activate_r <- file.path(proj_dir, "renv", "activate.R")
+  if (file.exists(activate_r)) {
+    Sys.setenv(RENV_PROJECT = proj_dir)
+    source(activate_r)
+  }
+})
+
 suppressPackageStartupMessages({
   library(wooldridge)   # pre-existing dependency - do not remove
   library(tidyverse)
@@ -111,6 +127,14 @@ predictors <- c("Holes", course_col, "county_type", "Longitude", "Latitude")
 
 imp_df <- acreage_df[, c(predictors, IMPUTE_COLS)]
 
+# [METHODOLOGY] explicit per-column method vector (P1-01/D-2) - a bare method="rf" string
+# applies to every column mice() finds with missing data, which would silently promote
+# Holes/Ownership_Type (or any future predictor with a stray NA) to imputation targets
+# alongside the two intended ones. Declaring the schema explicitly makes predictors stay
+# predictors regardless of what Phase 1 does or doesn't leave missing upstream.
+method_vec <- setNames(rep("", ncol(imp_df)), names(imp_df))
+method_vec[IMPUTE_COLS] <- "rf"
+
 cat("\nVariables to be imputed:", paste(IMPUTE_COLS, collapse = ", "), "\n")
 cat("Predictor variables:", paste(predictors, collapse = ", "), "\n")
 
@@ -125,7 +149,7 @@ cat(sprintf(
 imputed_list <- futuremice(
   data         = imp_df,
   m            = M,
-  method       = "rf",
+  method       = method_vec,
   parallelseed = 42,
   maxit        = 10
 )
@@ -135,6 +159,13 @@ cat("\nMICE imputation completed successfully!\n")
 cat("\nSaving imputed datasets to:", OUT_DIR, "\n")
 for (i in 1:M) {
   complete_data <- complete(imputed_list, i)
+
+  # [METHODOLOGY] floor imputed values at 0 (P3-07) - matches the explicit
+  # clip/clamp Python and Julia both apply after complete(); currently a no-op
+  # against this RF backend's draws, kept for defensive parity across languages
+  complete_data$final_acreage <- pmax(complete_data$final_acreage, 0)
+  complete_data$Baseline_Value_Per_Acre <- pmax(complete_data$Baseline_Value_Per_Acre, 0)
+
   dataset_file  <- file.path(OUT_DIR, sprintf("R_Imputed_Dataset_%d.csv", i))
   write.csv(complete_data, dataset_file, row.names = FALSE)
   cat(sprintf("  Saved: %s\n", dataset_file))

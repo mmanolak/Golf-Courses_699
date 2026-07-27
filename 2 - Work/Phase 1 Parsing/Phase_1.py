@@ -3,7 +3,10 @@
 # Inputs:  00 - Data Sources/Original Data/Golf Courses-USA.csv
 #          00 - Data Sources/Original Data/2022 - USDA County Data - Ag Use.csv
 #          00 - Data Sources/Original Data/2024 - FHFA June 20 Land Prices.xlsx
-#          https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv
+#          00 - Data Sources/Original Data/tl_2022_us_county.shp (vendored 2026-07-27,
+#            source https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip)
+#          00 - Data Sources/Secondary/2023-rural-urban-continuum-codes.csv (vendored
+#            2026-07-27, source https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv)
 # Outputs: Phase 1 Parsing/Data/Python/Py_Phase1_Spatial_Joined_Golf_Courses.csv
 #          Phase 1 Parsing/Data/Python/Py_Phase1_Valuation_Joined_Golf_Courses.csv
 #          Phase 1 Parsing/Data/Python/Py_Phase1_Baseline_Golf_Valuation.csv
@@ -17,7 +20,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from pygris import counties
 
 
 # === 2. GLOBALS & PATHS ===
@@ -25,14 +27,18 @@ from pygris import counties
 SCRIPT_DIR = Path(__file__).parent
 ROOT_DIR   = SCRIPT_DIR.parent
 DATA_DIR   = ROOT_DIR / "00 - Data Sources" / "Original Data"
-OUTPUT_DIR = SCRIPT_DIR / "Data" / "Python"
+OUTPUT_DIR = SCRIPT_DIR / "Data" / "python"
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-RAW_CSV  = DATA_DIR / "Golf Courses-USA.csv"
-USDA_IN  = DATA_DIR / "2022 - USDA County Data - Ag Use.csv"
-FHFA_IN  = DATA_DIR / "2024 - FHFA June 20 Land Prices.xlsx"
-RUCC_URL = "https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv?v=98246"
+RAW_CSV    = DATA_DIR / "Golf Courses-USA.csv"
+USDA_IN    = DATA_DIR / "2022 - USDA County Data - Ag Use.csv"
+FHFA_IN    = DATA_DIR / "2024 - FHFA June 20 Land Prices.xlsx"
+# Vendored 2026-07-27 (X-08/Gate-3 policy: no master script performs a network fetch at
+# run time). Source: https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv
+RUCC_CSV   = ROOT_DIR / "00 - Data Sources" / "Secondary" / "2023-rural-urban-continuum-codes.csv"
+# Vendored 2026-07-27. Source: https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip
+COUNTY_SHP = DATA_DIR / "tl_2022_us_county.shp"
 
 OUT_SPATIAL  = OUTPUT_DIR / "Py_Phase1_Spatial_Joined_Golf_Courses.csv"
 OUT_VAL_JOIN = OUTPUT_DIR / "Py_Phase1_Valuation_Joined_Golf_Courses.csv"
@@ -57,16 +63,29 @@ STATE_FIPS_TO_ABBR = {
 
 # === 3. FUNCTIONS ===
 
-def extract_ownership(detail_str: str) -> str:
-    s = str(detail_str).lower()
-    for label in ("public", "private", "municipal", "military", "resort"):
-        if label in s:
-            return label.title()
-    return "Unknown"
+def extract_ownership(detail_str: str) -> str | None:
+    # [METHODOLOGY] first-parenthetical extraction, matching R/Julia exactly (P1-05) —
+    # searches anywhere in the string (not anchored to position 0) so a "CLOSED|" prefix
+    # (e.g. Turtle Creek Golf Club, FL) doesn't defeat the match
+    m = re.search(r"\(([^)]+)\)", str(detail_str))
+    return m.group(1) if m else None
 
-def extract_holes(detail_str: str) -> int:
-    m = re.search(r"\((\d+)\s*Holes?\)", str(detail_str), re.IGNORECASE)
-    return int(m.group(1)) if m else 18
+def extract_holes(detail_str: str) -> int | None:
+    d = str(detail_str)
+    # [METHODOLOGY] strict "(N Holes)" pattern first
+    m = re.search(r"\((\d+)\s*Holes?\)", d, re.IGNORECASE)
+    if m:
+        return int(m.group(1))
+    # [METHODOLOGY] combo courses, e.g. "(18 Holes & 9 Holes)" -> sum the two nines
+    m = re.search(r"\((\d+)\s*Holes?\s*&\s*(\d+)\s*Holes?\)", d, re.IGNORECASE)
+    if m:
+        return int(m.group(1)) + int(m.group(2))
+    # [METHODOLOGY] bare "(N)" with no "Holes" text, restricted to the prefix before the
+    # first comma (the Ownership/Holes segment) so a phone area code or zip can't match
+    m = re.search(r"\((\d+)\)", d.split(",", 1)[0])
+    if m:
+        return int(m.group(1))
+    return 18
 
 
 # === 4. EXECUTION ===
@@ -85,7 +104,25 @@ def main():
     courses_df["Ownership_Type"] = courses_df["Details"].apply(extract_ownership)
     courses_df["Holes"]          = courses_df["Details"].apply(extract_holes)
 
-    print(" 3  Converting to GeoDataFrame (EPSG:4326)")
+    print(" 3  Deduplicating (lat/lon-round, Course_Name; ties broken by max Holes)")
+    # [METHODOLOGY] matches R's arrange(desc(Holes)) |> slice(1) and Julia's
+    # sort!(g, :Holes, rev=true); first(g) on the same (round(lat,4), round(lon,4),
+    # Course_Name) key -- P1-06/Decision 4: Python previously had no course-level
+    # dedup at all (5 duplicate source rows survived uncaught, all Urban).
+    original_n = len(courses_df)
+    courses_df["Lat_Round"] = courses_df["Latitude"].round(4)
+    courses_df["Lon_Round"] = courses_df["Longitude"].round(4)
+    courses_df = (courses_df
+                  .sort_values("Holes", ascending=False, kind="mergesort")
+                  .drop_duplicates(subset=["Lat_Round", "Lon_Round", "Course_Name"], keep="first")
+                  .drop(columns=["Lat_Round", "Lon_Round"])
+                  .sort_index()
+                  .reset_index(drop=True))
+    print(f"    Original raw rows:   {original_n:,}")
+    print(f"    Duplicates removed:  {original_n - len(courses_df):,}")
+    print(f"    Final cleaned rows:  {len(courses_df):,}")
+
+    print(" 4  Converting to GeoDataFrame (EPSG:4326)")
     courses_df = courses_df.dropna(subset=["Longitude", "Latitude"])
     courses_geo = gpd.GeoDataFrame(
         courses_df,
@@ -93,13 +130,13 @@ def main():
         crs="EPSG:4326"
     )
 
-    print(" 4  Downloading 2022 US County boundaries (pygris)")
+    print(" 5  Reading 2022 US County boundaries (vendored TIGER/Line)")
     # [METHODOLOGY] CRS: EPSG 4326 (WGS 84) - projects county boundaries to match golf course point CRS for spatial join
-    county_geo = counties(cb=False, year=2022).to_crs("EPSG:4326")
+    county_geo = gpd.read_file(COUNTY_SHP).to_crs("EPSG:4326")
 
     county_geo["STUSPS"] = county_geo["STATEFP"].map(STATE_FIPS_TO_ABBR).fillna("")
 
-    print(" 5  Spatial point-in-polygon join")
+    print(" 6  Spatial point-in-polygon join")
     courses_geo = gpd.sjoin(  # [METHODOLOGY]
         courses_geo,
         county_geo[["GEOID", "NAME", "STUSPS", "geometry"]],
@@ -119,7 +156,7 @@ def main():
     courses_df["FIPS"] = (courses_df["FIPS"].astype(str)
                           .str.replace(r"\.0$", "", regex=True).str.zfill(5))
 
-    print(" 6  Processing USDA County Ag-Use data")
+    print(" 7  Processing USDA County Ag-Use data")
     usda_df = pd.read_csv(USDA_IN)
     usda_df = usda_df[
         usda_df["Data Item"] == "AG LAND, INCL BUILDINGS - ASSET VALUE, MEASURED IN $ / ACRE"
@@ -136,12 +173,17 @@ def main():
                .dropna(subset=["USDA_Ag_Value_Per_Acre"])
                .drop_duplicates(subset=["FIPS"]))
 
-    print(" 7  Processing FHFA Panel Counties data")
+    print(" 8  Processing FHFA Panel Counties data")
     fhfa_df = pd.read_excel(FHFA_IN, sheet_name="Panel Counties", skiprows=1)
     fhfa_df = fhfa_df[fhfa_df["Year"] == 2022].copy()
     fhfa_df["FIPS"] = (fhfa_df["FIPS"].astype(str)
                         .str.replace(r"\.0$", "", regex=True).str.zfill(5))
-    as_is_col = "Land Value\n(Per Acre, As-Is)"
+    # [METHODOLOGY] dynamic column match (B-9) — matches R's grep()/Julia's occursin(),
+    # avoids a hardcoded embedded-newline column name breaking on any source refresh
+    as_is_matches = [c for c in fhfa_df.columns if "Per Acre, As-Is" in str(c)]
+    if not as_is_matches:
+        raise ValueError("Could not find 'Per Acre, As-Is' column in FHFA data")
+    as_is_col = as_is_matches[0]
     fhfa_df = (fhfa_df[["FIPS", as_is_col]]
                .rename(columns={as_is_col: "FHFA_Res_Value_Per_Acre"})
                .drop_duplicates(subset=["FIPS"]))
@@ -149,29 +191,29 @@ def main():
         fhfa_df["FHFA_Res_Value_Per_Acre"], errors="coerce"
     )
 
-    print(" 8  Left-joining proxies onto golf courses")
+    print(" 9  Left-joining proxies onto golf courses")
     courses_df = (courses_df
                   .merge(usda_df, on="FIPS", how="left")
                   .merge(fhfa_df, on="FIPS", how="left"))
     courses_df.to_csv(OUT_VAL_JOIN, index=False)
     print(f"    [OK] Valuation data saved -> {OUT_VAL_JOIN}")
 
-    print(" 9  Fetching 2023 RUCC data from USDA ERS")
-    rucc_df = pd.read_csv(RUCC_URL, encoding="latin1")
+    print(" 10 Reading 2023 RUCC data (vendored)")
+    rucc_df = pd.read_csv(RUCC_CSV, encoding="latin1")
     rucc_df = rucc_df[rucc_df["Attribute"] == "RUCC_2023"].copy()
     rucc_df["RUCC_2023"] = pd.to_numeric(rucc_df["Value"], errors="coerce")
     rucc_df["FIPS"] = (rucc_df["FIPS"].astype(str)
                        .str.replace(r"\.0$", "", regex=True).str.zfill(5))
     rucc_df = rucc_df[["FIPS", "RUCC_2023"]].drop_duplicates(subset=["FIPS"])
 
-    print(" 10 Merging RUCC and Classifying Urban/Rural")
+    print(" 11 Merging RUCC and Classifying Urban/Rural")
     courses_df = courses_df.merge(rucc_df, on="FIPS", how="left")
     courses_df["county_type"] = np.where(
         courses_df["RUCC_2023"].isin([1, 2, 3]), "Urban",
         np.where(courses_df["RUCC_2023"].between(4, 9), "Rural", None)
     )
 
-    print(" 11 Building Baseline_Value_Per_Acre")
+    print(" 12 Building Baseline_Value_Per_Acre")
     courses_df["Baseline_Value_Per_Acre"] = np.where(
         courses_df["county_type"] == "Urban",  courses_df["FHFA_Res_Value_Per_Acre"],
         np.where(courses_df["county_type"] == "Rural", courses_df["USDA_Ag_Value_Per_Acre"], np.nan)

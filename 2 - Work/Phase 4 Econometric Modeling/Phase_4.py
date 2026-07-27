@@ -23,9 +23,9 @@ PHASE3_DIR    = (
     SCRIPT_DIR.parent
     / "Phase 3 Economic Merge and MICE Imputation"
     / "Data"
-    / "Python"
+    / "python"
 )
-OUT_DIR       = SCRIPT_DIR / "Data" / "Python"
+OUT_DIR       = SCRIPT_DIR / "Data" / "python"
 PKL_PATH      = OUT_DIR / "Py_model_results.pkl"
 OUT_CSV       = OUT_DIR / "Py_Regression_Results.csv"
 

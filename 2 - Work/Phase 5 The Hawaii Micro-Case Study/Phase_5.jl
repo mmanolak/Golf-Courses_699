@@ -16,6 +16,10 @@
 
 # === 1. LIBRARIES ===
 
+# X-08/Decision 1 (2026-07-27): pinned environment, not the machine's global one.
+import Pkg
+Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
+
 using GeoDataFrames
 using ArchGDAL
 using DataFrames
@@ -49,6 +53,10 @@ const IMPUTED_PATHS = [
     joinpath(PHASE3_DATA_DIR, "Jl_Imputed_Dataset_$i.csv") for i in 1:100
 ]
 const ZONING_GPKG        = joinpath(HONOLULU_DATA_DIR, "Zoning_-2205419429161838665.gpkg")
+# Vendored 2026-07-27 (X-08/Gate-3 policy: no master script performs a network fetch at
+# run time). Same TIGER/Line file Phase 1 uses -- source
+# https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip
+const COUNTY_SHP = joinpath(WORK_DIR, "00 - Data Sources", "Original Data", "tl_2022_us_county.shp")
 
 const COMPARISON_OUT     = joinpath(OUT_DIR, "Jl_Phase5_Oahu_Comparison.csv")
 const GEO_BREAKDOWN_OUT  = joinpath(OUT_DIR, "Jl_Phase5_Geographic_Breakdown.csv")
@@ -57,6 +65,9 @@ const ZONE_PENETRATION_OUT = joinpath(OUT_DIR, "Jl_Phase5_Step6_Zone_Golf_Penetr
 
 const M2_PER_ACRE = 4046.856422
 
+# Coarse pre-filter only (Step 5, narrows the M=100 national imputed datasets before
+# exact polygon matching) -- NOT the Step 1 Oahu-membership test, which now uses the
+# real vendored county boundary polygon (see COUNTY_SHP / P5-08).
 const OAHU_LON_MIN = -158.5
 const OAHU_LON_MAX = -157.6
 const OAHU_LAT_MIN =  21.2
@@ -78,10 +89,6 @@ const DISTRICT_MAP = Dict(
 
 
 # === 3. FUNCTIONS ===
-
-function in_oahu(lon, lat)
-    return OAHU_LON_MIN <= lon <= OAHU_LON_MAX && OAHU_LAT_MIN <= lat <= OAHU_LAT_MAX
-end
 
 # [METHODOLOGY] createcoordtrans + transform! - in-place reproject using ArchGDAL.jl API;
 # ArchGDAL.reproject(geom, ISpatialRef, ISpatialRef) is not defined in this version.
@@ -157,15 +164,19 @@ function main()
     wgs84       = ArchGDAL.importPROJ4("+proj=longlat +datum=WGS84 +no_defs")
     parcels_crs = ArchGDAL.getspatialref(parcels_geo.geometry[1])
 
-    println("Filtering OSM polygons to Oahu bounding box...")
-    # [METHODOLOGY] centroid-in-bbox - filter OSM golf polygons to Honolulu county extents
-    oahu_mask = ArchGDAL.createcoordtrans(osm_crs, wgs84) do t
-        [begin
-            c = ArchGDAL.centroid(g)
-            ArchGDAL.transform!(c, t)
-            in_oahu(ArchGDAL.getx(c, 0), ArchGDAL.gety(c, 0))
-        end for g in osm_golf_geo.geometry]
-    end
+    println("Reading Oahu boundary (vendored TIGER/Line)...")
+    isfile(COUNTY_SHP) || error("Input file not found: $COUNTY_SHP")
+    county_geo = GeoDataFrames.read(COUNTY_SHP)
+    oahu_rows  = filter(row -> row.STATEFP == "15" && row.NAME == "Honolulu", county_geo)
+    nrow(oahu_rows) == 1 || error("[FATAL] Expected exactly 1 Honolulu County row in $COUNTY_SHP, found $(nrow(oahu_rows)).")
+    county_crs = ArchGDAL.importPROJ4("+proj=longlat +datum=NAD83 +no_defs")  # TIGER/Line native CRS (EPSG:4269)
+    # [METHODOLOGY] reproject_geom - align county boundary to OSM CRS for polygon matching
+    oahu_boundary_geom = reproject_geom(oahu_rows.geometry[1], county_crs, osm_crs)
+
+    println("Filtering OSM polygons to Oahu (real polygon intersects, matching R/Python)...")
+    # [METHODOLOGY] polygon-vs-polygon intersects against the real Honolulu County boundary -
+    # matches R's st_filter(..., .predicate = st_intersects) and Python's .intersects(boundary_union)
+    oahu_mask = [ArchGDAL.intersects(g, oahu_boundary_geom) for g in osm_golf_geo.geometry]
     oahu_golf_geo = osm_golf_geo[oahu_mask, :]
     nrow(oahu_golf_geo) > 0 || error("[FATAL] No OSM polygons found on Oahu.")
 

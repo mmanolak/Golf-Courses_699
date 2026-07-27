@@ -3,7 +3,10 @@
 # Inputs:  00 - Data Sources/Original Data/Golf Courses-USA.csv
 #          00 - Data Sources/Original Data/2022 - USDA County Data - Ag Use.csv
 #          00 - Data Sources/Original Data/2024 - FHFA June 20 Land Prices.xlsx
-#          https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv
+#          00 - Data Sources/Original Data/tl_2022_us_county.shp (vendored 2026-07-27,
+#            source https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip)
+#          00 - Data Sources/Secondary/2023-rural-urban-continuum-codes.csv (vendored
+#            2026-07-27, source https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv)
 # Outputs: Phase 1 Parsing/Data/R/R_Phase1_Parsed_Golf_Courses.csv
 #          Phase 1 Parsing/Data/R/R_Phase1_Spatial_Joined_Golf_Courses.csv
 #          Phase 1 Parsing/Data/R/R_Phase1_Valuation_Joined_Golf_Courses.csv
@@ -11,6 +14,22 @@
 
 
 # === 1. LIBRARIES ===
+
+# X-08/Decision 1 (2026-07-27): activate the pinned renv project library before
+# loading any packages, so this script runs against the versions in renv.lock,
+# not whatever happens to be in this machine's personal R library.
+local({
+  cmd_args <- commandArgs(trailingOnly = FALSE)
+  m <- grep("^--file=", cmd_args)
+  if (length(m) == 0) return(invisible(NULL))
+  script_path <- normalizePath(sub("^--file=", "", cmd_args[m]))
+  proj_dir <- dirname(dirname(script_path))
+  activate_r <- file.path(proj_dir, "renv", "activate.R")
+  if (file.exists(activate_r)) {
+    Sys.setenv(RENV_PROJECT = proj_dir)
+    source(activate_r)
+  }
+})
 
 suppressPackageStartupMessages({
   library(wooldridge)
@@ -42,7 +61,11 @@ if (!dir.exists(OUTPUT_DIR)) dir.create(OUTPUT_DIR, recursive = TRUE)
 RAW_CSV      <- file.path(DATA_DIR, "Golf Courses-USA.csv")
 USDA_IN      <- file.path(DATA_DIR, "2022 - USDA County Data - Ag Use.csv")
 FHFA_IN      <- file.path(DATA_DIR, "2024 - FHFA June 20 Land Prices.xlsx")
-RUCC_URL     <- "https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv?v=98246"
+# Vendored 2026-07-27 (X-08/Gate-3 policy: no master script performs a network fetch at
+# run time). Source: https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv
+RUCC_CSV     <- file.path(ROOT_DIR, "00 - Data Sources", "Secondary", "2023-rural-urban-continuum-codes.csv")
+# Vendored 2026-07-27. Source: https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip
+COUNTY_SHP   <- file.path(DATA_DIR, "tl_2022_us_county.shp")
 
 OUT_PARSED   <- file.path(OUTPUT_DIR, "R_Phase1_Parsed_Golf_Courses.csv")
 OUT_SPATIAL  <- file.path(OUTPUT_DIR, "R_Phase1_Spatial_Joined_Golf_Courses.csv")
@@ -51,6 +74,29 @@ OUT_BASELINE <- file.path(OUTPUT_DIR, "R_Phase1_Baseline_Golf_Valuation.csv")
 
 
 # === 3. FUNCTIONS ===
+
+extract_ownership <- function(details) {
+  # [METHODOLOGY] first-parenthetical extraction, searching anywhere in the string (not
+  # anchored to position 0) so a "CLOSED|" prefix doesn't defeat the match (P1-05)
+  m <- str_extract(details, "\\([^)]+\\)")
+  if (is.na(m)) return(NA_character_)
+  str_remove_all(m, "[()]")
+}
+
+extract_holes <- function(details) {
+  # [METHODOLOGY] strict "(N Holes)" pattern first
+  strict <- str_extract(details, "(?<=\\()\\d+(?= Holes\\))")
+  if (!is.na(strict)) return(as.numeric(strict))
+  # [METHODOLOGY] combo courses, e.g. "(18 Holes & 9 Holes)" -> sum the two nines
+  combo <- str_match(details, "\\((\\d+) Holes & (\\d+) Holes\\)")
+  if (!is.na(combo[1, 1])) return(as.numeric(combo[1, 2]) + as.numeric(combo[1, 3]))
+  # [METHODOLOGY] bare "(N)" with no "Holes" text, restricted to the prefix before the
+  # first comma (the Ownership/Holes segment) so a phone area code or zip can't match
+  prefix <- str_split_fixed(details, ",", 2)[, 1]
+  bare <- str_extract(prefix, "(?<=\\()\\d+(?=\\))")
+  if (!is.na(bare)) return(as.numeric(bare))
+  return(NA_real_)
+}
 
 
 # === 4. EXECUTION ===
@@ -72,8 +118,8 @@ courses_df <- courses_df |>
   mutate(
     Course_Name    = str_remove(Name_State, "-.*$"),
     State_Abbr     = str_extract(Name_State, "[A-Z]{2}$"),
-    Ownership_Type = str_remove_all(str_extract(Details, "^\\([^)]+\\)"), "[()]"),
-    Holes          = as.numeric(str_extract(Details, "(?<=\\()\\d+(?= Holes\\))")),
+    Ownership_Type = map_chr(Details, extract_ownership),
+    Holes          = map_dbl(Details, extract_holes),
     Zip_Code       = str_extract(Details, paste0("(?<=", State_Abbr, " )\\d{5}")),
     City           = str_remove(str_remove(str_extract(Details, paste0(",([^,]+),", State_Abbr)), "^,\\s*"), paste0(",", State_Abbr)),
     Address        = str_remove(str_remove(str_extract(Details, "\\), (.*?),(?=\\s*[^,]+,[A-Z]{2})"), "^\\), "), ",$")
@@ -100,9 +146,9 @@ courses_sf <- courses_df |>
   filter(!is.na(Longitude), !is.na(Latitude)) |>
   st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326, remove = FALSE)
 
-cat(" 4  Downloading 2022 US County boundaries (tigris)\n")
+cat(" 4  Reading 2022 US County boundaries (vendored TIGER/Line)\n")
 # [METHODOLOGY] CRS: EPSG 4326 (WGS 84) - projects county boundaries to match golf course point CRS for spatial join
-county_sf <- counties(cb = FALSE, year = 2022, resolution = "20m", progress_bar = FALSE) |>
+county_sf <- st_read(COUNTY_SHP, quiet = TRUE) |>
   st_transform(4326)
 
 cat(" 5  Spatial point-in-polygon join\n")
@@ -161,9 +207,9 @@ cat(sprintf("    [OK] Valuation data saved -> %s\n", OUT_VAL_JOIN))
 
 
 # PART D: RUCC Classification & Baseline Valuation
-cat(" 9  Fetching 2023 RUCC data from USDA ERS\n")
+cat(" 9  Reading 2023 RUCC data (vendored)\n")
 rucc_df <- read_csv(
-  RUCC_URL,
+  RUCC_CSV,
   locale = locale(encoding = "latin1"),
   show_col_types = FALSE
 ) |>

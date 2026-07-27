@@ -18,10 +18,25 @@
 
 # === 1. LIBRARIES ===
 
+# X-08/Decision 1 (2026-07-27): activate the pinned renv project library before
+# loading any packages, so this script runs against the versions in renv.lock,
+# not whatever happens to be in this machine's personal R library.
+local({
+    cmd_args <- commandArgs(trailingOnly = FALSE)
+    m <- grep("^--file=", cmd_args)
+    if (length(m) == 0) return(invisible(NULL))
+    script_path <- normalizePath(sub("^--file=", "", cmd_args[m]))
+    proj_dir <- dirname(dirname(script_path))
+    activate_r <- file.path(proj_dir, "renv", "activate.R")
+    if (file.exists(activate_r)) {
+        Sys.setenv(RENV_PROJECT = proj_dir)
+        source(activate_r)
+    }
+})
+
 suppressPackageStartupMessages({
     library(sf)
     library(tidyverse)
-    library(tigris)
     library(future)
     library(furrr)
     library(parallelly)
@@ -53,6 +68,10 @@ HONOLULU_DIR      <- file.path(WORK_DIR, "00 - Data Sources", "Honolulu")
 PARCELS_GPKG      <- file.path(HONOLULU_DIR, "All_Parcels_6378200148342636690.gpkg")
 PARCELS_CSV          <- file.path(HONOLULU_DIR, "All_Parcels_-4613852522541990741.csv")
 ZONING_GPKG          <- file.path(HONOLULU_DIR, "Zoning_-2205419429161838665.gpkg")
+# Vendored 2026-07-27 (X-08/Gate-3 policy: no master script performs a network fetch at
+# run time). Same TIGER/Line file Phase 1 uses -- source
+# https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip
+COUNTY_SHP        <- file.path(WORK_DIR, "00 - Data Sources", "Original Data", "tl_2022_us_county.shp")
 
 TARGET_GOLF_OUT      <- file.path(OUTPUT_DIR, "Target_Golf_Polygons.gpkg")
 PARCELS_OUT          <- file.path(OUTPUT_DIR, "Honolulu_Parcels_Reprojected.gpkg")
@@ -96,18 +115,12 @@ osm_golf_sf <- st_read(OSM_IN, quiet = TRUE)
 if (!file.exists(PARCELS_GPKG)) stop(paste("Input file not found:", PARCELS_GPKG))
 parcels_sf  <- st_read(PARCELS_GPKG, quiet = TRUE)
 
-cat("  Downloading Oahu boundary (Tigris)...\n")
-suppressMessages(
-    oahu_boundary_sf <- counties(
-        state        = "HI",
-        cb           = TRUE,
-        class        = "sf",
-        progress_bar = FALSE
-    ) |>
-        filter(NAME == "Honolulu") |>
-        # [METHODOLOGY] st_transform - reproject county boundary to match OSM CRS
-        st_transform(st_crs(osm_golf_sf))
-)
+cat("  Reading Oahu boundary (vendored TIGER/Line)...\n")
+if (!file.exists(COUNTY_SHP)) stop(paste("Input file not found:", COUNTY_SHP))
+oahu_boundary_sf <- st_read(COUNTY_SHP, quiet = TRUE) |>
+    filter(STATEFP == "15", NAME == "Honolulu") |>
+    # [METHODOLOGY] st_transform - reproject county boundary to match OSM CRS
+    st_transform(st_crs(osm_golf_sf))
 
 cat("  Extracting OSM polygons within Oahu...\n")
 # [METHODOLOGY] st_filter - spatial subset of all OSM golf polygons to Honolulu county
@@ -157,7 +170,11 @@ cat(sprintf(
     nrow(parcel_intersection_sf)
 ))
 
-tmk_columns  <- c("TMK", "PARCEL_ID", "Parcel_ID", "parcel_id", "TAX_MAP_KEY", "tmk")
+# P5-07/Decision 6 (2026-07-27): extended to match Python/Julia's 10-candidate list --
+# R was previously missing Tax_Map_Key, tax_map_key, MAPKEY, mapkey (dormant on the
+# current cadastre schema, but a latent hard-crash risk on a future schema change).
+tmk_columns  <- c("TMK", "PARCEL_ID", "Parcel_ID", "parcel_id", "TAX_MAP_KEY",
+                   "Tax_Map_Key", "tax_map_key", "MAPKEY", "mapkey", "tmk")
 found_column <- intersect(tmk_columns, names(parcel_intersection_sf))[1]
 if (is.na(found_column)) stop("[FATAL] No TMK column identified in intersection.")
 

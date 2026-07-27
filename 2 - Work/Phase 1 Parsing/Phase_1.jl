@@ -3,7 +3,10 @@
 # Inputs:  00 - Data Sources/Original Data/Golf Courses-USA.csv
 #          00 - Data Sources/Original Data/2022 - USDA County Data - Ag Use.csv
 #          00 - Data Sources/Original Data/2024 - FHFA June 20 Land Prices.xlsx
-#          00 - Data Sources/Secondary/2023-rural-urban-continuum-codes.csv
+#          00 - Data Sources/Original Data/tl_2022_us_county.shp (vendored 2026-07-27,
+#            source https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip)
+#          00 - Data Sources/Secondary/2023-rural-urban-continuum-codes.csv (vendored,
+#            source https://www.ers.usda.gov/media/5768/2023-rural-urban-continuum-codes.csv)
 # Outputs: Phase 1 Parsing/Data/Julia/Jl_Phase1_Parsed_Golf_Courses.csv
 #          Phase 1 Parsing/Data/Julia/Jl_Phase1_Spatial_Joined_Golf_Courses.csv
 #          Phase 1 Parsing/Data/Julia/Jl_Phase1_Baseline_Golf_Valuation.csv
@@ -14,7 +17,11 @@
 
 # === 1. LIBRARIES ===
 
-    using CSV, DataFrames, GeoDataFrames, ArchGDAL, Downloads, XLSX, Printf, Statistics
+    # X-08/Decision 1 (2026-07-27): pinned environment, not the machine's global one.
+    import Pkg
+    Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
+
+    using CSV, DataFrames, GeoDataFrames, ArchGDAL, XLSX, Printf, Statistics
 
 
     # === 2. GLOBALS & PATHS ===
@@ -32,9 +39,9 @@ FHFA_IN    = joinpath(DATA_DIR, "2024 - FHFA June 20 Land Prices.xlsx")
 RUCC_CSV   = joinpath(ROOT_DIR, "00 - Data Sources", "Secondary", "2023-rural-urban-continuum-codes.csv")
 
 COUNTY_DIR = DATA_DIR
+# Vendored 2026-07-27 (X-08/Gate-3 policy: no master script performs a network fetch at
+# run time). Source: https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip
 COUNTY_SHP = joinpath(COUNTY_DIR, "tl_2022_us_county.shp")
-COUNTY_ZIP = joinpath(COUNTY_DIR, "tl_2022_us_county.zip")
-COUNTY_URL = "https://www2.census.gov/geo/tiger/TIGER2022/COUNTY/tl_2022_us_county.zip"
 
 OUT_PARSED   = joinpath(OUTPUT_DIR, "Jl_Phase1_Parsed_Golf_Courses.csv")
 OUT_SPATIAL  = joinpath(OUTPUT_DIR, "Jl_Phase1_Spatial_Joined_Golf_Courses.csv")
@@ -69,14 +76,26 @@ function name_state_to_abbr(name_state::String)::String
 end
 
 function extract_ownership(details::String)::String
-    m = match(r"^\(([^)]+)\)", details)
+    # [METHODOLOGY] first-parenthetical extraction, searching anywhere in the string (not
+    # anchored to position 0) so a "CLOSED|" prefix doesn't defeat the match (P1-05)
+    m = match(r"\(([^)]+)\)", details)
     return isnothing(m) ? "" : m.captures[1]
 end
 
 function extract_holes(details::String)::Int64
     s = lowercase(details)
+    # [METHODOLOGY] strict "(N holes)" pattern first
     m = match(r"\((\d+)\s*hole[s]?\)", s)
-    return isnothing(m) ? 18 : parse(Int64, m.captures[1])
+    !isnothing(m) && return parse(Int64, m.captures[1])
+    # [METHODOLOGY] combo courses, e.g. "(18 holes & 9 holes)" -> sum the two nines
+    m = match(r"\((\d+)\s*hole[s]?\s*&\s*(\d+)\s*hole[s]?\)", s)
+    !isnothing(m) && return parse(Int64, m.captures[1]) + parse(Int64, m.captures[2])
+    # [METHODOLOGY] bare "(N)" with no "hole" text, restricted to the prefix before the
+    # first comma (the Ownership/Holes segment) so a phone area code or zip can't match
+    prefix = split(s, ","; limit = 2)[1]
+    m = match(r"\((\d+)\)", prefix)
+    !isnothing(m) && return parse(Int64, m.captures[1])
+    return 18
 end
 
 function extract_zip(details::String)::String
@@ -134,7 +153,7 @@ end
 # === 4. EXECUTION ===
 
 function main()
-    for path in (RAW_CSV, USDA_IN, FHFA_IN, RUCC_CSV)
+    for path in (RAW_CSV, USDA_IN, FHFA_IN, RUCC_CSV, COUNTY_SHP)
         if !isfile(path)
             error("Input file not found: $path")
         end
@@ -200,13 +219,6 @@ function main()
     courses_df = dropmissing(courses_df, [:Longitude, :Latitude])
     courses_df.geometry = [ArchGDAL.createpoint(row.Longitude, row.Latitude) for row in eachrow(courses_df)]
     courses_geo = courses_df
-
-    if !isfile(COUNTY_SHP)
-        if !isfile(COUNTY_ZIP)
-            Downloads.download(COUNTY_URL, COUNTY_ZIP)
-        end
-        run(`7z x -y -o"$COUNTY_DIR" "$COUNTY_ZIP"`)
-    end
 
     # [METHODOLOGY] Spatial read - county boundaries in EPSG 4326 (WGS 84), matching golf course point CRS
     county_geo = GeoDataFrames.read(COUNTY_SHP)

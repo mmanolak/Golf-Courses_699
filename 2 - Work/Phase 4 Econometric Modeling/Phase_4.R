@@ -7,6 +7,22 @@
 
 # === 1. LIBRARIES ===
 
+# X-08/Decision 1 (2026-07-27): activate the pinned renv project library before
+# loading any packages, so this script runs against the versions in renv.lock,
+# not whatever happens to be in this machine's personal R library.
+local({
+  cmd_args <- commandArgs(trailingOnly = FALSE)
+  m <- grep("^--file=", cmd_args)
+  if (length(m) == 0) return(invisible(NULL))
+  script_path <- normalizePath(sub("^--file=", "", cmd_args[m]))
+  proj_dir <- dirname(dirname(script_path))
+  activate_r <- file.path(proj_dir, "renv", "activate.R")
+  if (file.exists(activate_r)) {
+    Sys.setenv(RENV_PROJECT = proj_dir)
+    source(activate_r)
+  }
+})
+
 suppressPackageStartupMessages({
   library(wooldridge)  # pre-existing dependency - do not remove
   library(tidyverse)

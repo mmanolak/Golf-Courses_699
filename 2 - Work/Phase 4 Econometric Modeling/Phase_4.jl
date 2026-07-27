@@ -7,6 +7,10 @@
 
 # === 1. LIBRARIES ===
 
+# X-08/Decision 1 (2026-07-27): pinned environment, not the machine's global one.
+import Pkg
+Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
+
 using DataFrames
 using CSV
 using GLM

@@ -1,4 +1,4 @@
-# Phase 2 - Three-Tier Acreage Pipeline
+# Phase 2 - Two-Tier Acreage Pipeline
 # Master Script: Phase_2.R
 #
 # Fully self-contained - no bulk scripts required.
@@ -9,12 +9,26 @@
 #                         compute true acreage in parallel. Save canonical GPKG
 #                         to Data/R/.
 #   Tier 1  (OSM Match):  Point-in-polygon + 500 m nearest-neighbour fallback.
-#   Tier 2  (Tigris):     Census Area Landmarks (FULLNAME: Golf/Country Club),
-#                         nearest-neighbour within 500 m.
-#   Tier 3  (MICE):       Label remaining unmatched rows "MICE_Target".
-#   Finalize:             Coalesce OSM + Tigris acreage -> final_acreage (acres).
+#   Tier 2  (MICE):       Label remaining unmatched rows "MICE_Target".
+#   Finalize:             final_acreage = osm_acres (acres).
 #
-# acreage_source values: "OSM" | "Tigris" | "MICE_Target"
+# acreage_source values: "OSM" | "MICE_Target"
+#
+# X-02/P2-03/P2-01 resolved (author decision, 2026-07-27): the Tigris Area
+# Landmarks fallback tier (Census FULLNAME: Golf/Country Club) has been
+# removed. It recovered 0 courses in the 2026-06-12 run that fed every
+# published number to date, and its live network fetch is non-deterministic
+# by construction -- a one-time offline diagnostic (2026-07-27, run against
+# 7 states, not committed as pipeline code) confirmed this was a network/
+# environment miss, not a structural non-match: tigris::landmarks() does
+# return real Golf/Country Club area features today (109 in FL, 504 in CA,
+# 67 in AZ, 26 in HI, etc.), so a future run on a different day could have
+# silently repopulated this tier and changed final_acreage for a subset of
+# MICE_Target rows -- shifting R's Phase 3 input between runs for reasons
+# unrelated to any code change. Removing it makes R's final_acreage
+# identical in construction to Python/Julia's osm_acreage (no coalesce, no
+# live fetch), closing X-02/P2-01's three-tier-vs-two-tier structural
+# question and P2-03's reproducibility risk in one move. See Issue_Register.md.
 #
 # Reads:
 #   00 - Data Sources/Original Data/us-260413.osm.pbf      (Step 0, primary)
@@ -30,11 +44,26 @@
 
 # === 1. LIBRARIES ===
 
+# X-08/Decision 1 (2026-07-27): activate the pinned renv project library before
+# loading any packages, so this script runs against the versions in renv.lock,
+# not whatever happens to be in this machine's personal R library.
+local({
+  cmd_args <- commandArgs(trailingOnly = FALSE)
+  m <- grep("^--file=", cmd_args)
+  if (length(m) == 0) return(invisible(NULL))
+  script_path <- normalizePath(sub("^--file=", "", cmd_args[m]))
+  proj_dir <- dirname(dirname(script_path))
+  activate_r <- file.path(proj_dir, "renv", "activate.R")
+  if (file.exists(activate_r)) {
+    Sys.setenv(RENV_PROJECT = proj_dir)
+    source(activate_r)
+  }
+})
+
 suppressPackageStartupMessages({
   library(wooldridge)
   library(tidyverse)
   library(sf)
-  library(tigris)
   library(future)
   library(furrr)
   library(parallelly)
@@ -51,7 +80,6 @@ options(future.globals.maxSize = 48 * 1024^3)  # 48gb of usuable Memory
 plan(multisession, workers = SAFE_WORKERS)
 
 sf_use_s2(FALSE)
-options(tigris_use_cache = TRUE)
 
 TARGET_CRS    <- 5070
 MAX_NEAREST_M <- 500
@@ -59,14 +87,6 @@ MIN_ACRES     <- 5
 MAX_ACRES     <- 1500
 SQ_M_PER_ACRE <- 4046.8564224
 SQ_FT_PER_ACRE <- 43560
-
-ALL_STATES <- c(
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA",
-  "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY",
-  "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
-  "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-)
 
 SCRIPT_DIR <- this.path::this.dir()
 ROOT_DIR   <- normalizePath(file.path(SCRIPT_DIR, ".."), mustWork = FALSE)
@@ -91,7 +111,7 @@ print_separator <- function(char = "=") {
 cat("\n")
 print_separator()
 cat("Phase 2 - Three-Tier Acreage Pipeline\n")
-cat("Script: Phase_2.R (master - Parse OSM + OSM Match + Tigris + Finalize)\n")
+cat("Script: Phase_2.R (master - Parse OSM + OSM Match + Finalize)\n")
 print_separator()
 cat(sprintf("  Script dir      : %s\n", SCRIPT_DIR))
 cat(sprintf("  Work dir        : %s\n", ROOT_DIR))
@@ -335,119 +355,12 @@ acreage_df <- st_drop_geometry(courses_sf) |>
 rm(courses_sf, intersects_result, intersects_df, osm_golf_sf)
 
 
-# TIER 2 - Tigris Landmarks Fallback
+# TIER 2 - Label remaining as MICE_Target
+# (Formerly Tier 2 was a Tigris Area Landmarks fallback here; removed
+# 2026-07-27, see the header note and Issue_Register.md X-02/P2-01/P2-03.)
 
 print_separator()
-cat("TIER 2: Tigris Landmarks Fallback\n")
-print_separator()
-
-still_missing <- sum(is.na(acreage_df$acreage_source))
-cat(sprintf(
-  "\n  Courses needing Tigris fallback: %s (%.1f%%)\n",
-  formatC(still_missing, big.mark = ","),
-  100 * still_missing / nrow(acreage_df)
-))
-
-acreage_df$tigris_acreage <- NA_real_
-
-if (still_missing == 0) {
-  cat("  All courses matched by OSM -- skipping Tier 2.\n")
-} else {
-  cat(sprintf(
-    "\n[Step 6] Downloading Tigris area landmarks (%d states, parallel)...\n",
-    length(ALL_STATES)
-  ))
-  cat("  Cached files will be reused on subsequent runs.\n\n")
-
-  landmark_list <- future_map(
-    ALL_STATES,
-    function(st_abbr) {
-      tryCatch(
-        landmarks(st_abbr, type = "area", progress_bar = FALSE) |>
-          filter(str_detect(FULLNAME, "(?i)Golf|Country Club")),
-        error = function(e) NULL
-      )
-    },
-    .progress = TRUE,
-    .options  = furrr_options(seed = TRUE)
-  )
-
-  cat("\n  Downloads complete. Golf polygons per state:\n")
-  for (i in seq_along(ALL_STATES)) {
-    n <- if (is.null(landmark_list[[i]])) 0L else nrow(landmark_list[[i]])
-    cat(sprintf("    %s: %d\n", ALL_STATES[i], n))
-  }
-
-  tigris_golf_sf <- bind_rows(Filter(
-    function(x) !is.null(x) && nrow(x) > 0,
-    landmark_list
-  ))
-
-  cat(sprintf(
-    "\n  Total Tigris golf polygons (all states): %s\n",
-    formatC(nrow(tigris_golf_sf), big.mark = ",")
-  ))
-
-  if (nrow(tigris_golf_sf) == 0) {
-    warning(
-      "No Tigris golf landmarks downloaded -- check internet / tigris version.",
-      " Skipping Tier 2."
-    )
-  } else {
-    tigris_golf_sf <- tigris_golf_sf |>
-      st_make_valid() |>
-      st_transform(TARGET_CRS) |>  # [METHODOLOGY] EPSG:5070 - equal-area CRS
-      mutate(tigris_acreage = as.numeric(st_area(geometry)) / SQ_M_PER_ACRE) |>  # [METHODOLOGY]
-      filter(tigris_acreage >= MIN_ACRES, tigris_acreage <= MAX_ACRES)
-
-    cat(sprintf(
-      "  After plausibility filter (%.0f-%.0f acres): %s polygons remain\n",
-      MIN_ACRES, MAX_ACRES, formatC(nrow(tigris_golf_sf), big.mark = ",")
-    ))
-
-    cat(sprintf("\n[Step 7] Nearest-neighbour match (max %d m)...\n", MAX_NEAREST_M))
-
-    miss_mask2 <- is.na(acreage_df$acreage_source)
-    miss_sf    <- st_as_sf(  # [METHODOLOGY]
-      acreage_df[miss_mask2, ],
-      coords = c("Longitude", "Latitude"),
-      crs    = 4326,
-      remove = FALSE
-    ) |> st_transform(TARGET_CRS)
-
-    nearest <- st_join(  # [METHODOLOGY] nearest-feature fallback for unmatched courses
-      miss_sf,
-      tigris_golf_sf |> select(tigris_acreage),
-      join = st_nearest_feature
-    )
-
-    nn_idx   <- st_nearest_feature(miss_sf, tigris_golf_sf)
-    nn_dists <- as.numeric(
-      st_distance(miss_sf, tigris_golf_sf[nn_idx, ], by_element = TRUE)
-    )
-    nearest$tigris_acreage[nn_dists > MAX_NEAREST_M] <- NA
-
-    n_tigris <- sum(!is.na(nearest$tigris_acreage))
-    cat(sprintf("  Recovered via Tigris NN: %s\n", formatC(n_tigris, big.mark = ",")))
-
-    cat("\n[Step 8] Patching Tigris acreage into master frame...\n")
-
-    miss_idx <- which(miss_mask2)
-    acreage_df$tigris_acreage[miss_idx] <- nearest$tigris_acreage
-    acreage_df$acreage_source[miss_idx[!is.na(nearest$tigris_acreage)]] <- "Tigris"
-
-    cat(sprintf(
-      "  Tigris-sourced rows: %s\n",
-      formatC(sum(acreage_df$acreage_source == "Tigris", na.rm = TRUE), big.mark = ",")
-    ))
-  }
-}
-
-
-# TIER 3 - Label remaining as MICE_Target
-
-print_separator()
-cat("TIER 3: Label remaining missing as MICE_Target\n")
+cat("TIER 2: Label remaining missing as MICE_Target\n")
 print_separator()
 
 mice_mask <- is.na(acreage_df$acreage_source)
@@ -458,7 +371,7 @@ cat(sprintf("\n  MICE_Target rows: %s\n", formatC(sum(mice_mask), big.mark = ","
 
 # Finalize: Build final_acreage column
 
-cat("\n[Step 9] Building final_acreage column (acres)...\n")
+cat("\n[Step 6] Building final_acreage column (acres)...\n")
 
 acreage_df <- acreage_df |>
   mutate(
@@ -467,14 +380,9 @@ acreage_df <- acreage_df |>
     } else {
       NA_real_
     },
-    tigris_acres = if ("tigris_acreage" %in% names(acreage_df)) {
-      tigris_acreage
-    } else {
-      NA_real_
-    },
-    final_acreage = coalesce(osm_acres, tigris_acres)
+    final_acreage = osm_acres
   ) |>
-  select(-any_of(c("osm_acres", "tigris_acres", "OSM_Area_SqFt", "row_idx")))
+  select(-any_of(c("osm_acres", "OSM_Area_SqFt", "row_idx")))
 
 cat(sprintf(
   "  final_acreage non-NA: %s (%.1f%%)\n",
@@ -541,7 +449,7 @@ if (length(obs) > 0) {
   cat(sprintf("    Max:    %10.1f acres\n", max(obs)))
 }
 
-cat("\n[Step 10] Saving final output...\n")
+cat("\n[Step 7] Saving final output...\n")
 
 out_dir <- dirname(OUT_CSV)
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)

@@ -25,9 +25,9 @@ SCRIPT_DIR = Path(__file__).parent
 ROOT_DIR   = SCRIPT_DIR.parent
 
 PBF_FILE   = ROOT_DIR / "00 - Data Sources" / "Original Data" / "us-260413.osm.pbf"
-OUT_GPKG   = SCRIPT_DIR / "Data" / "Python" / "Py_Phase2_OSM_Golf_Polygons.gpkg"
-PHASE1_CSV = ROOT_DIR / "Phase 1 Parsing" / "Data" / "Python" / "Py_Phase1_Baseline_Golf_Valuation.csv"
-OUT_CSV    = SCRIPT_DIR / "Data" / "Python" / "Py_Phase2_Acreage_Matched.csv"
+OUT_GPKG   = SCRIPT_DIR / "Data" / "python" / "Py_Phase2_OSM_Golf_Polygons.gpkg"
+PHASE1_CSV = ROOT_DIR / "Phase 1 Parsing" / "Data" / "python" / "Py_Phase1_Baseline_Golf_Valuation.csv"
+OUT_CSV    = SCRIPT_DIR / "Data" / "python" / "Py_Phase2_Acreage_Matched.csv"
 
 MIN_ACRES     = 5
 MAX_ACRES     = 1500
@@ -160,6 +160,10 @@ def match_osm_to_courses(osm_golf_geo):
     if "index_right" in courses_geo.columns:
         courses_geo.drop(columns=["index_right"], inplace=True)
 
+    # [METHODOLOGY] tie-break: when a point falls inside >1 candidate polygon,
+    # keep the largest-area match (matches R's explicit largest-area-wins rule)
+    courses_geo = courses_geo.sort_values("osm_acreage", ascending=False)
+
     matched_mask = courses_geo["osm_acreage"].notna()
     n_hit  = matched_mask.sum()
     n_miss = (~matched_mask).sum()
@@ -178,6 +182,8 @@ def match_osm_to_courses(osm_golf_geo):
             max_distance=MAX_NEAREST_M,
             distance_col="_dist",
         )
+        # [METHODOLOGY] tie-break: among equidistant candidates, keep the largest-area match
+        nearest = nearest.sort_values(["_dist", "osm_acreage"], ascending=[True, False])
         nearest = nearest[~nearest.index.duplicated(keep="first")]
         courses_geo.loc[nearest.index, "osm_acreage"] = nearest["osm_acreage"].values
 

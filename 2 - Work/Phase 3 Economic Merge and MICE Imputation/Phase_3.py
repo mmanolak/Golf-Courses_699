@@ -45,7 +45,7 @@ N_CORES = max(1, multiprocessing.cpu_count() - 1)
 
 # === 3. FUNCTIONS ===
 
-def run_imputation(input_csv, out_dir, m_datasets=100):
+def run_imputation(input_csv, out_dir, m_datasets=M):
     # 1. Load ----------------------------------------------------------------
     print("--- 1  Loading Phase 2 acreage-matched dataset ---")
 
@@ -82,8 +82,12 @@ def run_imputation(input_csv, out_dir, m_datasets=100):
     )
     # [METHODOLOGY] miceforest MICE - LightGBM Random Forest, m=100 datasets,
     #               random_state=42 for reproducibility (Van Buuren 2018)
+    # [METHODOLOGY] explicit variable_schema (P1-01/D-2) - without it, miceforest imputes
+    # every column with missing data; declaring the schema keeps predictors as predictors
+    # regardless of what Phase 1 does or doesn't leave missing upstream
     imputed_list = mf.ImputationKernel(
         data=imp_df,
+        variable_schema=IMPUTE_COLS,
         num_datasets=m_datasets,
         random_state=42,
     )
@@ -128,7 +132,7 @@ def run_imputation(input_csv, out_dir, m_datasets=100):
         print(f"    Negative: {(s < 0).sum()}")
 
 
-def run_pooling(in_dir, out_csv, m_datasets=100):
+def run_pooling(in_dir, out_csv, m_datasets=M):
     aggregates  = []
     within_vars = []
 
@@ -220,7 +224,7 @@ def pool_acreage(x: np.ndarray) -> dict:
     }
 
 
-def run_acreage_summary(in_dir, out_csv, m_datasets=100):
+def run_acreage_summary(in_dir, out_csv, m_datasets=M):
     print("Computing total U.S. golf course footprint (pooled across imputations)\n")
 
     print("--- 1  Loading imputed datasets and computing acreage totals ---\n")
