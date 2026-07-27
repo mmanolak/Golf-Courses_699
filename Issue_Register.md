@@ -191,6 +191,18 @@ It is evidence that a full cascade *can* complete (roughly 10 hours, Phase 2 sta
 finish, from the timestamps above) — useful for planning the frozen re-run — not evidence that
 any number in it is final.
 
+**Caveat 2 — the 2026-07-28 frozen cascade runs on different hardware than this Jun-12 baseline
+(logged pre-cascade, 2026-07-27).** This run predates the Jun-12 baseline in one further respect:
+`Phase_6.jl`'s own header comment referenced a 12-core/24-thread Ryzen 3900XT; the machine
+confirmed for the 2026-07-28 cascade is an 8-core/16-thread Ryzen 7 5700X3D — different hardware
+the author has but was not using when the Jun-12 baseline (or possibly the 3900XT-era code
+comment) was produced. Seeds (`42` throughout) and the newly-pinned environments (**X-08**) should
+make this immaterial to any pooled point estimate, but it is a real, uncontrolled difference
+between the two runs being diffed under **Decision 5** — flagged explicitly so any unexplained
+delta can be checked against it before being attributed to a code fix. See also **P3-08**'s
+sibling note in `PARITY_AUDIT.md` D-5 on the untested `SAFE_WORKERS=14` extrapolation, a related
+but distinct hardware-adjacent uncertainty.
+
 **QA_Verification/ and Final_Thesis_Figures/ inventoried (2026-07-25).** `QA_Verification/`
 (26 files) is entirely per-language PNG renders — Scripts 1, 2, 5 (MICE density), 7, each split
 into `_Julia`/`_Python`/`_R` suffixed images. **It does not contain cross-language numeric

@@ -2099,7 +2099,8 @@ end # Mod_14_Urban_Rural_Scatter
 # All five modules are independent (separate inputs, separate outputs).
 # Threads.@spawn launches each on its own thread; fetch() blocks until all finish.
 # Launch with: julia --threads=auto .\Phase_6.jl
-# On a 12-core 3900XT, --threads=auto will use all available logical threads.
+# On the 8-core/16-thread Ryzen 7 5700X3D this runs on, --threads=auto uses
+# all 16 logical threads (confirmed 2026-07-27 -- see Issue_Register.md B-8).
 
 function main()
     println("\n=== Phase 6 Visualization ===")
