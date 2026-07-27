@@ -9,8 +9,11 @@
 # Fully self-contained - no bulk scripts required.
 #
 # NOTE: JULIA_NUM_THREADS must be set via the -t flag or environment variable
-#       before Julia starts (e.g. julia -t 24 Phase_2.jl). Setting
-#       ENV["JULIA_NUM_THREADS"] inside a running script has no effect.
+#       before Julia starts. Setting ENV["JULIA_NUM_THREADS"] inside a running
+#       script has no effect.
+#
+#          for running the script:
+#          julia --threads=auto .\Phase_2.jl
 #
 # Inputs:  Data/Python/Py_Phase2_OSM_Golf_Polygons.gpkg
 #          Phase 1 Parsing/Data/Julia/Jl_Phase1_Baseline_Golf_Valuation.csv
@@ -83,6 +86,10 @@ function main()
     println("  Phase 1 CSV       : $PHASE1_CSV")
     println("  Output CSV        : $OUT_CSV")
     println("  Threads           : $(Threads.nthreads())")
+    if Threads.nthreads() == 1
+        @warn "Running on 1 thread - parallel speedup disabled. " *
+                "Relaunch with: julia --threads=auto .\\Phase_2.jl"
+    end
     println()
 
 

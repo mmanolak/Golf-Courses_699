@@ -3,6 +3,9 @@
 # Inputs:  Phase 3 Economic Merge and MICE Imputation/Data/Julia/Jl_Imputed_Dataset_{1..M}.csv
 # Outputs: Data/Julia/Jl_model_results.jls
 #          Data/Julia/Jl_Regression_Results.csv
+#
+#          for running the script:
+#          julia --threads=auto .\Phase_4.jl
 
 
 # === 1. LIBRARIES ===
@@ -26,6 +29,13 @@ using Distributions
 const SCRIPT_DIR    = @__DIR__
 const PROV_START = time()
 include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
+
+@printf("    Julia threads available: %d\n", Threads.nthreads())
+if Threads.nthreads() == 1
+    @warn "Running on 1 thread - parallel speedup disabled. " *
+            "Relaunch with: julia --threads=auto .\\Phase_4.jl"
+end
+
 const PHASE3_DIR    = joinpath(
     SCRIPT_DIR, "..", "Phase 3 Economic Merge and MICE Imputation", "Data", "Julia"
 )

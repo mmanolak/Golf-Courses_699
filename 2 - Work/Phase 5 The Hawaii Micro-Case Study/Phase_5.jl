@@ -12,6 +12,9 @@
 #          Data/Julia/Jl_Phase5_Step6_Zoning_Percentages.csv
 #          Data/Julia/Jl_Phase5_Step6_Zone_Golf_Penetration.csv
 # Note:    Run the R version first to generate the Geopackage File
+#
+#          for running the script:
+#          julia --threads=auto .\Phase_5.jl
 
 
 # === 1. LIBRARIES ===
@@ -33,6 +36,13 @@ using Printf
 const SCRIPT_DIR        = @__DIR__
 const PROV_START = time()
 include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
+
+@printf("    Julia threads available: %d\n", Threads.nthreads())
+if Threads.nthreads() == 1
+    @warn "Running on 1 thread - parallel speedup disabled. " *
+            "Relaunch with: julia --threads=auto .\\Phase_5.jl"
+end
+
 const WORK_DIR          = normpath(joinpath(@__DIR__, ".."))
 const HONOLULU_DATA_DIR = joinpath(WORK_DIR, "00 - Data Sources", "Honolulu")
 const OUT_DIR           = joinpath(SCRIPT_DIR, "Data", "Julia")

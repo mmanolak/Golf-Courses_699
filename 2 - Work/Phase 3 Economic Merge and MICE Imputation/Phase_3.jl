@@ -14,6 +14,9 @@
 #   se    = sqrt(v_t)
 #   99%CI = q_bar +/- 2.576 * se
 #   95%CI = q_bar +/- 1.960 * se
+#
+#          for running the script:
+#          julia --threads=auto .\Phase_3.jl
 
 
 # === 1. LIBRARIES ===
@@ -30,6 +33,13 @@ using CategoricalArrays, CSV, DataFrames, Mice, Printf, Random, Statistics
 const SCRIPT_DIR = @__DIR__
 const PROV_START = time()
 include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
+
+@printf("    Julia threads available: %d\n", Threads.nthreads())
+if Threads.nthreads() == 1
+    @warn "Running on 1 thread - parallel speedup disabled. " *
+            "Relaunch with: julia --threads=auto .\\Phase_3.jl"
+end
+
 const INPUT_CSV  = joinpath(
     SCRIPT_DIR, "..",
     "Phase 2 Spatial Polygons and True Acreage",

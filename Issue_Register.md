@@ -886,10 +886,24 @@ forward. R and Julia untouched.
 **B-8, checked, mixed result:** of three claimed dead-code items, two confirmed
 (`Phase_1.jl:22`'s `ENV["JULIA_NUM_THREADS"]="24"` mid-script assignment is a genuine runtime
 no-op; `Phase_1.R`'s loaded-but-unused `future`/`furrr`/`plan(multisession)` is genuine dead
-code) and recorded only, per the original instruction, not fixed. The third — "`Downloads.
+code) and originally recorded only, not fixed. The third — "`Downloads.
 download(COUNTY_CB, COUNTY_ZIP)` passes a local path where a URL is expected" — **does not match
 current code**: `COUNTY_CB` doesn't exist in `Phase_1.jl`; the actual call uses `COUNTY_URL`, a
 correct, genuine URL. No fix needed; the original claim was stale or mistaken.
+
+**Fixed 2026-07-27 (standing rule: an execution-path defect gets fixed before the cascade
+regardless of which list it appeared on).** The `ENV["JULIA_NUM_THREADS"]="24"` no-op is a
+genuine oversubscription/correctness risk, not cosmetic dead code — Julia fixes its thread pool
+at process launch, so this assignment never took effect, and every prior Julia run (including
+the Jun-12 M=100 baseline, if launched without an explicit `-t`/`--threads` flag) may have run
+single-threaded throughout. `VERIFIED` directly: `julia -e 'ENV["JULIA_NUM_THREADS"]="24";
+println(Threads.nthreads())'` prints `1`; `julia --threads=auto -e 'println(Threads.nthreads())'`
+prints the true logical core count. Removed the no-op assignment from `Phase_1.jl`; added the
+`julia --threads=auto` launch-convention header comment and a `Threads.nthreads() == 1` runtime
+`@warn` to all six Julia master scripts (`Phase_2.jl` already had the header note and thread
+print but not the warning; `Phase_6.jl` already had both — used as the reference pattern).
+`Phase_1.R`'s dead `future`/`furrr` imports remain logged-only, out of scope for this fix (not an
+execution-path correctness issue, just unused code).
 
 ### P1-10 — `extract_holes()`'s ultimate fallback still returns fabricated `18` in Python/Julia, `NA` in R (dormant — P1-01's fix means it's currently unreachable)
 **Severity:** Minor (dormant — 0/16,297 rows currently reach this branch) · **Status:** Open · **Locus:** Code

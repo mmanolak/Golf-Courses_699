@@ -26,7 +26,10 @@
 
     # === 2. GLOBALS & PATHS ===
 
-    ENV["JULIA_NUM_THREADS"] = "24"
+    # NOTE (2026-07-27): ENV["JULIA_NUM_THREADS"] set here was a no-op -- Julia
+    # fixes its thread count at process launch, before any user code runs.
+    # Thread count must be set via `julia --threads=auto` (see header) or the
+    # JULIA_NUM_THREADS environment variable set *before* invoking julia.
 
 SCRIPT_DIR = @__DIR__
 ROOT_DIR   = joinpath(SCRIPT_DIR, "..")
@@ -35,6 +38,12 @@ OUTPUT_DIR = joinpath(SCRIPT_DIR, "Data", "Julia")
 
 const PROV_START = time()
 include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
+
+@printf("    Julia threads available: %d\n", Threads.nthreads())
+if Threads.nthreads() == 1
+    @warn "Running on 1 thread - parallel speedup disabled. " *
+            "Relaunch with: julia --threads=auto .\\Phase_1.jl"
+end
 
 RAW_CSV    = joinpath(DATA_DIR, "Golf Courses-USA.csv")
 USDA_IN    = joinpath(DATA_DIR, "2022 - USDA County Data - Ag Use.csv")
