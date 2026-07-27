@@ -26,6 +26,9 @@ import Pkg
 Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
 
 using CategoricalArrays, CSV, DataFrames, Mice, Printf, Random, Statistics
+# X-10 (2026-07-28): BetaML must be `using`'d (not just a Project.toml dep) to trigger
+# Mice.jl's MiceBetaMLExt package extension, which registers the "rf" imputer.
+using BetaML
 
 
 # === 2. GLOBALS & PATHS ===
@@ -92,7 +95,25 @@ function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = M)
     # predictors regardless of what Phase 1 does or doesn't leave missing upstream.
     # mice()'s visitsequence::Vector{String} signature requires String, not Symbol -
     # IMPUTE_COLS is declared as Symbols (used elsewhere for DataFrame column selection).
-    imputed_list = mice(imp_df, m = m_datasets, visitsequence = string.(IMPUTE_COLS), iter = 10)
+    #
+    # [METHODOLOGY] X-10 (2026-07-28): explicit random-forest method, matching R's
+    # `method="rf"` (ranger) and Python's miceforest (LightGBM RF). Mice.jl's own
+    # default is predictive mean matching (pmm) when `methods` is unspecified -
+    # relying on that default silently diverged from the other two languages'
+    # explicit choice. `imputers["rf"]` is registered by the BetaML package
+    # extension (backed by BetaML.RandomForestImputer, default n_trees=10, which
+    # matches R's mice.impute.rf default ntree=10 - see Issue_Register.md X-10).
+    methods_arr = makemethods(imp_df)
+    for col in PREDICTOR_COLS
+        methods_arr[string(col)] = ""
+    end
+    for col in IMPUTE_COLS
+        methods_arr[string(col)] = "rf"
+    end
+    imputed_list = mice(
+        imp_df, m = m_datasets, visitsequence = string.(IMPUTE_COLS),
+        methods = methods_arr, iter = 10,
+    )
 
     # 4. Save each imputed dataset -------------------------------------------
     println("\n--- 4  Saving $m_datasets imputed datasets ---")
@@ -127,7 +148,7 @@ function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = M)
     ds1 = CSV.read(joinpath(out_dir, "Jl_Imputed_Dataset_1.csv"), DataFrame)
 
     println("\n=== IMPUTATION VERIFICATION (Dataset 1) ===")
-    println("  Method: Mice.jl")
+    println("  Method: Mice.jl, method='rf' (BetaML.RandomForestImputer, n_trees=10)")
     println("  Datasets generated:     $m_datasets")
     println("  Iterations per dataset: 10")
 

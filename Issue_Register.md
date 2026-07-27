@@ -573,7 +573,7 @@ run time.** All spatial/administrative reference data is read from `00 - Data So
 ---
 
 ### X-10 — Julia's Phase 3 `mice()` call specifies no imputation method and silently defaults to predictive mean matching (PMM), not random forest — R and Python both use random forest
-**Severity:** Critical · **Status:** Confirmed, escalated (not fixed) · **Locus:** Code
+**Severity:** Critical · **Status:** Author-decided (2026-07-28): run both methods, keep both results · **Locus:** Code
 
 **`READ`, `Phase_3.jl:95`:** `mice(imp_df, m = m_datasets, visitsequence = string.(IMPUTE_COLS),
 iter = 10)` — no `methods` (or equivalent) argument is passed. R's `Phase_3.R` passes
@@ -593,11 +593,20 @@ should be imputed in the `mice()` function. The default method is predictive mea
 methods = AxisArray(fill("pmm", no), names)
 ```
 
-**Finding: Julia has never been running the same imputation algorithm as R and Python.** PMM
-(donor-based nearest-neighbor matching on predicted values) and random forest (tree-ensemble
-regression) are different statistical methods, not different implementations of one method — this
-is exactly the class of divergence `CLAUDE.md` §1 exists to catch, one level deeper than any
-single-language bug found so far in this audit. It plausibly explains, in one mechanism: (a) the
+**Finding: Julia has never been running the same imputation algorithm as R and Python — reframed
+per author review (2026-07-28).** The original framing above treated Julia as the outlier. On
+review, that framing itself needs correcting: R's own `mice` package defaults to PMM too —
+`method="rf"` is R's explicit, deliberate override of its package's canonical default, not the
+neutral baseline. Python's `miceforest` is RF-only by construction (no PMM option). So the
+accurate statement is: **a methodological choice (random forest) was made explicitly in two
+languages and silently left unmade — defaulting to each package's own baseline — in the third.**
+Julia is not "wrong" or "deviating from a standard"; it is running `Mice.jl`'s canonical default
+while its two counterparts run a configured, non-default alternative. The defect is the silence,
+not the algorithm. PMM (donor-based nearest-neighbor matching on predicted values) and random
+forest (tree-ensemble regression) are different statistical methods, not different
+implementations of one method — this is exactly the class of divergence `CLAUDE.md` §1 exists to
+catch, one level deeper than any single-language bug found so far in this audit. It plausibly
+explains, in one mechanism: (a) the
 large speed gap observed in the 2026-07-28 cascade (Julia's Phase 3, M=100/maxit=10, completed in
 53-62s against R's 218s and Python's 272s — PMM's donor-matching is far cheaper per iteration than
 fitting hundreds of RF trees), and (b) a meaningful share of the cross-language pooled-total spread
@@ -606,14 +615,59 @@ from the Jun-12 baseline's 1.61%, and Julia's total moved +$4.07B against Python
 essentially-flat +$0.05B, an asymmetry PMM-vs-RF is a strong candidate to explain, though not yet
 isolated from other candidates by a controlled test).
 
-**Not fixed — escalated per `CLAUDE.md` §5.** Whether Julia should be switched to a `Mice.jl`
-random-forest method (if one exists in the package), and if so whether that requires re-running
-the entire Julia cascade (M=100 imputation is the expensive step), is a methodology decision for
-the author, not a bug fix a parity audit should apply unilaterally — this changes what Julia's
-"independent implementation" has been estimating, not how correctly it computes an agreed-upon
-target. Recommend as the author's next question: does `Mice.jl` support a random-forest method
-comparable to `ranger`/LightGBM, and if so, is switching to it worth invalidating and re-running
-Julia's cascade output.
+**Escalated per `CLAUDE.md` §5, decision returned 2026-07-28: run Julia both ways, keep both
+results.** Converts X-10 from a defect into a quantified methodological sensitivity result rather
+than a silently-absorbed discrepancy. Rationale (author): RF is likely the more defensible choice
+for this model specifically — `Longitude`/`Latitude` are predictors, and are close to
+meaningless as PMM donor-matching covariates in a linear donor model, whereas RF can capture
+their spatial nonlinearity — but the point of the exercise is that the choice becomes explicit
+and consistent across languages, with the alternative quantified rather than silently absorbed
+into "Julia's number."
+
+**`Mice.jl` does support random forest — `VERIFIED` against package source, not the docs alone.**
+`~/.julia/packages/Mice/41x4x/ext/MiceBetaMLExt.jl` is a package extension (loads only when
+`BetaML` is also `using`'d) that registers an `"rf"` imputer (`registerimputer!("rf", RF_IMPUTER)`,
+line 57) backed by `BetaML.RandomForestImputer`, defaulting to `n_trees=10`. Checked for a
+coincidental parity point: R's own RF backend, `mice::mice.impute.rf` (`Rscript -e
+'deparse(mice::mice.impute.rf)'`), also defaults to `ntree=10` — so Julia-RF-with-defaults and
+R's RF match on tree count without extra tuning. `BetaML` was not previously an environment
+dependency (present only as a `Manifest.toml` `weakdeps` extension trigger, unresolved) — added
+explicitly to `Project.toml` and resolved (`Pkg.add("BetaML"); Pkg.resolve()`), pulling BetaML
+v0.13-line and 62 transitive dependencies. `Mice.jl` is pinned at exactly v0.4.1 — the first
+version *not* covered by the package's own "`Mice` versions prior to v0.4.1 may produce incorrect
+results" warning, so no separate correctness concern there.
+
+**Implementation:** `Phase_3.jl` now builds an explicit `methods` `AxisArray` via `makemethods()`,
+overrides `IMPUTE_COLS` (`osm_acreage`, `Baseline_Value_Per_Acre`) to `"rf"` and all
+`PREDICTOR_COLS` to `""` (mirroring R's `method_vec` pattern from **P1-01**/**D-2**), and adds
+`using BetaML` (required for the extension to register — being a `Project.toml` dependency alone
+does not trigger it). Smoke-tested against the real Phase 2 input (`m=2, iter=2`): `"rf"`
+genuinely registered and applied, 0 missing values remained post-imputation.
+
+**Real-world cost discovered during smoke-testing, before committing to the full run.** Two
+timed calibration runs against the real input data (`m=2,iter=2` → 8 RF fits → 94.4s; `m=10,iter=3`
+→ 60 RF fits → 671.6s) fit a linear model of ≈11.1s per RF fit + ≈5.6s fixed overhead.
+`Mice.jl`'s `sampler!` (`src/sampler.jl:57`, `for j in 1:m`) fits one model per imputation
+**serially** — no internal parallelization across the `m=100` imputations, unlike R's
+`futuremice()`, which explicitly parallelizes the equivalent work across `future` workers
+(`SAFE_WORKERS=14` here). This is the dominant reason R's RF-based Phase 3 completes in 3m38s
+while Julia's is estimated at **≈6h10m** for the same `M=100, iter=10, ntree=10` — not a
+difference in tree count or dataset size. `BetaML.RandomForestImputer` being a pure-Julia
+implementation (versus `ranger`'s compiled backend) is a second, unisolated contributor. Neither
+factor is fixable without patching `Mice.jl`'s internals or `BetaML` itself, which is out of
+scope here. **Author confirmed proceeding with the full `M=100` run at this cost** rather than a
+reduced-`M` sensitivity check, to keep the RF-vs-PMM comparison apples-to-apples with R/Python's
+own `M=100`.
+
+**Archived:** the PMM-based Julia Phase 3/4/5 outputs and the full (PMM-Julia-pooled) tri-language
+Phase 6 output were copied to `Archive/2026-07-27_Julia_PMM/` before `Phase_3.jl` was changed
+(file counts and an MD5 spot-check verified against source; see that archive's own `README.md`).
+
+**Principle applied pipeline-wide, matching D-2's rationale:** a package default that differs
+across languages is exactly the mechanism that produced X-10. All three languages now state their
+imputation method explicitly rather than relying on a package default — R (`method="rf"`,
+pre-existing), Python (`miceforest`, RF-only by construction, no implicit default to diverge on),
+Julia (`methods["osm_acreage"|"Baseline_Value_Per_Acre"] = "rf"`, added here).
 
 ---
 
@@ -984,6 +1038,23 @@ found. Recommend, if this becomes worth chasing: move the `include(provenance.jl
 immediately before the `record_provenance()` call (currently it's at the top of the file) as the
 next diagnostic step, since that would rule out a world-age effect from the intervening `module`
 and `Threads.@spawn` code.
+
+**Second finding, same cascade: Julia's Phase 1 and Phase 2 `Run_Provenance_Julia.csv` rows have
+blank `git_sha`/`git_dirty` fields; Phase 3/4/5/6 populate correctly.** Diagnosed 2026-07-28
+(reported during the cascade per the standing rule that diagnosis is fine mid-run but fixes wait
+until after). `provenance.jl`'s `_git()` wraps the `git -C <repo_dir> rev-parse HEAD` subprocess
+call in a bare `try/catch` that silently returns `nothing` on any failure — so the blank fields
+mean the subprocess call threw, but the original code discarded the exception, leaving no
+diagnostic trail. **Could not reproduce standalone:** running the identical code path (`git -C
+"...\Phase 1 Parsing" rev-parse HEAD`) outside the cascade, pointed at the real Phase 1 directory,
+succeeds and returns the correct SHA. Root cause remains `INFERRED`, not `VERIFIED` — most likely
+a transient subprocess-spawn issue specific to how the two earliest scripts in the chain were
+launched, but this is a guess, not a finding. **Fixed 2026-07-28 (defensively, not at the
+unconfirmed root cause):** `_git()`'s `catch` block now logs `@warn` with the actual exception,
+`repo_dir`, and `args` before returning `nothing`, so a recurrence produces a diagnosable console
+message instead of a silent blank CSV cell. This does not claim to fix the underlying cause —
+consistent with `CLAUDE.md` §4's evidence-tagging standard, an unreproduced hypothesis is not
+presented as a resolved defect.
 
 ### P1-10 — `extract_holes()`'s ultimate fallback still returns fabricated `18` in Python/Julia, `NA` in R (dormant — P1-01's fix means it's currently unreachable)
 **Severity:** Minor (dormant — 0/16,297 rows currently reach this branch) · **Status:** Open · **Locus:** Code
