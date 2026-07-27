@@ -2132,4 +2132,8 @@ function main()
 end
 
 main()
-record_provenance("Phase 6", "Phase_6.jl", SCRIPT_DIR, PROV_START)
+try
+    record_provenance("Phase 6", "Phase_6.jl", SCRIPT_DIR, PROV_START)
+catch e
+    @warn "[provenance] call site failed, run already complete" exception=e
+end

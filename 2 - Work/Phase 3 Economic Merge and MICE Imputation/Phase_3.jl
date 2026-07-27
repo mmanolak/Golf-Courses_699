@@ -360,6 +360,10 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
-    record_provenance("Phase 3", "Phase_3.jl", SCRIPT_DIR, PROV_START;
-                       M = M, maxit = 10, seed = 42)
+    try
+        record_provenance("Phase 3", "Phase_3.jl", SCRIPT_DIR, PROV_START;
+                           M = M, maxit = 10, seed = 42)
+    catch e
+        @warn "[provenance] call site failed, run already complete" exception=e
+    end
 end

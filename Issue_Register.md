@@ -917,6 +917,29 @@ print but not the warning; `Phase_6.jl` already had both — used as the referen
 `Phase_1.R`'s dead `future`/`furrr` imports remain logged-only, out of scope for this fix (not an
 execution-path correctness issue, just unused code).
 
+**New finding, 2026-07-28 cascade: `Phase_6.jl`'s `record_provenance()` call reproducibly fails
+with `UndefVarError: record_provenance not defined in Main`, root cause not confirmed.**
+`VERIFIED` by execution, twice: the live cascade run and an isolated re-run of `Phase_6.jl` alone
+both hit the identical error at the same line (the top-level `record_provenance(...)` call, placed
+immediately after `main()`). `Phase_6.jl` is the only one of the six Julia master scripts that
+uses `Threads.@spawn` across multiple internal `module Mod_N ... end` blocks; the other five
+(no threaded submodule structure) never hit this. Two isolated minimal reproductions — `include()`
++ two submodules + `Threads.@spawn` + `fetch()`, once with a stand-in function and once with the
+real `provenance.jl` — both **failed to reproduce** the error, so the specific trigger (INFERRED:
+something about the combination of 7 spawned submodules, heavier real workloads inside them, and
+first-time JIT compilation under `--threads=auto`) is not pinned down. **Not a data-integrity
+issue** — confirmed via file mtimes that all of Phase 6's real output (maps, tables, figures)
+completes and saves successfully *before* this line executes; only the provenance CSV row for
+Julia Phase 6 is affected. **Mitigated, not fixed:** wrapped the call site itself in `try`/`catch`
+in all six Julia scripts (the function body was already guarded; the call site wasn't) — confirmed
+by a second isolated re-run that this stops the error from being fatal (`@warn` fires, script
+exits 0, all outputs regenerate correctly) without resolving why the name fails to resolve.
+**Consequence:** `Run_Provenance_Julia.csv` will never have a Phase 6 row until the real cause is
+found. Recommend, if this becomes worth chasing: move the `include(provenance.jl)` call to
+immediately before the `record_provenance()` call (currently it's at the top of the file) as the
+next diagnostic step, since that would rule out a world-age effect from the intervening `module`
+and `Threads.@spawn` code.
+
 ### P1-10 — `extract_holes()`'s ultimate fallback still returns fabricated `18` in Python/Julia, `NA` in R (dormant — P1-01's fix means it's currently unreachable)
 **Severity:** Minor (dormant — 0/16,297 rows currently reach this branch) · **Status:** Open · **Locus:** Code
 
