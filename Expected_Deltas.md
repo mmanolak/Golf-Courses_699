@@ -195,3 +195,34 @@ than ~3%, something in P5-12 or P5-13 remains unfound or the fixes don't fully r
 prediction was written; P5-13's fix is implemented in all three languages but only checked via
 the diagnostic re-computation, not a full Phase 5 re-run). Will report the actual number here
 once both fixes are applied.
+
+**Actual, 2026-07-28: gap is 2.15%, tighter than predicted.** Built the crosswalk
+(`Oahu_Course_Polygon_Crosswalk.csv`) and re-ran Step 3's exact Rubin's-Rules computation using
+it as the course→polygon assignment (M=100, national imputed datasets, same code path as
+production Step 3, standalone re-computation not yet merged into `Phase_5.R`):
+
+- **Crosswalk-corrected Step 3: 36 courses, 6,161.49 ac, q_bar = $30.515B (SE $1.077B, 99% CI
+  $27.741B–$33.290B).**
+- **P5-13-corrected Step 2: 6,031.80 ac** (unchanged from the P5-13 entry above).
+- **Gap: 129.69 ac, 2.15%** — smaller than the 2.6% predicted.
+
+The prediction was directionally and materially correct (both land in the same ~2-3% band, both
+far below the unreconciled 8,564.23-vs-5,420.26 ac, 58% gap this whole exercise started from),
+but the exact mechanism differs from what the prediction assumed. The prediction added back the
+three orphan courses' *own measured polygon acreage* (452.08 ac) to Step 3's original total. The
+actual crosswalk recomputation instead uses each course's *nationally-imputed* `final_acreage` —
+which, for exactly the courses affected by P5-14's mis-geocoding, is itself MICE-imputed rather
+than OSM-measured, because the same >500 m offset that breaks Phase 5's Oahu-specific match also
+breaks Phase 2's *national* OSM match for the same coordinate. This is a clean, unplanned
+cross-check: it implies the 6-of-37 Oahu courses with imputation variance found in the **P5-11**
+CI diagnostic are Kahuku, Hoakalei, Ted Makalena, Hawaii Country Club, Barbers Point, and Luana
+Hills — the exact union of P5-12's collapse cases and P5-14's mis-geocoded/unresolved courses.
+Not separately verified by name at the time of that diagnostic; consistent with it, not proven
+identical to it.
+
+**This is the internal validation the prediction was checking for.** Two independent data
+paths — parcel-intersected OSM geometry (Step 2) and national MICE-imputed acreage keyed to
+(possibly wrong) baseline coordinates (Step 3) — converge to within 2.15% once P5-13's
+double-counted parcels and P5-12's wrong-polygon collapses are both corrected. Not yet reflected
+in `Phase_5.R`'s actual Step 3 (the crosswalk exists but Step 3 hasn't been re-wired to use it) —
+see **P5-11** decision entry for what happens next.

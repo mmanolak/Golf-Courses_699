@@ -2085,6 +2085,27 @@ defect in the 8,564.23 ac figure itself, found while answering the three questio
    acreage defect were fixed first) would be the one lever that meaningfully shrinks the CI;
    swapping it for the other 31 would not.
 
+**Corrected numbers now in hand (2026-07-28), decision still open — author's call, not made
+here.** With **P5-13** (Step 2 double-count) and **P5-12** (Step 3 wrong-polygon collapse, via
+the crosswalk) both corrected: Step 2 = 6,031.80 ac; Step 3 = 36 courses, 6,161.49 ac, q_bar =
+$30.515B (SE $1.077B). The two independent figures now agree to within 2.15% (full
+reconciliation in `Expected_Deltas.md`). Two things worth stating plainly before any figure is
+chosen as headline:
+
+1. **The CI is measurement uncertainty dressed as imputation uncertainty.** Per the variance
+   finding above, 84% of Oahu courses contribute zero imputation variance — `Baseline_Value_Per_
+   Acre` is deterministic everywhere, and `final_acreage` is deterministic (OSM-observed) for all
+   but 6 courses. Those 6 are not a random missing-data sample: they are, as far as this audit
+   can tell, exactly the courses affected by **P5-14**'s geocoding errors — the same coordinate
+   defect that breaks Phase 5's Oahu match also breaks Phase 2's national OSM match for the
+   identical point. **A Rubin's-Rules CI presented without this context implies the uncertainty
+   comes from statistical imputation model variance; it actually comes almost entirely from six
+   specific, identifiable, fixable bad coordinates.** That should be stated in whatever document
+   carries this figure forward, not left implicit in an unlabeled confidence interval.
+2. **Which acreage basis becomes the headline (Step 2's parcel-measured 6,031.80 ac, Step 3's
+   imputed-and-deduplicated 6,161.49 ac, or some stated combination) is the author's decision**,
+   consistent with this entry's original framing — not resolved here.
+
 ### P5-12 — Phase 5's Oahu spatial deduplication frequently merges distinct, adjacent golf courses, not just true duplicates — confirmed at both Oahu and national scale
 **Severity:** Critical · **Status:** Confirmed, root cause identified, not fixed · **Locus:** Code
 
@@ -2159,6 +2180,7 @@ coordinates for these three courses are grossly mis-geocoded.** Measured directl
 | Kahuku Golf Course | 4,984.6 m | 7.6 m |
 | Hoakalei Country Club At Ocean Pointe | 3,420.7 m | 8.8 m |
 | Ted Makalena Golf Course | 1,331.7 m | 260.7 m |
+| Hawaii Country Club (found building the crosswalk, see below) | 5,832 m | — (not a collapse case; correctly orphaned rather than merged, since no *other* course's baseline point lands near its polygon) |
 
 No geometric matching rule — nearest-feature, intersects-first, or any distance-based variant —
 can fix this: the baseline point sits kilometers from the course it is supposed to represent and
@@ -2183,6 +2205,49 @@ tag, e.g. "Mid Pacific Country Club"/"Unknown" poly 6) and would still need the 
 **Net: name-first-with-geometric-fallback is the right general shape for a fix; the specific
 geometric variant the author proposed this round does not work, for a reason (bad input
 coordinates) that no purely-geometric rule can route around.**
+
+**Resolved (2026-07-28): hand-verified crosswalk built and committed** —
+`Phase 5 The Hawaii Micro-Case Study/Data/Oahu_Course_Polygon_Crosswalk.csv`, 37 baseline
+courses → 39 OSM polygons, one row per course, with `Match_Basis` and a `Notes` column recording
+the evidence for every non-trivial call. Author's stated reason for rejecting fuzzy matching at
+this scale ("right for 16,292 courses, wrong for 39") is why this is a static, hand-verified
+table rather than code — no matching algorithm runs at Oahu scale going forward. Findings from
+building it, beyond the three already known:
+
+- **A 4th mis-geocoded course, found while building the crosswalk: Hawaii Country Club,
+  baseline point 5,832 m from its own uniquely-named polygon** — the largest offset of the four,
+  `VERIFIED` the same way as the other three (exact name match to one polygon; no name overlap
+  with anything closer). Logged as part of **P5-14**.
+- **The Ko'olau Golf Club "duplicate" is not a Phase 5 or Phase 1 defect — it's a duplicate
+  *OSM* geometry.** Polygons 22 (`osm_id` 22249545) and 24 (`osm_id` 479916082) are `VERIFIED`
+  100% geometrically identical (0 m apart, full-area overlap, both independently tagged "Ko'olau
+  Golf Club") — the same physical course digitized twice in the source OSM data itself, upstream
+  of anything this pipeline does. Crosswalk keeps 24, excludes 22. **This means Oahu's true
+  distinct-physical-course polygon count is 38, not 39** — a correction to every "39 courses"
+  figure in **P5-01**, **P5-11**, and this entry, though the acreage effect is zero (both
+  polygons carry the same area; nothing was being double-counted in Step 2 or Step 3, only the
+  course *count* was overstated by one).
+- **Makaha Valley Country Club / Makaha Resort Golf Club remain genuinely ambiguous** — both
+  baseline points sit 90 m and 106 m from the same single polygon, no second candidate polygon
+  exists within 15 km. Crosswalk records both rows pointing at polygon 27 with an explicit
+  "AMBIGUOUS, not resolved" note rather than picking one silently.
+- **Two baseline records could not be confidently matched to any polygon: Barbers Point Golf
+  Course and Luana Hills Country Club.** Nearest candidates for both are 0.9–3.3 km away and
+  carry unrelated names — left unresolved in the crosswalk rather than force-assigned.
+- **Three OSM polygons on Oahu have no baseline-course counterpart at all: 2 ("Unknown"), 12
+  ("Bellows Golf Course"), 29 ("Royal Hawaiian Golf Club").** Bellows and Royal Hawaiian are real,
+  named Oahu courses — their absence from Phase 1's 37-course Oahu baseline looks like a Phase 1
+  **coverage** gap (a course missing from the national source list entirely), a different defect
+  class from P5-14's geocoding-accuracy issue and from P1-06's dedup-key issue. Not investigated
+  further here — flagging, not scoping.
+
+**Net effect on course/polygon counts once the crosswalk is applied:** 35 of 37 baseline courses
+resolve to a polygon (Barbers Point and Luana Hills unresolved), using 34 distinct polygons
+(Makaha's 2 records share 1 polygon) — plus 1 duplicate (Ko'olau's poly 22) excluded and 3
+polygons (2, 12, 29) with no baseline match. 34 + 1(dup) + 3(unmatched) + 1(Kealohi/Mamala's
+own count already included) — reconciles to the reported 39 once the duplicate and the two
+Phase-1-coverage-gap courses are accounted for as separate, already-understood categories rather
+than unexplained residual.
 
 **Confirms author's flat-rate observation:** $26.844B ÷ 5,420.26 ac = $4,952,530/ac, matching
 the flat Honolulu Urban FHFA rate ($4,952,600/ac) to within rounding — `VERIFIED`. Every course
@@ -2238,30 +2303,52 @@ purely `type==3` in every case and needs a closer look before implementing — f
 prescribing, per audit scope. This is a Phase-5-Hawaii-only defect (`Honolulu_Parcels_
 Reprojected.gpkg` is Oahu-specific input data); does not touch Phase 1-4 or the national figure.
 
-### P5-14 — Phase 1 baseline coordinates for at least 3 Oahu courses are mis-geocoded by 1.3–5 km; national prevalence untested
-**Severity:** Major · **Status:** Confirmed (Oahu sample), scope unknown · **Locus:** Data (Phase 1)
+### P5-14 — Phase 1 baseline coordinates for at least 4 Oahu courses are mis-geocoded by 1.3–5.8 km; national prevalence partially quantified
+**Severity:** Major · **Status:** Confirmed (Oahu sample), national scope partially quantified · **Locus:** Data (Phase 1)
 
 Surfaced testing a fix for **P5-12**. Kahuku Golf Course, Hoakalei Country Club At Ocean Pointe,
-and Ted Makalena Golf Course each have a baseline `(Latitude, Longitude)` that sits kilometers
-from their own named OSM polygon and meters from a *different* golf course's polygon (see table
-in the P5-12 follow-up above: 4,984.6 m / 3,420.7 m / 1,331.7 m to their own polygon, vs. 7.6 m /
-8.8 m / 260.7 m to the wrong one). This is why P5-12's spatial dedup merges them — not a flaw in
-the matching algorithm's logic, but bad input coordinates that place these three courses right on
-top of a different, adjacent course.
+Ted Makalena Golf Course, and (found while building **P5-12**'s crosswalk) Hawaii Country Club
+each have a baseline `(Latitude, Longitude)` that sits kilometers from their own named OSM
+polygon (see table in the P5-12 follow-up above: 4,984.6 m / 3,420.7 m / 1,331.7 m / 5,832 m).
+The first three sit meters from a *different* golf course's polygon, which is why P5-12's spatial
+dedup merges them — not a flaw in the matching algorithm's logic, but bad input coordinates that
+place these courses right on top of a different, adjacent course. Hawaii Country Club's
+mis-geocoding doesn't happen to land near another named course, so it doesn't produce a P5-12
+collapse, but it is the same underlying defect and the largest offset of the four.
 
 **This is a distinct defect class from P1-06** (which is about the dedup *key* being too strict
 to catch genuine duplicates) — this is a geocoding *accuracy* defect: the coordinate itself is
 wrong, for reasons not yet investigated (address geocoder ambiguity, wrong source record, etc.).
-**Scope not tested.** This entry was found by cross-referencing three specific, already-flagged
-Oahu courses against their known-correct OSM polygon locations; there is no reason to assume it
-is confined to Oahu or to these three. Testing national prevalence would require ground-truth
-polygon coordinates for a large sample of the 16,292 national baseline courses, which is a
-materially larger effort than anything done for this audit so far — **flagging as an open
-question, not attempting to answer it here.** If prevalent nationally, it would affect Phase 2's
-OSM-polygon matching (Pass 1 point-in-polygon, Pass 2 nearest-feature, `Phase_2.R:288-338`) the
-same way it affects Phase 5 — a mis-geocoded course would fail Pass 1 and could land on a
-neighboring course's polygon in Pass 2, silently assigning it that neighbor's acreage. Not fixed
-— freeze holds; not scoped beyond the Oahu sample that surfaced it.
+
+**National scope, `VERIFIED` (2026-07-28), author-requested, read-only:** two diagnostics, both
+run against the full national dataset rather than the Oahu sample.
+
+1. **Of the 4,687 national `MICE_Target` courses (Phase 2's own count — `VERIFIED` this is
+   exactly the set with no OSM polygon match within the 500 m cap), 2,440 (52.1%) have a golf
+   polygon somewhere within 5 km that the 500 m cap excluded.** Distances to the nearest polygon
+   for this group: median 4,681 m, mean 8,623 m, up to 118.9 km at the extreme (genuinely no
+   nearby course). This does not prove all 2,440 are the *same* course as their nearest polygon
+   the way the four Oahu cases were individually verified by name — it shows the 500 m cap is
+   excluding a large, non-trivial share of otherwise-plausible matches, consistent with the
+   mechanism found on Oahu. **Material by the author's own stated criterion** (2,440 of 16,292
+   national baseline courses, 15.0%, currently priced on imputed rather than measured acreage
+   for a reason that traces to a fixed matching-radius choice, not missing data).
+2. **County-boundary/FIPS disagreement check: in progress at time of writing, not yet complete**
+   — for the ~5,899 baseline courses within 5 km of their own assigned county's boundary,
+   checking whether a bordering county (within that same 5 km) carries a different Urban/Rural
+   `county_type`, which would flip `FHFA_Res_Value_Per_Acre` ↔ `USDA_Ag_Value_Per_Acre` (a ~60×
+   per-acre swing) under a plausible geocoding error. Result to be appended here once the run
+   completes; flagging as unresolved rather than delaying this entry on it.
+
+**Per the author's own decision rule stated when this diagnostic was requested: item 1 is
+material, so this is a Phase 1/2 finding, not a Hawaii-local one, and the freeze scope should be
+understood to cover Phase 1/2 as well as Phase 5/6 pending a decision on whether/how to widen
+the national matching radius.** Not fixed — freeze holds. Testing whether the 2,440 candidate
+matches are individually correct (not just "something is within 5km") would require the same
+name-aware verification approach P5-12's crosswalk used, at a scale (thousands, not 39) where
+the author has already ruled out hand-verification and flagged fuzzy-matching as the wrong tool
+for a 16,292-course crosswalk — this is now an open methodological question for how the fix,
+if pursued, would even work, not just whether to pursue it.
 
 ---
 

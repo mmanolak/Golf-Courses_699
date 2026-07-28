@@ -1,0 +1,38 @@
+Course_Name,Poly_ID,Poly_Name,Match_Basis,Distance_M,Notes
+Waialae Country Club,15,Waiʻalae Country Club,name+distance,22,
+Ala Wai Golf Course,13,Ala Wai Golf Course,name+distance,130,
+Hawaii Kai Golf Course,16,Championship Course,distance (name match spurious),76,"Hawaii Kai Golf Course operates two courses (Championship + Executive); baseline has one record, assigned to the nearer/primary Championship Course. Executive Course (poly 21) has no separate baseline record -- expected, not an error."
+Ewa Beach Golf Club,37,Ewa Beach Golf Club,name+distance,69,
+Hoakalei Country Club At Ocean Pointe,3,Hoakalei Country Club,name (baseline coordinate mis-geocoded),3421,"P5-14: baseline point sits 3421m from its own polygon and 9m from Ewa Beach's polygon. Name identity overrides distance."
+Coral Creek Golf Course,8,Coral Creek Golf Course,name+distance,0,
+Hawaii Prince Golf Club,20,Hawaii Prince Golf Club,name+distance,238,
+Kealohi Golf Course,34,Kealohi Golf Course,name+distance,773,
+Mamala Bay Golf Course,26,Mamala Bay Golf Course,name (nearer polygon is Kealohi's),1838,"Baseline point is closer to poly 34 (Kealohi, 773m) than to its own name-matched poly 26 (1838m) -- both are part of the same Kalaeloa/Barbers Point course cluster. Name identity used; distance gap noted, not flagged as P5-14 (well under the 3km+ threshold of the confirmed mis-geocoding cases)."
+Ko Olina Golf Club,30,Ko Olina Golf Club,name+distance,0,
+Oahu Country Club,33,Oʻahu Country Club,name+distance,0,
+Ewa Villages Golf Course,32,Ewa Villages Golf Course,name+distance,0,
+Navy Marine Golf Course,17,Navy Marine Golf Course,name+distance,0,
+Walter J. Nagorski Golf Course,9,Fort Shafter Golf Course,distance (no name token overlap),34,"Walter J. Nagorski Golf Course is the official name of the golf course at Fort Shafter Army base -- same physical course, different naming convention between Phase 1's source and OSM's tag."
+Kapolei Golf Course,10,Kapolei Golf Course,name+distance,198,
+Barbers Point Golf Course,,,UNRESOLVED -- no confident polygon match,,"Nearest candidates (Kealohi 1199m, Navy Marine 1698m, Mamala Bay 3321m) are all too far for confident assignment. Left unresolved rather than guessed; excluded from the 39-polygon course count until resolved."
+Olomana Golf Links,31,Unknown,distance (polygon carries no OSM name tag),18,
+Honolulu Country Club,1,Honolulu Country Club,name+distance,24,
+Moanalua Golf Club,5,Moanalua Golf Club,name+distance,0,
+West Loch Municipal Golf Course,14,West Loch Golf Course,name+distance,36,
+Pali Municipal Golf Course,36,Pali Golf Course,name+distance,0,
+Luana Hills Country Club,,,UNRESOLVED -- no confident polygon match,,"Nearest candidate (Royal Hawaiian Golf Club, 934m) is a different, named course -- not a plausible match. Left unresolved; excluded from the 39-polygon course count until resolved."
+Koolau Golf Club,24,Ko'olau Golf Club,name+distance (duplicate OSM geometry resolved),0,"Polygons 22 (osm_id 22249545) and 24 (osm_id 479916082) are 100% geometrically identical (0m apart, full area overlap, both tagged Ko'olau Golf Club) -- a genuine OSM source-data duplicate, not a Phase 5 defect. Poly 24 kept as canonical; poly 22 excluded as a duplicate feature. True Oahu polygon count is 38 distinct physical courses, not 39."
+Mid Pacific Country Club,6,Unknown,distance (polygon carries no OSM name tag),90,
+Pearl Country Club,7,Pearl Country Club,name+distance,3,
+Ted Makalena Golf Course,35,Ted Makalena Golf Course,name (baseline coordinate mis-geocoded),1332,"P5-14: baseline point sits 1332m from its own polygon and 261m from Waikele's polygon. Name identity overrides distance."
+Waikele Golf Club,39,Waikele Golf Club,name+distance,2,
+Bayview Golf Park,11,Bayview,name+distance,0,
+Royal Kunia Country Club,19,Royal Kunia Country Club,name+distance,4,
+Kaneohe Klipper Marine Golf Course,4,Klipper Golf Course,name+distance,871,
+Mililani Golf Club,25,Mililani Golf Course,name+distance,0,
+Makaha Valley Country Club,27,Makaha Valley Country Club,AMBIGUOUS -- genuine likely-duplicate,90,"See Makaha Resort Golf Club below. Both baseline records sit 90-106m from the single polygon 27; no second polygon exists nearby (next-nearest is 15.3km away). Not resolved with confidence from available data -- kept as the primary of the pair pending author decision."
+Makaha Resort Golf Club,27,Makaha Valley Country Club,AMBIGUOUS -- genuine likely-duplicate,106,"Same polygon as Makaha Valley Country Club above, 16m further. Genuinely ambiguous whether this is a real duplicate course listing or two distinct adjacent facilities sharing one OSM polygon -- not resolved either way from available data (consistent with P5-12's original assessment)."
+Leilehua Golf Course,38,Leilehua Golf Course,name+distance,0,
+Hawaii Country Club,18,Hawaii Country Club,name (baseline coordinate mis-geocoded),5832,"NEW P5-14 case (4th): baseline point sits 5832m from its own uniquely-named polygon; nearer polygons (Leilehua 1511m, Mililani 3554m) share no name tokens. Name identity overrides distance -- this is the largest mis-geocoding distance found among the four."
+Kahuku Golf Course,28,Kahuku Golf Course,name (baseline coordinate mis-geocoded),4985,"P5-14: baseline point sits 4985m from its own polygon and 8m from Kulima/Turtle Bay's polygon. Name identity overrides distance."
+The Turtle Bay Resort & Golf Club,23,Kulima Golf Course,distance + historical name (Kuilima Resort),178,"OSM tags this polygon 'Kulima' (variant spelling of Kuilima, Turtle Bay Resort's original 1970s name) rather than 'Turtle Bay' -- same physical course, naming-convention mismatch, not a coordinate error."
