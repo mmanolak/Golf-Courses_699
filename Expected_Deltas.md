@@ -229,6 +229,23 @@ Hills — the exact union of P5-12's collapse cases and P5-14's mis-geocoded/unr
 Not separately verified by name at the time of that diagnostic; consistent with it, not proven
 identical to it.
 
+**Correction (2026-07-28): this inference was wrong for half the set, verified directly by name
+in the gap-decomposition diagnostic below.** Only 3 of the 6 — Hawaii Country Club, Barbers
+Point, Luana Hills — are genuinely `acreage_source == "MICE_Target"` with real variance across
+M=100 (SD 21.6–44.3 ac in a 6-draw sample). **Kahuku, Hoakalei, and Ted Makalena are
+`acreage_source == "OSM"` with zero variance** — their national `final_acreage` is not imputed
+at all, it is a *deterministic, confidently wrong* measurement: Phase 2's own Pass-2
+nearest-feature fallback (`Phase_2.R:321-338`, the exact same "accept the nearest match without
+verifying it's the right course" pattern as P5-12) assigned each of them their mis-geocoded
+point's nearest *neighboring* course's polygon area at the *national* level, not just in Phase
+5's Oahu-specific re-match. Confirmed directly: Kahuku's Phase 2 row shows 459 ac (Turtle Bay's
+polygon, to the acre) at every one of 6 sampled imputations; Hoakalei's shows ~150 ac (Ewa
+Beach's); Ted Makalena's shows ~133 ac (Waikele's). This is a **more consequential defect than
+"imputation uncertainty"** — half of P5-14's flagged courses carry a wrong number with 100%
+apparent confidence, not an honestly-uncertain one, and it originates in Phase 2's national
+matching, not Phase 3's imputation. Not fixed here (read-only diagnostic); logged as a
+discovery, see the register.
+
 **This is the internal validation the prediction was checking for.** Two independent data
 paths — parcel-intersected OSM geometry (Step 2) and national MICE-imputed acreage keyed to
 (possibly wrong) baseline coordinates (Step 3) — converge to within 2.15% once P5-13's
@@ -258,6 +275,54 @@ prediction's qualitative claim (the two paths would converge to a few percent on
 were fixed) held; its specific number did not survive contact with the actual corrected code.
 Caught by running the real pipeline rather than trusting a hand-rolled prototype — exactly the
 reason production re-runs, not standalone diagnostics, are the final word on a number like this.
+
+**`6.04% is the corrected agreement figure. The earlier 2.15% must not be quoted anywhere —
+superseded, not a valid alternative reading.`**
+
+**Gap decomposition (2026-07-28), read-only diagnostic, author-requested — full per-course
+Step 2 vs. Step 3 comparison, all 36 crosswalk courses (34 polygon-matched + 2 unresolved
+solo):**
+
+| Component | Acres | Direction |
+|---|---|---|
+| Raw gap (Step 3 total − Step 2 total) | +350.87 | — |
+| (a) 4 Step-2-only polygons with no Step 3 course (Bellows, Royal Hawaiian, "Unknown" ×2) | −462.11 | pulls Step2 total up relative to Step3 |
+| (b) 2 Step-3-only solo courses with no Step 2 polygon (Barbers Point, Luana Hills) | +302.57 | pulls Step3 total up relative to Step2 |
+| (c) Per-course difference among the 34 matched courses | +510.41 | — |
+| — of which, from the 4 P5-14-flagged matched courses (Kahuku, Hoakalei, Ted Makalena, Hawaii CC) | +330.99 | — |
+| — of which, from the other 30 matched courses | +179.42 | — |
+
+**P5-14's 6 flagged courses (4 matched-course diffs + 2 solo courses) total 633.56 ac — 180.6%
+of the entire net gap.** They don't just account for "most of" the widened gap, they account for
+more than all of it; other components (mainly the 4 orphaned Step-2 polygons pulling the other
+direction) net the total back down to 350.87 ac. **Largest single driver: Kahuku alone
+(+399.96 ac) exceeds the entire net gap by itself.** Second-largest: Kealohi Golf Course
+(+171.18 ac) — not one of the 6 P5-14-flagged courses (its baseline coordinate isn't
+P5-14-mis-geocoded), but confirmed `MICE_Target` nationally, and its pattern matches the
+P5-14 national impact test exactly: a small measured course (27.77 ac) imputed to ~199 ac, the
+same "small course inflated toward the dominant 18-hole mode" bias already documented there.
+Mamala Bay Golf Course (−24.23 ac) is also `MICE_Target`. **Outside these 8 courses (the 6
+flagged + Kealohi + Mamala Bay), the remaining 28 matched courses show near-zero differences —
+mostly under 2 ac, several exactly 0.00 ac.** The gap is not spread evenly; it is almost
+entirely concentrated in a small, identifiable, already-partly-flagged set of courses, and the
+mechanism for at least 3 of them (Kahuku, Hoakalei, Ted Makalena) is not imputation variance at
+all but a deterministic Phase 2 national mismatch (see the correction above).
+
+**Answering the three questions directly:**
+1. **Per-course table**: 34 matched courses + 2 solo, full ranked list in the register (P5-14
+   addendum) and `gap_decomposition.csv` (scratchpad, not committed — regenerable from the
+   diagnostic script).
+2. **P5-14 contribution to the gap**: 633.56 ac against a 350.87 ac net gap — **more than the
+   entire gap**, not merely "most of" it; other courses net in the opposite direction.
+3. **Concentration**: heavily concentrated — 8 courses (6 flagged + Kealohi + Mamala Bay, both
+   independently confirmed `MICE_Target`) drive essentially the entire signal; the other 28 are
+   noise-level.
+
+This corroborates P5-14's small-course-over-imputation finding for the genuinely-imputed cases
+(Hawaii CC, Barbers Point, Luana Hills, Kealohi) — but the largest single contributor (Kahuku)
+and two others (Hoakalei, Ted Makalena) are not an imputation story at all. Both mechanisms are
+real, both trace back to the same root cause (P5-14's mis-geocoded coordinates), and both now
+have names, not just aggregate statistics.
 
 **Final production confirmation, all fixes wired into `Phase_5.R`/`.py`/`.jl` and
 `Phase_6.R`/`.jl`, full pipeline re-run 2026-07-28:**

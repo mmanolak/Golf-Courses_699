@@ -2106,9 +2106,11 @@ fixed in code, is materially lower).
 - **Consistency check, reported alongside: Step 3's crosswalk-corrected figure (36 courses,
   6,161.49 ac, q_bar = $30.515B, 99% CI $27.741B–$33.290B)**, with the **6.04% acreage
   agreement** stated explicitly — a real, useful internal-consistency result (two independent
-  data paths within 6% of each other, not the original 58%), though not as tight as the
-  standalone prototype's 2.15% first suggested; see `Expected_Deltas.md` for the full
-  correction.
+  data paths within 6% of each other, not the original 58%). **6.04% is the corrected,
+  authoritative figure. An earlier 2.15% figure was reported before the P5-15 fix was actually
+  wired into Step 2's production code and is superseded — it must not be quoted anywhere as the
+  validation result.** Full mechanism, per-course breakdown, and why the gap widened: see the
+  **P5-14** addendum below and `Expected_Deltas.md`.
 - **CI note carried forward, not left implicit:** per the variance finding above, 84% of Oahu
   courses contribute zero imputation variance — `Baseline_Value_Per_Acre` is deterministic
   everywhere, `final_acreage` is deterministic (OSM-observed) for all but 6 courses, and those 6
@@ -2124,13 +2126,42 @@ run:** `run_9b_Oahu_OC_Rural_USDA_Sensitivity()` — 3 of 38 polygons fall in un
 Development Plan zones (15-20) and are repriced from the flat FHFA rate ($4,952,600/ac) to the
 2022 USDA agricultural rate ($29,887/ac); the other 35 stay at FHFA. Crosswalk-identified,
 Grand Mean across R/Python/Julia (M=300, 100 each): **$25.188B across the same 36 courses** —
-**$3.590B lower than the flat-rate headline ($28.778B), a 12.5% reduction.** Confirms the
-direction predicted above (down, since it moves the *opposite* way from P5-12/P5-13's $2B
-upward correction) and gives it an actual magnitude for the first time. **Whether rural
-differentiation becomes the headline Oahu specification is the author's call, not resolved
-here** — both the flat-rate headline ($28.778B) and this sensitivity ($25.188B) are now
-reported figures on the same corrected acreage/course basis, not a hypothetical vs. a measured
-one.
+**$3.590B lower than the flat-rate figure ($28.778B), a 12.5% reduction.**
+
+**Decided (2026-07-28), author's final call: rural-differentiated pricing is the headline Oahu
+specification.**
+
+- **Headline: $25.188B** (Development-Plan-zone rural-USDA differentiated).
+- **Reported alongside: $28.778B**, labeled as the figure consistent with the national
+  methodology's flat within-county pricing (Urban/Rural by RUCC, no sub-county differentiation)
+  — not a rejected alternative, a stated point of comparison.
+- **12.5% stated explicitly** as the measured effect of within-county rate differentiation on
+  Oahu — see below for why this is now a measured answer, not an assumption.
+
+**Rationale, for the record:** the flat rate prices every Oahu course — including North Shore
+courses in unambiguously rural Development Plan zones — at the Honolulu urban residential
+(FHFA) rate. That is not defensible as a highest-and-best-use proxy for land the City and
+County's own planning classification treats as rural. The differentiated figure is the more
+conservative of the two, and conservatism is the right default for an opportunity-cost estimate
+feeding a policy argument. **The 12.5% gap is also, independently, a measured answer to a
+question the flat-rate national methodology never tests: how much does within-county price
+uniformity cost you, in a county with genuine urban/rural variation?** Before this fix, that
+question had no answer in this codebase — `run_9b` existed but ran against defect-laden inputs
+(P5-12/P5-13/P5-15). It now does, and the answer is 12.5%, not an untested assumption that
+uniform pricing is "close enough."
+
+**Classification basis — stated explicitly, not left implicit.** The Oahu rural/urban split
+uses the City and County of Honolulu's own **Development Plan zoning boundary** (`ZONMAP_NO`,
+parcel/sub-county resolution, zones 15-20 rural). **The national estimate's Urban/Rural split
+uses county-level RUCC** (Rural-Urban Continuum Codes, one classification per county, no
+within-county differentiation) — a coarser classification, by construction, because it has to
+work for all ~3,143 US counties with a single consistent national data source. **The Oahu
+figure uses a finer classification than the national figure not because Oahu is special, but
+because the micro-case study has access to Honolulu's own parcel-resolution planning data,
+which no county in the national dataset has.** This is a genuine methodological difference
+between the headline national spec and the headline Oahu spec, not an inconsistency to paper
+over — it should be stated plainly wherever both figures are cited together, so a reader isn't
+left to assume the two "Urban/Rural" labels mean the same classification at different scales.
 
 ### P5-12 — Phase 5's Oahu spatial deduplication frequently merges distinct, adjacent golf courses, not just true duplicates — confirmed at both Oahu and national scale
 **Severity:** Critical · **Status:** Confirmed, root cause identified, not fixed · **Locus:** Code
@@ -2486,6 +2517,75 @@ the 1,101 has been individually checked against its true location the way the fo
 were. Worth stating in the paper's limitations section as an untested residual risk alongside
 the MICE small-course finding above; not investigated further, not a blocker for anything else
 in this entry's closure.
+
+**Addendum (2026-07-28), author-requested, read-only: full per-course Step 2 (measured) vs.
+Step 3 (national-imputed) acreage comparison, and a correction to how P5-14's 6 flagged courses
+actually behave.** Surfaced diagnosing why the P5-13/P5-15-corrected Step 2 vs. Step 3 agreement
+widened to 6.04% (see **P5-11**, `Expected_Deltas.md`). `VERIFIED` against the real production
+Step 2/Step 3 outputs, all 36 crosswalk-identified courses:
+
+| Course | Step 2 (ac) | Step 3 (ac) | Diff | Note |
+|---|---:|---:|---:|---|
+| Kahuku Golf Course | 58.75 | 458.71 | **+399.96** | P5-14; deterministic, see below |
+| Kealohi Golf Course | 27.77 | 198.95 | **+171.18** | `MICE_Target`, not P5-14-flagged |
+| Hoakalei Country Club | 244.07 | 149.74 | **−94.34** | P5-14; deterministic, see below |
+| Hawaii Country Club | 123.30 | 165.13 | +41.83 | P5-14; genuinely `MICE_Target` |
+| Mamala Bay Golf Course | 183.83 | 159.60 | −24.23 | `MICE_Target`, not P5-14-flagged |
+| Ted Makalena Golf Course | 149.26 | 132.79 | −16.47 | P5-14; deterministic, see below |
+| West Loch Golf Course | 157.03 | 165.70 | +8.67 | — |
+| Coral Creek Golf Course | 190.58 | 195.03 | +4.45 | — |
+| Ewa Villages Golf Course | 178.55 | 182.03 | +3.48 | — |
+| Hawaii Kai Golf Course | 126.97 | 130.44 | +3.47 | — |
+| Waialae Country Club | 143.10 | 145.11 | +2.01 | — |
+| Waikele Golf Club | 131.05 | 132.79 | +1.74 | — |
+| Mililani Golf Club | 154.97 | 156.44 | +1.47 | — |
+| Bayview Golf Park | 88.32 | 89.59 | +1.27 | — |
+| Ko Olina Golf Club | 186.96 | 188.15 | +1.19 | — |
+| Pearl Country Club | 190.76 | 191.85 | +1.09 | — |
+| Turtle Bay / Kulima | 457.84 | 458.71 | +0.86 | — |
+| Leilehua Golf Course | 191.33 | 192.19 | +0.86 | — |
+| Moanalua Golf Club | 57.26 | 57.86 | +0.60 | — |
+| Ala Wai Golf Course | 130.93 | 131.44 | +0.51 | — |
+| Hawaii Prince Golf Club | 268.54 | 268.94 | +0.40 | — |
+| Kaneohe Klipper Marine | 140.57 | 140.36 | −0.21 | — |
+| Ewa Beach Golf Club | 149.56 | 149.74 | +0.17 | — |
+| Olomana Golf Links | 123.94 | 124.09 | +0.16 | — |
+| Pali Golf Course | 162.83 | 162.97 | +0.14 | — |
+| Mid Pacific Country Club | 151.83 | 151.96 | +0.13 | — |
+| Ko'olau Golf Club | 221.17 | 221.18 | +0.01 | — |
+| Honolulu CC, Kapolei, Makaha Valley, Navy-Marine, Royal Kunia, Oʻahu CC, Fort Shafter (7 courses) | — | — | 0.00 | exact matches |
+| Barbers Point Golf Course (solo, no Step 2 polygon) | — | 151.55 | n/a | P5-14; genuinely `MICE_Target` |
+| Luana Hills Country Club (solo, no Step 2 polygon) | — | 151.02 | n/a | P5-14; genuinely `MICE_Target` |
+
+**Decomposition of the 350.87 ac net gap:** (a) 4 Step-2-only polygons with no matching Step 3
+course (Bellows, Royal Hawaiian, poly 2 "Unknown", Executive Course) sum to 462.11 ac, pulling
+the *Step 2* total up relative to Step 3; (b) the 2 solo Step-3-only courses above sum to
+302.57 ac, pulling the *Step 3* total up relative to Step 2; (c) the 34 matched courses'
+per-course differences sum to +510.41 ac net. **The 6 P5-14-flagged courses alone (4 matched-
+course diffs + the 2 solo courses) total 633.56 ac of gap — 180.6% of the entire net 350.87 ac
+gap.** They more than fully explain it; the 4 Step-2-only orphan polygons are the main
+offsetting factor pulling the net figure back down. Outside 8 courses total (the 6 flagged, plus
+Kealohi and Mamala Bay, both independently confirmed `MICE_Target`), the remaining 28 matched
+courses differ by under 2 ac each, several by exactly zero — **the gap is concentrated, not
+spread evenly.**
+
+**Correction to this entry's own earlier framing: not all 6 flagged courses are "imputed."**
+`VERIFIED` directly against `R_Phase2_Acreage_Matched_v2.csv` and a 6-draw variance check across
+M=100: **Kahuku, Hoakalei, and Ted Makalena are `acreage_source == "OSM"` with zero variance —
+not MICE-imputed at all.** Their national `final_acreage` is a confident, deterministic, *wrong*
+number: Phase 2's own Pass-2 nearest-feature fallback (`Phase_2.R:321-338`) — the identical
+"accept the nearest match without verifying it belongs to this course" pattern already found in
+**P5-12** — assigned each of them their mis-geocoded point's nearest *neighboring* course's
+polygon area, at the *national* level, independent of and prior to anything Phase 5 does.
+Kahuku's Phase 2 row shows 459 ac (Turtle Bay's polygon) identically across all 6 sampled
+imputations; Hoakalei's shows ~150 ac (Ewa Beach's); Ted Makalena's shows ~133 ac (Waikele's).
+Only **Hawaii Country Club, Barbers Point, and Luana Hills** are genuinely `MICE_Target` with
+real cross-imputation variance (SD 21.6–44.3 ac in the sample). **This is a materially worse
+defect than "imputation uncertainty" for half the set** — a wrong-but-confident measurement
+inherited from Phase 2's national matching, not an honestly-uncertain guess from Phase 3's
+imputation model. Not fixed here (read-only diagnostic, no code changes); the candidate fix
+belongs wherever P5-12's is implemented for Phase 5, applied instead to Phase 2's own Pass-2
+matching — out of scope to design or implement without further direction.
 
 ### P5-15 — Ko'olau's duplicate OSM polygon suggests golf courses may be double-digitized in OpenStreetMap nationally, not just on Oahu
 **Severity:** Minor · **Status:** Confirmed (1 instance, Oahu), national scope not tested · **Locus:** Data (OSM source)
