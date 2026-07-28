@@ -2045,7 +2045,45 @@ paired — the columns of one CSV, read top to bottom, read as a coherent deriva
 **Needed: either derive the dollar figure from the same 8,564.23 ac / 39-course polygon-verified
 footprint, or add an explicit note in the output that the two figures use different course sets
 and acreage sources.** Not fixed — freeze holds; this is a finding, not a patch. See **P5-12**
-for why the 33-course figure is additionally unreliable on its own terms.
+for why the 33-course figure is additionally unreliable on its own terms, and **P5-13** for a
+defect in the 8,564.23 ac figure itself, found while answering the three questions below.
+
+**Follow-up diagnostic (2026-07-28), author-requested, before any fix:**
+
+1. **Why Step 3 uses `final_acreage` (national-imputed) instead of Step 2's `osm_derived_acres`
+   (polygon-verified): incidental, `VERIFIED` by reading `Phase_5.R` end to end.** No comment, no
+   variable hand-off, no code path connects the two. `osm_derived_acres` is computed at line 196,
+   printed, and written to one row of `comparison_df`; Step 3 (lines 213+) independently reloads
+   the national Phase 3 imputed datasets and never references `osm_derived_acres` or
+   `parcel_intersection_sf` again. There is no documented rationale for the omission — it reads as
+   an oversight, not a deliberate methodological choice.
+
+2. **Per-course acreage comparison, `VERIFIED` by re-running Step 2's cookie-cutter intersection
+   per-polygon and joining against Step 3's per-course `final_acreage`:** for the 23 polygons with
+   a clean 1:1 course match (no dedup collapsing involved), the gap is **not uniform** — it splits
+   sharply into two groups. 15 of 23 agree closely (ratio 0.978–1.02, i.e. within ~2%, consistent
+   with ordinary parcel-boundary clipping). The other **8 of 23 show `step3/step2` ≈ 0.500–0.533 —
+   almost exactly half** (West Loch, Navy-Marine, Hawaii Prince, Mililani, Ewa Villages, Oahu
+   Country Club, Pali, Leilehua). Tracing this down surfaced a distinct, previously-unknown defect
+   — see **P5-13**. In short: the halving is *not* a Step-3/national-imputation problem (all 8
+   courses are cleanly OSM-sourced, non-imputed, in Phase 2's output) — it is Step 2's own
+   parcel-intersection acreage that is inflated ~2× for these 8 (and a similar share of the other
+   16 polygons behind the 33→39 dedup gap), from a duplicate-parcel-geometry defect in the
+   Honolulu cadastre file itself.
+
+3. **Rubin's-Rules CI variance, `VERIFIED` by comparing `final_acreage` and
+   `Baseline_Value_Per_Acre` across a 6-point sample of the M=100 imputed datasets, bbox-filtered
+   to Oahu's 37 baseline courses:** `Baseline_Value_Per_Acre` has **zero** variance across all 37
+   — expected, since it is a deterministic flat rate (Urban→FHFA, Rural→USDA), never subject to
+   MICE. `final_acreage` varies for only **6 of 37 courses (16%)** — the ones whose OSM match
+   failed nationally in Phase 2 and fell through to MICE imputation; the other 31 (84%) are
+   OSM-observed and bit-identical across all 100 draws. **Substituting Step 2's measured acreage
+   for Step 3's would change the *level* of q_bar substantially (see P5-13) but would barely
+   change the *width* of the CI** — 84% of the course set already contributes zero imputation
+   variance under the current method; the reported SE ($1.054B) is driven almost entirely by
+   those same 6 already-imputed courses. Swapping in a measured value for them (if Step 2's own
+   acreage defect were fixed first) would be the one lever that meaningfully shrinks the CI;
+   swapping it for the other 31 would not.
 
 ### P5-12 — Phase 5's Oahu spatial deduplication frequently merges distinct, adjacent golf courses, not just true duplicates — confirmed at both Oahu and national scale
 **Severity:** Critical · **Status:** Confirmed, root cause identified, not fixed · **Locus:** Code
@@ -2104,6 +2142,48 @@ national figure if applied, but is not currently applied there.
 that key doesn't resolve). This is a Phase 5-only fix; does not touch Phase 1-4 or any
 non-Hawaii output.
 
+**Follow-up (2026-07-28), author-proposed fix tested, `VERIFIED`:** author proposed an
+intersects-first approach — match each course's point to a polygon it geometrically falls
+*inside* first, use `st_nearest_feature` only as fallback for points matching no polygon — with
+the specific test "does it resolve Kahuku, Hoakalei, and Ted Makalena; handle Makaha as
+ambiguous." **It does not resolve them.** Re-ran Step 3's matching with `st_intersects` as pass 1
+and the existing 500 m `st_nearest_feature` as pass 2 for the 26 points `st_intersects` misses:
+Kahuku, Hoakalei, and Ted Makalena all still collapse into the same three wrong polygons as
+before (Kulima/"Turtle Bay", Ewa Beach, Waikele respectively) — the 500 m fallback still fires
+for all three, because none of their baseline points intersects *any* polygon at all, including
+their own. **Root cause is upstream of Phase 5's matching algorithm entirely: Phase 1's baseline
+coordinates for these three courses are grossly mis-geocoded.** Measured directly —
+
+| Course | Distance to its own OSM polygon | Distance to the polygon it wrongly matches |
+|---|---|---|
+| Kahuku Golf Course | 4,984.6 m | 7.6 m |
+| Hoakalei Country Club At Ocean Pointe | 3,420.7 m | 8.8 m |
+| Ted Makalena Golf Course | 1,331.7 m | 260.7 m |
+
+No geometric matching rule — nearest-feature, intersects-first, or any distance-based variant —
+can fix this: the baseline point sits kilometers from the course it is supposed to represent and
+meters from a different one. **This is a distinct defect class from P1-06** (dedup-key
+strictness) — it is a geocoding *accuracy* defect in Phase 1's `Course_Name` → `(Latitude,
+Longitude)` assignment, not a duplicate-detection problem. Logged separately as **P5-14** since
+its scope (how many of the national 16,292 baseline courses are similarly mis-geocoded) has not
+been tested and may extend well beyond Oahu.
+
+**A name-aware match — the fix this entry already recommended above — was prototype-tested and
+does resolve all three,** `VERIFIED`: normalizing `Course_Name` and the polygon's own OSM `name`
+attribute (lowercasing, stripping generic suffixes/diacritics) and matching by substring, 28 of
+37 Oahu baseline courses resolve to exactly one polygon, correctly including Kahuku→28,
+Hoakalei→3, and Ted Makalena→35 (all previously wrong). Makaha correctly remains ambiguous (both
+records match only polygon 27, no name-based tiebreaker available, consistent with this entry's
+original assessment). The prototype is not production-ready as-is: 3 courses over-match on
+generic substrings ("Hawaii Prince"/"Hawaii Country Club" both catch on "Hawaii"), the genuine
+"Ko'olau Golf Club" duplicate-named-polygon pair (polygons 22 and 24, two distinct OSM features
+with the identical name) needs a geometric tiebreaker, and 6 courses have no nameable polygon
+match at all (either genuinely orphaned, e.g. Luana Hills, or the polygon carries no OSM `name`
+tag, e.g. "Mid Pacific Country Club"/"Unknown" poly 6) and would still need the distance fallback.
+**Net: name-first-with-geometric-fallback is the right general shape for a fix; the specific
+geometric variant the author proposed this round does not work, for a reason (bad input
+coordinates) that no purely-geometric rule can route around.**
+
 **Confirms author's flat-rate observation:** $26.844B ÷ 5,420.26 ac = $4,952,530/ac, matching
 the flat Honolulu Urban FHFA rate ($4,952,600/ac) to within rounding — `VERIFIED`. Every course
 in the headline Oahu figure, including North Shore/rural-feeling courses, is priced at the same
@@ -2111,6 +2191,77 @@ flat urban-residential rate. The Rural-USDA sensitivity (`run_9b_...`, Phase 6 o
 Plan zones 15-20) addresses a differentiation the headline computation does not apply at all —
 not a variant of a partially-applied adjustment, but the only place in the codebase where Oahu
 courses are ever priced at anything other than the single flat FHFA rate.
+
+### P5-13 — Step 2's own 8,564.23 ac "OSM-Derived Legal Footprint" is inflated ~2× for roughly half of Oahu's 39 courses by a duplicate-parcel-geometry defect in the Honolulu cadastre file
+**Severity:** Critical · **Status:** Confirmed, root cause identified, not fixed · **Locus:** Data / Code
+
+Surfaced answering **P5-11**'s per-course diagnostic question. `Honolulu_Parcels_Reprojected.gpkg`
+(from `All_Parcels_6378200148342636690.gpkg`, 177,392 rows) contains a `type` column with three
+values: `type==1` (167,298 rows, all TMK-present), `type==2` (4,610 rows, all TMK-present), and
+**`type==3` (5,484 rows, all TMK-`NA`)**. `VERIFIED` by direct inspection: `type==3` rows are not
+incidental slivers — for a specific subset of golf-course land, a `type==3` polygon sits
+**almost exactly on top of** a `type==1`/`type==2` polygon that already has a TMK, sharing the
+same `in_file_num` source-ingestion batch (e.g. polygon 17/Navy-Marine's largest fragment: TMK
+`11010066`, 150.49 ac, `in_file_num="TAXBNDY11010_2016GAM"`, paired with a TMK-`NA` twin at
+149.92 ac, same centroid, same `in_file_num`). This looks like an unreconciled tax-boundary
+("TAXBNDY") layer duplicating the TMK-assessed parcel layer for large single-ownership tracts
+that have been re-surveyed.
+
+Step 2's `osm_derived_acres` (`Phase_5.R:196`, `sum(st_area(st_intersection(oahu_golf_sf,
+parcels_sf)))`) sums fragment area **without deduplicating parcels_sf first**, so every course
+whose land sits on a duplicated tract gets counted twice. Re-ran the same intersection per
+polygon, splitting fragment area by TMK presence, `VERIFIED` for all 39 Oahu polygons:
+
+| Pattern | Count | Example |
+|---|---|---|
+| Ratio ≈ 1.00 (no duplication) | 22 of 39 | Honolulu CC, Hoakalei CC, Moanalua, Fort Shafter, Kahuku |
+| Ratio ≈ 2.00 (near-total duplication) | 17 of 39 | Navy-Marine, Hawaii Prince, Mililani, Ewa Villages, Oʻahu CC, Pali, Leilehua, West Loch, Kealohi, Mamala Bay, Royal Hawaiian, Bellows, Klipper, Ted Makalena, Waikele, + 2 "Unknown" |
+| Partial (1.13–1.99) | 3 of 39 | Makaha Valley (1.883), Ewa Beach (1.130), Waikele's neighbor (1.468) |
+
+Sum across all 39, TMK-present fragments only: **6,031.80 ac** — vs. the reported **8,564.23 ac**
+(TMK-present + TMK-`NA` combined). The TMK-`NA` ("shadow") share is **29.6% of the reported
+total, 2,532.44 ac**, concentrated almost entirely in the 17+3 affected polygons.
+
+**This means the 8,564.23 ac headline figure — which stands as the polygon-verified basis for
+the entire micro-case study — is itself overstated, independent of and prior to the P5-11/P5-12
+Step 3 reconciliation question.** At the flat FHFA rate ($4,952,600/ac), the reported 8,564.23 ac
+implies ~$42.4B; the TMK-deduplicated 6,031.80 ac implies **~$29.9B** — much closer to Step 3's
+$26.844B (5,420.26 ac) than the reported acreage suggested. Once this defect is corrected, the
+two independently-computed Phase 5 figures (Step 2 measured footprint, Step 3 national-imputed +
+deduplicated estimate) converge to within ~10%, not the ~58% gap the unreconciled headline
+implied.
+
+**Not fixed — freeze holds.** Candidate fix: filter `parcels_sf` to `type != 3` (equivalently
+`!is.na(tmk)`) before `st_intersection` in Step 2. Not a clean fix for the 3 partial-ratio cases
+(Makaha 1.883, Ewa Beach 1.130, Waikele-neighbor 1.468), which suggests the duplication is not
+purely `type==3` in every case and needs a closer look before implementing — flagging rather than
+prescribing, per audit scope. This is a Phase-5-Hawaii-only defect (`Honolulu_Parcels_
+Reprojected.gpkg` is Oahu-specific input data); does not touch Phase 1-4 or the national figure.
+
+### P5-14 — Phase 1 baseline coordinates for at least 3 Oahu courses are mis-geocoded by 1.3–5 km; national prevalence untested
+**Severity:** Major · **Status:** Confirmed (Oahu sample), scope unknown · **Locus:** Data (Phase 1)
+
+Surfaced testing a fix for **P5-12**. Kahuku Golf Course, Hoakalei Country Club At Ocean Pointe,
+and Ted Makalena Golf Course each have a baseline `(Latitude, Longitude)` that sits kilometers
+from their own named OSM polygon and meters from a *different* golf course's polygon (see table
+in the P5-12 follow-up above: 4,984.6 m / 3,420.7 m / 1,331.7 m to their own polygon, vs. 7.6 m /
+8.8 m / 260.7 m to the wrong one). This is why P5-12's spatial dedup merges them — not a flaw in
+the matching algorithm's logic, but bad input coordinates that place these three courses right on
+top of a different, adjacent course.
+
+**This is a distinct defect class from P1-06** (which is about the dedup *key* being too strict
+to catch genuine duplicates) — this is a geocoding *accuracy* defect: the coordinate itself is
+wrong, for reasons not yet investigated (address geocoder ambiguity, wrong source record, etc.).
+**Scope not tested.** This entry was found by cross-referencing three specific, already-flagged
+Oahu courses against their known-correct OSM polygon locations; there is no reason to assume it
+is confined to Oahu or to these three. Testing national prevalence would require ground-truth
+polygon coordinates for a large sample of the 16,292 national baseline courses, which is a
+materially larger effort than anything done for this audit so far — **flagging as an open
+question, not attempting to answer it here.** If prevalent nationally, it would affect Phase 2's
+OSM-polygon matching (Pass 1 point-in-polygon, Pass 2 nearest-feature, `Phase_2.R:288-338`) the
+same way it affects Phase 5 — a mis-geocoded course would fail Pass 1 and could land on a
+neighboring course's polygon in Pass 2, silently assigning it that neighbor's acreage. Not fixed
+— freeze holds; not scoped beyond the Oahu sample that surfaced it.
 
 ---
 
