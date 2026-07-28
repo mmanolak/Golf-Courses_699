@@ -65,6 +65,15 @@ TARGET_GOLF_GPKG    = BULK_PYTHON_DIR / "Target_Golf_Polygons.gpkg"
 PARCELS_REPROJECTED = BULK_PYTHON_DIR / "Honolulu_Parcels_Reprojected.gpkg"
 TMK_LIST_CSV        = BULK_PYTHON_DIR / "Target_Golf_Parcels_List.csv"
 COMPARISON_CSV      = DATA_PYTHON_DIR / "Py_Phase5_Oahu_Comparison.csv"
+CROSSWALK_CSV        = SCRIPT_DIR / "Data" / "Oahu_Course_Polygon_Crosswalk.csv"
+# The crosswalk's Course_Name is R-sourced (e.g. "Pearl Country Club"). Python's own Phase 1
+# output formats Course_Name differently ("Pearl Country Club-Aiea,HI") -- a real, separately
+# logged cross-language Phase 1 parity gap (P5-17), not something to paper over silently here.
+# Resolve the crosswalk against R's baseline for canonical coordinates, then match those
+# (rounded) coordinates into this language's own Phase 3 imputed datasets below.
+PHASE1_R_PATH = (
+    WORK_DIR / "Phase 1 Parsing" / "Data" / "R" / "R_Phase1_Baseline_Golf_Valuation.csv"
+)
 GEO_BREAKDOWN_CSV   = DATA_PYTHON_DIR / "Py_Phase5_Step5_Geographic_Breakdown.csv"
 
 # --- Step 3 inputs ---
@@ -363,74 +372,89 @@ def run_step3(osm_derived_acres):
         df_oahu   = df_i[oahu_mask].copy()
         df_oahu["Total_Opportunity_Cost"] = df_oahu["osm_acreage"] * df_oahu["Baseline_Value_Per_Acre"]
         df_oahu["imputation"] = i
+        # Join key for the crosswalk match below: rounded, not exact float equality.
+        # P5-01 already found exact-float coordinate joins silently drop rows across a CSV
+        # write/read round-trip (Script 9's cross-language join, 39->37 courses) -- applying
+        # the same defensive rounding here rather than risk the identical failure mode.
+        df_oahu["lon6"] = df_oahu["Longitude"].round(6)
+        df_oahu["lat6"] = df_oahu["Latitude"].round(6)
         oahu_estimates.append(df_oahu)
         del df_i; gc.collect()
 
     oahu_all = pd.concat(oahu_estimates, ignore_index=True)
     sizes    = ", ".join(str(len(d)) for d in oahu_estimates)
     print(f"  Oahu courses before deduplication (per imputation): {sizes}")
-    print("\n  Applying spatial deduplication using OSM polygons...")
+    print("\n  Assigning courses to polygons via the hand-verified Oahu crosswalk (P5-12)...")
 
-    # [METHODOLOGY] gpd.read_file - spatial read of Oahu golf polygons for deduplication
+    # [METHODOLOGY] gpd.read_file - spatial read of Oahu golf polygons (Ko'olau duplicate
+    #               already excluded in Step 1 -- P5-15)
     osm_polys_geo = gpd.read_file(TARGET_GOLF_GPKG)
     osm_polys_geo["poly_id"] = range(1, len(osm_polys_geo) + 1)
 
-    unique_courses = (
-        oahu_all.groupby(["Longitude", "Latitude"])
-        .agg(Holes=("Holes", "max"))
-        .reset_index()
+    # P5-12 (2026-07-28): gpd.sjoin_nearest()'s unverified many-to-one geometric snap
+    # silently merged distinct, adjacent courses (Kahuku, Hoakalei, Ted Makalena -> the
+    # wrong polygon) because it never checked that a course's nearest polygon was actually
+    # ITS OWN polygon. Replaced with a hand-verified name-based crosswalk (37 Oahu courses,
+    # one row each, Makaha's genuine ambiguity and 2 unresolved courses documented rather
+    # than silently decided by geometry). Joined on osm_id (stable), not the crosswalk's
+    # row-order Poly_ID (which shifts once the P5-15 Ko'olau duplicate is excluded).
+    if not CROSSWALK_CSV.exists():
+        print(f"[FATAL] Crosswalk not found:\n  {CROSSWALK_CSV}")
+        raise SystemExit(1)
+    crosswalk = pd.read_csv(CROSSWALK_CSV)
+
+    # Canonical coordinates for the crosswalk's Course_Name (R-sourced -- see note above).
+    baseline_r = pd.read_csv(PHASE1_R_PATH)
+    oahu_baseline_r = baseline_r[
+        (baseline_r["County_Name"] == "Honolulu") | (baseline_r["FIPS"] == 15003)
+    ][["Course_Name", "Longitude", "Latitude"]].copy()
+    oahu_baseline_r["lon6"] = oahu_baseline_r["Longitude"].round(6)
+    oahu_baseline_r["lat6"] = oahu_baseline_r["Latitude"].round(6)
+
+    # This language's own baseline, for Holes and Baseline_Value_Per_Acre, matched by
+    # rounded coordinate (not Course_Name, which doesn't match the crosswalk -- see above).
+    baseline_df = pd.read_csv(PHASE1_IN)
+    oahu_baseline_own = baseline_df[
+        (baseline_df["County_Name"] == "Honolulu") | (baseline_df["FIPS"] == 15003)
+    ][["Longitude", "Latitude", "Holes", "Baseline_Value_Per_Acre"]].copy()
+    oahu_baseline_own["lon6"] = oahu_baseline_own["Longitude"].round(6)
+    oahu_baseline_own["lat6"] = oahu_baseline_own["Latitude"].round(6)
+
+    oahu_baseline_courses = oahu_baseline_r[["Course_Name", "lon6", "lat6"]].merge(
+        oahu_baseline_own[["lon6", "lat6", "Holes", "Baseline_Value_Per_Acre"]],
+        on=["lon6", "lat6"], how="left",
     )
 
-    # [METHODOLOGY] gpd.GeoDataFrame - convert deduplicated course coordinates to spatial points
-    courses_geo = gpd.GeoDataFrame(
-        unique_courses,
-        geometry=gpd.points_from_xy(unique_courses["Longitude"], unique_courses["Latitude"]),
-        crs=4326,
-    )
-    # [METHODOLOGY] .to_crs - reproject course points to match OSM CRS
-    courses_geo = courses_geo.to_crs(osm_polys_geo.crs)
-
-    # [METHODOLOGY] gpd.sjoin_nearest - nearest-neighbor match to OSM polygons;
-    #               mirrors Phase 2's fallback matching logic
-    joined_nearest = gpd.sjoin_nearest(
-        courses_geo.reset_index(drop=True),
-        osm_polys_geo[["poly_id", "geometry"]],
-        how="left",
-        distance_col="nearest_dist",
-    ).groupby(level=0).first()
-
-    # [METHODOLOGY] 500 m cap - only assign a polygon if within 500 m of the point;
-    #               threshold mirrors Phase 2 spatial tolerance for point-to-polygon matching
-    assigned_poly = np.where(
-        joined_nearest["nearest_dist"] <= 500,
-        joined_nearest["poly_id"],
-        np.nan,
+    merged_cw = crosswalk.merge(oahu_baseline_courses, on="Course_Name", how="left")
+    merged_cw["group_id"] = np.where(
+        merged_cw["Poly_OSM_ID"].isna(),
+        "solo_" + merged_cw["Course_Name"].astype(str),
+        "osmid_" + merged_cw["Poly_OSM_ID"].astype("Int64").astype(str),
     )
 
-    group_ids = [
-        f"orphan_{i}" if np.isnan(p) else str(int(p))
-        for i, p in enumerate(assigned_poly)
-    ]
-
-    dedup_df = unique_courses.copy()
-    dedup_df["group_id"] = group_ids
-    dedup_df["Holes"]    = joined_nearest["Holes"].values
-
+    # Makaha Valley/Makaha Resort share a polygon and are genuinely ambiguous (crosswalk
+    # Notes); keep the higher-Holes record, consistent with the pre-crosswalk convention
+    # for true duplicates.
     master_keep_list = (
-        dedup_df
+        merged_cw
         .sort_values(["group_id", "Holes"], ascending=[True, False])
         .drop_duplicates(subset=["group_id"])
-        [["Longitude", "Latitude", "Holes"]]
+        [["lon6", "lat6", "Holes"]]
         .reset_index(drop=True)
     )
-    print(f"  Unique Oahu courses after spatial deduplication: {len(master_keep_list)}")
+    print(f"  Unique Oahu courses after crosswalk-based identification: {len(master_keep_list)}")
 
     oahu_deduped_list = []
     for i in range(1, M + 1):
         df_i = oahu_all[oahu_all["imputation"] == i].merge(
-            master_keep_list, on=["Longitude", "Latitude", "Holes"], how="inner"
+            master_keep_list, on=["lon6", "lat6", "Holes"], how="inner"
         )
         oahu_deduped_list.append(df_i)
+    n_deduped_check = len(oahu_deduped_list[0])
+    if n_deduped_check != len(master_keep_list):
+        print(f"[WARNING] [P5-11] Step 3 crosswalk join matched {n_deduped_check} of "
+              f"{len(master_keep_list)} expected courses (imputation 1) -- check for a "
+              f"coordinate-precision mismatch.")
 
     oahu_per_course = (
         pd.concat(oahu_deduped_list, ignore_index=True)
@@ -459,28 +483,50 @@ def run_step3(osm_derived_acres):
     se    = np.sqrt(v_t)
     ci_lo = q_bar - 2.576 * se
     ci_hi = q_bar + 2.576 * se
+    # [METHODOLOGY] mean measured/imputed acreage across M=100, for the Step 3 consistency
+    # check reported alongside the Step 2 headline (P5-11).
+    step3_mean_acreage = np.mean([d["osm_acreage"].sum() for d in oahu_deduped_list])
 
     print(
-        f"\n  Deduplicated Pooled Oahu Opportunity Cost: "
-        f"${q_bar/1e9:.3f}B (99% CI: ${ci_lo/1e9:.3f}B - ${ci_hi/1e9:.3f}B)"
+        f"\n  Step 3 consistency check (national-imputed, crosswalk-identified): "
+        f"${q_bar/1e9:.3f}B (99% CI: ${ci_lo/1e9:.3f}B - ${ci_hi/1e9:.3f}B), {step3_mean_acreage:,.2f} ac"
     )
+
+    # ---------- Headline: Step 2 measured footprint, priced at the flat FHFA rate ----------
+    # P5-11 (2026-07-28, author's decision): headline the measured (Step 2) acreage --
+    # parcel-verified, which is the entire purpose of a micro-case study -- rather than the
+    # national-imputed (Step 3) figure. Step 3 is retained above as a reported consistency
+    # check, not the headline. All Oahu courses currently price at the single flat Honolulu
+    # Urban FHFA rate (P5-12 finding); pulled from the data rather than hardcoded.
+    oahu_bvpa = oahu_baseline_courses["Baseline_Value_Per_Acre"].dropna().unique()
+    if len(oahu_bvpa) != 1:
+        print(f"[WARNING] Expected a single flat Oahu Baseline_Value_Per_Acre, "
+              f"found {len(oahu_bvpa)} distinct values -- using the first.")
+    oahu_flat_rate = oahu_bvpa[0]
+    headline_oc = osm_derived_acres * oahu_flat_rate
+    pct_agreement = 100 * abs(step3_mean_acreage - osm_derived_acres) / osm_derived_acres
+
+    print(
+        f"  HEADLINE Oahu Opportunity Cost (Step 2 measured {osm_derived_acres:,.2f} ac x "
+        f"flat FHFA rate ${oahu_flat_rate:,.0f}/ac): ${headline_oc/1e9:.3f}B"
+    )
+    print(f"  Headline (Step 2) vs. consistency-check (Step 3) acreage agreement: {pct_agreement:.2f}%")
 
     print("-" * 70)
     print("[Step 3.4] Building and saving comparison table...")
 
     rows = []
-    add_row(rows, "Total Golf Courses (Oahu, OSM polygons)", len(osm_polys_geo))
+    add_row(rows, "Total Golf Courses (Oahu, OSM polygons, Ko'olau duplicate excluded)", len(osm_polys_geo))
     add_row(rows, "Total Unique TMKs (Step 2)",             f"{len(tmk_df):,}")
-    add_row(rows, "TMKs Matched in Cadastre",               f"{len(matched_parcels):,}")
-    add_row(rows, "OSM-Derived Legal Footprint (acres)",    f"{osm_derived_acres:,.2f}")
-
-    for i, val in enumerate(oahu_agg_dedup, start=1):
-        add_row(rows, f"Oahu Opportunity Cost - Imputation {i} ($B)", f"{val/1e9:.3f}")
-
-    add_row(rows, "Pooled Oahu Opportunity Cost - q_bar ($B)", f"{q_bar/1e9:.3f}")
-    add_row(rows, "Standard Error ($B)",                        f"{se/1e9:.3f}")
-    add_row(rows, "95% CI Lower ($B)",                          f"{ci_lo/1e9:.3f}")
-    add_row(rows, "95% CI Upper ($B)",                          f"{ci_hi/1e9:.3f}")
+    add_row(rows, "HEADLINE: OSM-Derived Legal Footprint (acres, Step 2, P5-13/P5-15-corrected)", f"{osm_derived_acres:,.2f}")
+    add_row(rows, "HEADLINE: Oahu Opportunity Cost (Step 2 measured acreage x flat FHFA rate, $B)", f"{headline_oc/1e9:.3f}")
+    add_row(rows, "Consistency Check: Unique Oahu Courses (Step 3, crosswalk-identified)", len(master_keep_list))
+    add_row(rows, "Consistency Check: Mean Acreage (Step 3, national-imputed, ac)", f"{step3_mean_acreage:,.2f}")
+    add_row(rows, "Consistency Check: Pooled Oahu Opportunity Cost - q_bar ($B)", f"{q_bar/1e9:.3f}")
+    add_row(rows, "Consistency Check: Standard Error ($B)",                        f"{se/1e9:.3f}")
+    add_row(rows, "Consistency Check: 99% CI Lower ($B)",                          f"{ci_lo/1e9:.3f}")
+    add_row(rows, "Consistency Check: 99% CI Upper ($B)",                          f"{ci_hi/1e9:.3f}")
+    add_row(rows, "Headline vs. Consistency-Check Acreage Agreement (%)",          f"{pct_agreement:.2f}%")
 
     if not np.isnan(official_area_acres):
         add_row(rows, "Total Official Area (acres)", f"{official_area_acres:,.2f}")

@@ -249,7 +249,14 @@ for (i in seq_len(M)) {
     oahu_estimates[[i]] <- df_i[oahu_mask, ] |>
         mutate(
             Total_Opportunity_Cost = final_acreage * Baseline_Value_Per_Acre,
-            imputation = i
+            imputation = i,
+            # Join key for the crosswalk match below: rounded, not exact float equality.
+            # P5-01 already found exact-float coordinate joins silently drop rows across a
+            # CSV write/read round-trip (Script 9's cross-language join, 39->37 courses) --
+            # applying the same defensive rounding here rather than risk the identical
+            # failure mode in this new join.
+            lon6 = round(Longitude, 6),
+            lat6 = round(Latitude, 6)
         )
     rm(df_i); gc()
 }
@@ -272,7 +279,8 @@ crosswalk <- read_csv(CROSSWALK_PATH, show_col_types = FALSE)
 
 oahu_baseline_courses <- baseline_df |>
     filter(County_Name == "Honolulu" | FIPS == 15003) |>
-    select(Course_Name, Longitude, Latitude, Holes, Baseline_Value_Per_Acre)
+    mutate(lon6 = round(Longitude, 6), lat6 = round(Latitude, 6)) |>
+    select(Course_Name, lon6, lat6, Holes, Baseline_Value_Per_Acre)
 
 master_keep_list <- crosswalk |>
     left_join(oahu_baseline_courses, by = "Course_Name") |>
@@ -286,7 +294,7 @@ master_keep_list <- crosswalk |>
     # for true duplicates.
     arrange(group_id, desc(Holes)) |>
     filter(!duplicated(group_id)) |>
-    select(Longitude, Latitude, Holes)
+    select(lon6, lat6, Holes)
 
 cat(sprintf(
     "  Unique Oahu courses after crosswalk-based identification: %d\n",
@@ -296,8 +304,15 @@ cat(sprintf(
 oahu_deduped_list <- lapply(seq_len(M), function(i) {
     oahu_all |>
         filter(imputation == i) |>
-        inner_join(master_keep_list, by = c("Longitude", "Latitude", "Holes"))
+        inner_join(master_keep_list, by = c("lon6", "lat6", "Holes"))
 })
+n_deduped_check <- nrow(oahu_deduped_list[[1]])
+if (n_deduped_check != nrow(master_keep_list)) {
+    warning(sprintf(
+        "[P5-11] Step 3 crosswalk join matched %d of %d expected courses (imputation 1) -- check for a coordinate-precision mismatch.",
+        n_deduped_check, nrow(master_keep_list)
+    ))
+}
 
 oahu_agg_dedup <- sapply(
     oahu_deduped_list,

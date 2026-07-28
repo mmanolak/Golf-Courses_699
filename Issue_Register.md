@@ -2501,6 +2501,34 @@ polygons is not, by itself, evidence of a systemic national gap, but it is a def
 audit had not previously identified (prior work assumed Phase 1's course list was complete and
 only checked its accuracy/dedup, not its coverage).
 
+### P5-17 — Python and Julia's Phase 1 `Course_Name` field has a different format than R's; broke the crosswalk join during implementation
+**Severity:** Major · **Status:** `VERIFIED`, worked around, not fixed at the source · **Locus:** Code (Phase 1, Python/Julia)
+
+Found implementing the **P5-12** crosswalk in `Phase_5.py`/`Phase_5.jl`: joining the crosswalk
+(`Course_Name` built from R's Phase 1 output, e.g. `"Pearl Country Club"`) against Python's or
+Julia's own Phase 1 baseline by `Course_Name` matched **zero of 37 Oahu courses** — not a partial
+mismatch, a complete one. Python's and Julia's `Course_Name` field carries a `"-City,State"`
+suffix R's does not: `"Pearl Country Club-Aiea,HI"` vs. R's `"Pearl Country Club"`, `VERIFIED`
+identically in both languages' Phase 1 output. This is a real cross-language parity gap in
+Phase 1's `Course_Name` extraction, not a Phase 5 defect — it just happened to surface here
+because Phase 5 was the first place in this audit that joined on `Course_Name` across languages.
+
+**Coordinates are unaffected and were used as the workaround.** `VERIFIED`: Oahu's 37 courses'
+`(Longitude, Latitude)`, rounded to 6 decimals, match 37-of-37 exactly across all three
+languages' independent Phase 1 outputs. `Phase_5.py`/`Phase_5.jl` now resolve the crosswalk's
+`Course_Name` against **R's** baseline for canonical coordinates, then match those coordinates
+into each language's own Phase 3 imputed datasets — sidesteps the `Course_Name` format
+difference entirely rather than fixing it, since the fix required is in Phase 1's
+`extract_course_name()`-equivalent logic (or whichever step appends the city/state suffix in
+Python/Julia but not R), which is out of scope for a Phase 5 implementation task. Logged here so
+it isn't rediscovered by the next thing that tries to join on `Course_Name` across languages.
+
+**Not investigated further:** whether this suffix appears in Python/Julia's *national* baseline
+(not just the Oahu subset), whether it's cosmetic-only or affects any join used in the national
+pipeline (Phase 1-4 don't appear to join on `Course_Name` after Phase 1 itself, based on this
+audit's review so far, but that has not been exhaustively re-checked against this specific
+finding), and whether R is the "correct" format or Python/Julia are. Flagging, not fixing.
+
 ---
 
 ## Phase 6 — Visualization

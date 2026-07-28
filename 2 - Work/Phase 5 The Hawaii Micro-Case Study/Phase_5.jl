@@ -51,6 +51,12 @@ const PHASE1_IN = joinpath(
     WORK_DIR, "Phase 1 Parsing", "Data", "Julia",
     "Jl_Phase1_Baseline_Golf_Valuation.csv",
 )
+# The crosswalk's Course_Name is R-sourced (e.g. "Pearl Country Club"). Julia's own Phase 1
+# output formats Course_Name differently ("Pearl Country Club-Aiea,HI") -- a real, separately
+# logged cross-language Phase 1 parity gap (P5-17), not something to paper over silently here.
+const PHASE1_R_PATH = joinpath(
+    WORK_DIR, "Phase 1 Parsing", "Data", "R", "R_Phase1_Baseline_Golf_Valuation.csv",
+)
 const OSM_IN = joinpath(
     WORK_DIR, "Phase 2 Spatial Polygons and True Acreage", "Data", "Julia",
     "Jl_Phase2_OSM_Golf_Polygons.gpkg",
@@ -71,6 +77,7 @@ const ZONING_GPKG        = joinpath(HONOLULU_DATA_DIR, "Zoning_-2205419429161838
 const COUNTY_SHP = joinpath(WORK_DIR, "00 - Data Sources", "Original Data", "tl_2022_us_county.shp")
 
 const COMPARISON_OUT     = joinpath(OUT_DIR, "Jl_Phase5_Oahu_Comparison.csv")
+const CROSSWALK_CSV      = joinpath(SCRIPT_DIR, "Data", "Oahu_Course_Polygon_Crosswalk.csv")
 const GEO_BREAKDOWN_OUT  = joinpath(OUT_DIR, "Jl_Phase5_Geographic_Breakdown.csv")
 const ZONING_PCT_OUT     = joinpath(OUT_DIR, "Jl_Phase5_Step6_Zoning_Percentages.csv")
 const ZONE_PENETRATION_OUT = joinpath(OUT_DIR, "Jl_Phase5_Step6_Zone_Golf_Penetration.csv")
@@ -329,37 +336,84 @@ function main()
         df_oahu = df_i[mask, :]
         df_oahu.Total_Opportunity_Cost = df_oahu.osm_acreage .* df_oahu.Baseline_Value_Per_Acre
         df_oahu.imputation = fill(i, nrow(df_oahu))
+        # Join key for the crosswalk match below: rounded, not exact float equality.
+        # P5-01 already found exact-float coordinate joins silently drop rows across a CSV
+        # write/read round-trip (Script 9's cross-language join, 39->37 courses) -- applying
+        # the same defensive rounding here rather than risk the identical failure mode.
+        df_oahu.lon6 = round.(df_oahu.Longitude, digits = 6)
+        df_oahu.lat6 = round.(df_oahu.Latitude,  digits = 6)
         oahu_estimates[i]  = df_oahu
         df_i = nothing; GC.gc()
     end
     oahu_all = vcat(oahu_estimates...)
     println("  Oahu courses before dedup (per imputation): $(join(string.(nrow.(oahu_estimates)), ", "))")
 
-    # reuse oahu_golf_geo as the OSM polygon reference; tag with poly_id for dedup
+    println("  Assigning courses to polygons via the hand-verified Oahu crosswalk (P5-12)...")
+    # reuse oahu_golf_geo as the OSM polygon reference (Ko'olau duplicate already excluded
+    # in Step 1 -- P5-15); poly_id kept for reference only, matching below uses osm_id.
     oahu_golf_geo.poly_id = 1:nrow(oahu_golf_geo)
-    unique_courses = combine(groupby(oahu_all, [:Longitude, :Latitude]),
-                                :Holes => maximum => :Holes)
 
-    group_ids = Vector{String}(undef, nrow(unique_courses))
-    for i in 1:nrow(unique_courses)
-        # [METHODOLOGY] ArchGDAL.createpoint - convert course lat/lon to spatial point
-        pt_wgs84 = ArchGDAL.createpoint(unique_courses.Longitude[i], unique_courses.Latitude[i])
-        # [METHODOLOGY] reproject_geom - align course point to OSM CRS for polygon matching
-        pt_osm   = reproject_geom(pt_wgs84, wgs84, osm_crs)
-        # [METHODOLOGY] find_nearest_polygon + 500 m cap - mirrors Phase 2 fallback matching
-        nearest_id, dist = find_nearest_polygon(pt_osm, oahu_golf_geo)
-        group_ids[i] = dist <= 500 ? string(oahu_golf_geo.poly_id[nearest_id]) : "orphan_$i"
+    # P5-12 (2026-07-28): find_nearest_polygon()'s unverified many-to-one geometric snap
+    # silently merged distinct, adjacent courses (Kahuku, Hoakalei, Ted Makalena -> the
+    # wrong polygon) because it never checked that a course's nearest polygon was actually
+    # ITS OWN polygon. Replaced with a hand-verified name-based crosswalk (37 Oahu courses,
+    # one row each, Makaha's genuine ambiguity and 2 unresolved courses documented rather
+    # than silently decided by geometry). Joined on osm_id (stable), not the crosswalk's
+    # row-order Poly_ID (which shifts once the P5-15 Ko'olau duplicate is excluded).
+    isfile(CROSSWALK_CSV) || error("[FATAL] Crosswalk not found: $CROSSWALK_CSV")
+    crosswalk = CSV.read(CROSSWALK_CSV, DataFrame; missingstring = ["NA", ""])
+
+    # Canonical coordinates for the crosswalk's Course_Name (R-sourced -- see note above).
+    baseline_r_df = CSV.read(PHASE1_R_PATH, DataFrame)
+    oahu_baseline_r = filter(baseline_r_df) do row
+        (!ismissing(row.County_Name) && row.County_Name == "Honolulu") ||
+        (!ismissing(row.FIPS)        && row.FIPS        == 15003)
     end
-    unique_courses.group_id = group_ids
-    sort!(unique_courses, [:group_id, :Holes], rev = [false, true])
-    master_keep = unique(unique_courses, :group_id)
-    select!(master_keep, [:Longitude, :Latitude, :Holes])
-    println("  Unique Oahu courses after spatial dedup: $(nrow(master_keep))")
+    select!(oahu_baseline_r, [:Course_Name, :Longitude, :Latitude])
+    oahu_baseline_r.lon6 = round.(oahu_baseline_r.Longitude, digits = 6)
+    oahu_baseline_r.lat6 = round.(oahu_baseline_r.Latitude,  digits = 6)
 
+    # This language's own baseline, for Holes and Baseline_Value_Per_Acre, matched by
+    # rounded coordinate (not Course_Name, which doesn't match the crosswalk -- see above).
+    oahu_baseline_own = filter(baseline_df) do row
+        (!ismissing(row.County_Name) && row.County_Name == "Honolulu") ||
+        (!ismissing(row.FIPS)        && row.FIPS        == 15003)
+    end
+    select!(oahu_baseline_own, [:Longitude, :Latitude, :Holes, :Baseline_Value_Per_Acre])
+    oahu_baseline_own.lon6 = round.(oahu_baseline_own.Longitude, digits = 6)
+    oahu_baseline_own.lat6 = round.(oahu_baseline_own.Latitude,  digits = 6)
+
+    oahu_baseline_courses = leftjoin(
+        select(oahu_baseline_r, [:Course_Name, :lon6, :lat6]),
+        select(oahu_baseline_own, [:lon6, :lat6, :Holes, :Baseline_Value_Per_Acre]),
+        on = [:lon6, :lat6],
+    )
+
+    merged_cw = leftjoin(crosswalk, oahu_baseline_courses, on = :Course_Name)
+    merged_cw.group_id = [
+        ismissing(row.Poly_OSM_ID) ? "solo_$(row.Course_Name)" : "osmid_$(Int(row.Poly_OSM_ID))"
+        for row in eachrow(merged_cw)
+    ]
+    # Makaha Valley/Makaha Resort share a polygon and are genuinely ambiguous (crosswalk
+    # Notes); keep the higher-Holes record, consistent with the pre-crosswalk convention
+    # for true duplicates.
+    sort!(merged_cw, [:group_id, :Holes], rev = [false, true])
+    master_keep = unique(merged_cw, :group_id)
+    select!(master_keep, [:lon6, :lat6, :Holes])
+    println("  Unique Oahu courses after crosswalk-based identification: $(nrow(master_keep))")
+
+    # matchmissing = :notequal: some crosswalk rows have no polygon (Poly_OSM_ID missing,
+    # e.g. Barbers Point, Luana Hills) and Julia's innerjoin errors by default on any
+    # missing join key, unlike R/pandas which silently produce no match. Matching their
+    # (silent no-match) semantics rather than hard-erroring on a legitimately-unresolved row.
     oahu_deduped_list = Vector{DataFrame}(undef, M)
     for i in 1:M
         df_i = filter(r -> r.imputation == i, oahu_all)
-        oahu_deduped_list[i] = innerjoin(df_i, master_keep, on = [:Longitude, :Latitude, :Holes])
+        oahu_deduped_list[i] = innerjoin(df_i, master_keep, on = [:lon6, :lat6, :Holes], matchmissing = :notequal)
+    end
+    n_deduped_check = nrow(oahu_deduped_list[1])
+    if n_deduped_check != nrow(master_keep)
+        @warn "[P5-11] Step 3 crosswalk join matched $n_deduped_check of $(nrow(master_keep)) expected courses (imputation 1) -- check for a coordinate-precision mismatch."
     end
 
     all_deduped = vcat(oahu_deduped_list...)
@@ -384,19 +438,45 @@ function main()
     se    = sqrt(v_t)
     ci_lo = q_bar - 2.576 * se
     ci_hi = q_bar + 2.576 * se
+    # [METHODOLOGY] mean measured/imputed acreage across M=100, for the Step 3 consistency
+    # check reported alongside the Step 2 headline (P5-11).
+    step3_mean_acreage = mean([sum(d.osm_acreage) for d in oahu_deduped_list])
+
+    @printf("\n  Step 3 consistency check (national-imputed, crosswalk-identified): \$%.3fB (99%% CI: \$%.3fB - \$%.3fB), %.2f ac\n",
+            q_bar / 1e9, ci_lo / 1e9, ci_hi / 1e9, step3_mean_acreage)
+
+    # ---------- Headline: Step 2 measured footprint, priced at the flat FHFA rate ----------
+    # P5-11 (2026-07-28, author's decision): headline the measured (Step 2) acreage --
+    # parcel-verified, which is the entire purpose of a micro-case study -- rather than the
+    # national-imputed (Step 3) figure. Step 3 is retained above as a reported consistency
+    # check, not the headline. All Oahu courses currently price at the single flat Honolulu
+    # Urban FHFA rate (P5-12 finding); pulled from the data rather than hardcoded.
+    oahu_bvpa = collect(skipmissing(oahu_baseline_courses.Baseline_Value_Per_Acre))
+    oahu_flat_rate_candidates = unique(oahu_bvpa)
+    if length(oahu_flat_rate_candidates) != 1
+        @warn "[P5-11] Expected a single flat Oahu Baseline_Value_Per_Acre, found $(length(oahu_flat_rate_candidates)) distinct values -- using the first."
+    end
+    oahu_flat_rate = oahu_flat_rate_candidates[1]
+    headline_oc     = osm_acres * oahu_flat_rate
+    pct_agreement   = 100 * abs(step3_mean_acreage - osm_acres) / osm_acres
+
+    @printf("  HEADLINE Oahu Opportunity Cost (Step 2 measured %.2f ac x flat FHFA rate \$%.0f/ac): \$%.3fB\n",
+            osm_acres, oahu_flat_rate, headline_oc / 1e9)
+    @printf("  Headline (Step 2) vs. consistency-check (Step 3) acreage agreement: %.2f%%\n", pct_agreement)
 
     rows = NamedTuple{(:Metric, :Value), Tuple{String, String}}[]
-    add_row!(rows, "Total Golf Courses (Oahu, OSM polygons)",      nrow(oahu_golf_geo))
+    add_row!(rows, "Total Golf Courses (Oahu, OSM polygons, Ko'olau duplicate excluded)", nrow(oahu_golf_geo))
     add_row!(rows, "Total Unique TMKs (Step 2)",                   replace(@sprintf("%d", length(unique_tmks)), r"(?<=\d)(?=(\d{3})+$)" => ","))
     add_row!(rows, "TMKs Matched in Cadastre",                     replace(@sprintf("%d", nrow(matched_parcels)), r"(?<=\d)(?=(\d{3})+$)" => ","))
-    add_row!(rows, "OSM-Derived Legal Footprint (acres)",          @sprintf("%.2f", osm_acres))
-    for (i, val) in enumerate(oahu_agg_dedup)
-        add_row!(rows, "Oahu Opportunity Cost - Imputation $i (\$B)", @sprintf("%.3f", val / 1e9))
-    end
-    add_row!(rows, "Pooled Oahu Opportunity Cost - q_bar (\$B)",   @sprintf("%.3f", q_bar / 1e9))
-    add_row!(rows, "Standard Error (\$B)",                         @sprintf("%.3f", se    / 1e9))
-    add_row!(rows, "95% CI Lower (\$B)",                           @sprintf("%.3f", ci_lo / 1e9))
-    add_row!(rows, "95% CI Upper (\$B)",                           @sprintf("%.3f", ci_hi / 1e9))
+    add_row!(rows, "HEADLINE: OSM-Derived Legal Footprint (acres, Step 2, P5-13/P5-15-corrected)", @sprintf("%.2f", osm_acres))
+    add_row!(rows, "HEADLINE: Oahu Opportunity Cost (Step 2 measured acreage x flat FHFA rate, \$B)", @sprintf("%.3f", headline_oc / 1e9))
+    add_row!(rows, "Consistency Check: Unique Oahu Courses (Step 3, crosswalk-identified)", nrow(master_keep))
+    add_row!(rows, "Consistency Check: Mean Acreage (Step 3, national-imputed, ac)", @sprintf("%.2f", step3_mean_acreage))
+    add_row!(rows, "Consistency Check: Pooled Oahu Opportunity Cost - q_bar (\$B)",   @sprintf("%.3f", q_bar / 1e9))
+    add_row!(rows, "Consistency Check: Standard Error (\$B)",                         @sprintf("%.3f", se    / 1e9))
+    add_row!(rows, "Consistency Check: 99% CI Lower (\$B)",                           @sprintf("%.3f", ci_lo / 1e9))
+    add_row!(rows, "Consistency Check: 99% CI Upper (\$B)",                           @sprintf("%.3f", ci_hi / 1e9))
+    add_row!(rows, "Headline vs. Consistency-Check Acreage Agreement (%)",            @sprintf("%.2f%%", pct_agreement))
     !isnan(official_area_acres) &&
         add_row!(rows, "Total Official Area (acres)", @sprintf("%.2f", official_area_acres))
 
