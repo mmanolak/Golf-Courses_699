@@ -1765,6 +1765,34 @@ $28.6B **four paragraphs apart**.
 course-count ladder is well explained in the Summary and is *not* the problem — the problem is
 that the dollar totals attached to those stages aren't reconciled.
 
+**$31.197B resolved, 2026-07-28.** `VERIFIED` by direct trace of `Phase_6.R`'s `run_9_Oahu_
+Opportunity_Cost_Map` (`pool_oahu_oc()`): bbox-filters the *national* Phase 3 M=100 imputed
+datasets to Oahu (21.2-21.9°N, -158.5 to -157.6°W), no spatial deduplication, cross-language
+`full_join` on exact float `(Longitude, Latitude)` — which drops 2 of 39 courses to
+floating-point mismatch, landing on **37 courses**, matching the doc's own annotation exactly.
+Live console output for this same code path, re-run 2026-07-28 (post the X-10 RF switch, so
+Julia's contribution shifted): **$31.282B, 37 courses** — same mechanism, number moved only
+because Julia moved. This is not "R draws" as the Phase 6 Doc's annotation states — it's a
+tri-language `rowMeans`, per `Phase_6.R:1897`; the doc's annotation is itself imprecise, logged
+here rather than corrected (`CLAUDE.md` §2.2, docs are the author's to edit).
+
+**$28.6B searched, not found — retire it.** Checked: (1) the live waffle-chart module
+(`Phase_6.jl` `Mod_12_Zoning_Waffle`, the actual "Preservation Paradox" chart) reads `q_bar`
+directly from each language's own `Phase5_Oahu_Comparison.csv` and computes
+`grand_mean_oc = (oc_jl+oc_py+oc_r)/3` — currently ≈$26.82B, not $28.6B, at any point in this
+audit's history. (2) `Phase 6 Visualization/Bulk/Julia/10_Hawaii_Gap_Dumbbell.jl` and
+`12_Zoning_Waffle_Chart.jl` (the old exploratory prototypes) — the latter hardcodes "$26.67B"
+in its title, explicitly on **mock, not real, data**; neither matches $28.6B. (3) The Jun-12
+archive's own three `Phase5_Oahu_Comparison.csv` files: R $26.735B, Python $26.786B, Julia (PMM)
+$26.316B — mean $26.612B, still no match. No candidate source anywhere in the corpus produces
+$28.6B. Per author instruction: **retiring, not inheriting** — this figure should not appear in
+any future document without a fresh, stated derivation.
+
+**Which figure is authoritative, per author decision (2026-07-28):** Phase 5's own dedicated
+Oahu pipeline (`Phase5_Oahu_Comparison.csv` family) is authoritative over Script 9's map-rendering
+byproduct — but see **P5-11** and **P5-12** below: Phase 5's own $26.844B(R)-family figure turned
+out to have defects of its own, found while reconciling it against Script 9.
+
 ### P5-02 — Summary and Documentation disagree on whether the P-1 discrepancy was resolved
 **Severity:** Major, downgraded from live discrepancy · **Status:** Resolved — Summary is correct, Documentation is stale · **Locus:** Docs
 
@@ -1993,6 +2021,96 @@ non-ASCII characters inside `print()` calls — this was the only instance.
 **Fixed:** replaced "∩" with ASCII "x" (`"...golf courses x zoning)..."`). Purely a print-string
 change, zero effect on any computed value. Re-ran Phase 5 end-to-end after the fix — completed
 clean, matching R's and Julia's 6,066.2-acre total exactly.
+
+### P5-11 — `Phase5_Oahu_Comparison.csv` presents an acreage figure and a dollar figure computed from unrelated course sets, side by side, unreconciled
+**Severity:** Major · **Status:** Confirmed, not fixed · **Locus:** Code / Docs (framing)
+
+`VERIFIED` by reading `Phase_5.R` directly. The output table's rows come from two independent
+computations that share nothing but a file:
+
+- **"OSM-Derived Legal Footprint (acres)": 8,564.23**, **"Total Golf Courses... 39"** — Step 2
+  (`Phase_5.R:196`), `osm_derived_acres <- sum(st_area(st_intersection(oahu_golf_sf, parcels_sf)))`
+  — genuine OSM-polygon ∩ cadastre-parcel geometry, all 39 real OSM course polygons.
+- **"Pooled Oahu Opportunity Cost - q_bar": $26.844B** — Step 3 (`Phase_5.R:213-284`), reads the
+  *national* Phase 3 M=100 imputed datasets, bbox-filters to Oahu (37 course-points), spatially
+  deduplicates against the same 39 OSM polygons (500 m cap, keep-max-`Holes`) down to **33
+  courses**, sums `final_acreage × Baseline_Value_Per_Acre` per imputation, pools via Rubin's
+  Rules. Mean acreage actually behind this figure across M=100: **5,420.26 ac** — reproduced
+  exactly (`q_bar` matches to the dollar) by re-running this logic standalone.
+
+**5,420.26 ac ≠ 8,564.23 ac, and 33 courses ≠ 39 courses — the acreage row and the dollar row in
+one output table are not the same computation and were never reconciled.** Any reader (including
+this audit, until reconciling this against Script 9 forced a closer look) will assume they're
+paired — the columns of one CSV, read top to bottom, read as a coherent derivation. They aren't.
+**Needed: either derive the dollar figure from the same 8,564.23 ac / 39-course polygon-verified
+footprint, or add an explicit note in the output that the two figures use different course sets
+and acreage sources.** Not fixed — freeze holds; this is a finding, not a patch. See **P5-12**
+for why the 33-course figure is additionally unreliable on its own terms.
+
+### P5-12 — Phase 5's Oahu spatial deduplication frequently merges distinct, adjacent golf courses, not just true duplicates — confirmed at both Oahu and national scale
+**Severity:** Critical · **Status:** Confirmed, root cause identified, not fixed · **Locus:** Code
+
+Surfaced diagnosing **P5-01**'s Script-9-vs-Phase-5 17% gap. The gap is not acreage or valuation
+divergence — `Baseline_Value_Per_Acre` is identical ($4,952,600/ac flat) in both computations.
+It is entirely the dedup step (`Phase_5.R:230-266`, `st_nearest_feature` + 500 m cap + keep-
+max-`Holes`), which Script 9 skips and Phase 5 applies. Examined all 4 groups Phase 5 collapses
+(37 → 33 course-points):
+
+| Winning course (kept) | Merged-away course (dropped) | Same-named OSM polygon exists elsewhere? |
+|---|---|---|
+| The Turtle Bay Resort & Golf Club (36 holes) → snapped to "Kulima Golf Course" polygon | **Kahuku Golf Course** (9 holes) | **Yes** — polygon 28, "Kahuku Golf Course", 58.75 ac, sits completely unmatched |
+| Ewa Beach Golf Club (18 holes) → snapped to its own polygon | **Hoakalei Country Club** (18 holes) | **Yes** — polygon 3, "Hoakalei Country Club", 244.07 ac, sits unmatched |
+| Waikele Golf Club (18 holes) → snapped to its own polygon | **Ted Makalena Golf Course** (18 holes) | **Yes** — polygon 35, "Ted Makalena Golf Course", 149.26 ac, sits unmatched |
+| Makaha Valley Country Club (18 holes) | Makaha Resort Golf Club (18 holes) | No same-named polygon found elsewhere — genuinely ambiguous, plausibly a real duplicate |
+
+**3 of 4 collapsed groups are `VERIFIED` mismatches, not duplicates.** Kahuku Golf Course,
+Hoakalei Country Club, and Ted Makalena Golf Course are real, distinct, separately-operating
+Oahu courses, each with its *own* correctly-named OSM polygon sitting unmatched elsewhere in the
+same 39-polygon set — proof that `st_nearest_feature()` is snapping the baseline point to the
+wrong (geometrically closer but wrongly-named) neighboring polygon, not correctly resolving each
+course to its own polygon. This also explains part of **P5-09**'s "39 today" note and this
+entry's predecessor conclusion in the F-7 review ("the dedup/matching algorithm... reads as
+identical across all three") — that prior assessment checked that the *algorithm* runs
+consistently across languages, not that the algorithm produces *correct* matches; it does not,
+in 3 of 4 Oahu cases. Only the Makaha pair lacks a same-named orphan polygon and remains a
+genuinely ambiguous case — possibly a real duplicate Phase 1's `(round(lat,4), round(lon,4),
+Course_Name)` key should have caught (different name strings for the same facility), possibly
+two distinct adjacent courses. Not resolved either way from available data.
+
+**Phase 1's national dedup key is not implicated** — `(round(lat,4), round(lon,4), Course_Name)`
+correctly treats all three verified-mismatched pairs as distinct (different names, different
+coordinates), which they are. The mechanism that drops these courses is Phase 5's own
+Oahu-specific, geometry-only nearest-polygon match — a different algorithm entirely, present
+**only** in `Phase_5.R`'s Step 3, nowhere in Phase 1-4's national pipeline.
+
+**National blast radius, `VERIFIED` by running the identical algorithm (500 m cap,
+keep-max-`Holes`) against the full national Phase 1 baseline (16,292 courses, post-**P1-06**
+dedup) and the national Phase 2 OSM polygon set (15,166 polygons):** 232 groups, 473 courses
+involved, net collapse of **241 courses (1.48%)** if this mechanism were ever applied nationally.
+Spot-checked 15 sample groups: the same signature — pairs/triples of clearly distinct, well-known
+courses (e.g. Grey Oaks Country Club + Bear's Paw Country Club + Naples Grande Golf Club, three
+separate Naples, FL clubs, merged into one group; Hapuna Golf Course + Mauna Kea Resort, two
+distinct, famous, adjacent Big Island resort courses). **This mechanism is not used anywhere in
+the national pipeline** — Phase 1-4's headline $935-951B figures are unaffected and safe. This
+number quantifies a hypothetical ("if this exact Oahu-only code were ever pointed at national
+data"), not a live defect in the national total — logged because the author's own hypothesis
+raised exactly this question and the evidence answers it: the mechanism would corrupt the
+national figure if applied, but is not currently applied there.
+
+**Not fixed — freeze holds.** Recommend, if pursued: replace or supplement the pure-geometric
+`st_nearest_feature` match with a name-aware step (e.g. require substring/fuzzy match on
+`Course_Name` before accepting a nearest-polygon assignment, or fall back to Phase 1's own
+`(round(lat,4), round(lon,4), Course_Name)` key first and use nearest-polygon only for points
+that key doesn't resolve). This is a Phase 5-only fix; does not touch Phase 1-4 or any
+non-Hawaii output.
+
+**Confirms author's flat-rate observation:** $26.844B ÷ 5,420.26 ac = $4,952,530/ac, matching
+the flat Honolulu Urban FHFA rate ($4,952,600/ac) to within rounding — `VERIFIED`. Every course
+in the headline Oahu figure, including North Shore/rural-feeling courses, is priced at the same
+flat urban-residential rate. The Rural-USDA sensitivity (`run_9b_...`, Phase 6 only, Development
+Plan zones 15-20) addresses a differentiation the headline computation does not apply at all —
+not a variant of a partially-applied adjustment, but the only place in the codebase where Oahu
+courses are ever priced at anything other than the single flat FHFA rate.
 
 ---
 
