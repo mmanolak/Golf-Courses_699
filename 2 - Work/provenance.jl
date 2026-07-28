@@ -13,14 +13,13 @@ const _KEY_PACKAGE_WHITELIST = [
 function _git(repo_dir::AbstractString, args...)
     try
         cmd = Cmd(vcat(["git", "-C", repo_dir], collect(String, args)))
-        out = read(cmd, String)
+        # Issue_Register.md B-8 follow-up (2026-07-28): root cause confirmed on the
+        # 2026-07-28 RF cascade - Phase 1/2's `using ArchGDAL, GeoDataFrames` export
+        # their own `read` bindings, ambiguating the bare `read` call at `Main` scope.
+        # Qualify explicitly rather than relying on whatever `read` resolves to here.
+        out = Base.read(cmd, String)
         return strip(out)
     catch e
-        # Issue_Register.md B-8 follow-up (2026-07-28): Phase 1/2's blank git_sha rows
-        # could not be reproduced standalone (a direct `git -C <phase_dir> rev-parse HEAD`
-        # succeeds outside the cascade). Root cause remains unconfirmed - surface the
-        # exception instead of swallowing it, so a recurrence is diagnosable from the
-        # console/log rather than showing up only as an unexplained blank CSV field.
         @warn "[provenance] git command failed" repo_dir args exception=e
         return nothing
     end
