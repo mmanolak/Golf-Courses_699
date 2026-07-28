@@ -1426,11 +1426,15 @@ UHM_Palette = (green = UHM_GREEN, gold = UHM_GOLD, silver = UHM_SILVER, ocean = 
 
 # === 3. FUNCTIONS ===
 
-# Read Phase 5b Rubin-pooled q̄ from the language-specific Oahu comparison CSV.
+# P5-11 (2026-07-28): Phase 5's Oahu comparison CSV now reports two figures, not one --
+# a HEADLINE (Step 2 measured acreage x flat FHFA rate) and a labeled Consistency Check
+# (the old "Pooled Oahu Opportunity Cost - q_bar" row, national-imputed/crosswalk-based).
+# Per the author's decision, the headline is the measured figure; this chart now reads
+# that row instead of the old metric name, which no longer exists in the output.
 function read_qbar(path::String)
     df  = CSV.read(path, DataFrame)
-    row = findfirst(df.Metric .== "Pooled Oahu Opportunity Cost - q_bar (\$B)")
-    row === nothing && error("q_bar row not found in $path")
+    row = findfirst(df.Metric .== "HEADLINE: Oahu Opportunity Cost (Step 2 measured acreage x flat FHFA rate, \$B)")
+    row === nothing && error("HEADLINE OC row not found in $path")
     parse(Float64, replace(string(df[row, :Value]), "," => "")) * 1e9
 end
 

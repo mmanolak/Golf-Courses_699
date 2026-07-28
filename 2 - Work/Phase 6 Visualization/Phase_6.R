@@ -1695,6 +1695,20 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
     R_IMPUTED_PATHS <- file.path(PHASE3_R_DIR, paste0("R_Imputed_Dataset_", 1:100, ".csv"))
     PY_IMPUTED_PATHS <- file.path(PHASE3_PY_DIR, paste0("Py_Imputed_Dataset_", 1:100, ".csv"))
     JL_IMPUTED_PATHS <- file.path(PHASE3_JL_DIR, paste0("Jl_Imputed_Dataset_", 1:100, ".csv"))
+    # P5-12 (2026-07-28): hand-verified crosswalk, replaces this script's own nearest-feature
+    # polygon join -- see join_oc_to_polygons below.
+    CROSSWALK_CSV <- file.path(
+        WORK_DIR, "Phase 5 The Hawaii Micro-Case Study", "Data", "Oahu_Course_Polygon_Crosswalk.csv"
+    )
+    PHASE1_R_PATH <- file.path(
+        WORK_DIR, "Phase 1 Parsing", "Data", "R", "R_Phase1_Baseline_Golf_Valuation.csv"
+    )
+    PHASE1_PY_PATH <- file.path(
+        WORK_DIR, "Phase 1 Parsing", "Data", "python", "Py_Phase1_Baseline_Golf_Valuation.csv"
+    )
+    PHASE1_JL_PATH <- file.path(
+        WORK_DIR, "Phase 1 Parsing", "Data", "Julia", "Jl_Phase1_Baseline_Golf_Valuation.csv"
+    )
     OUTPUT_DIR <- file.path(SCRIPT_DIR, "output")
     THESIS_DIR <- file.path(OUTPUT_DIR, "Final_Thesis_Figures")
     QA_DIR <- file.path(OUTPUT_DIR, "QA_Verification")
@@ -1732,29 +1746,69 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
         if ("osm_acreage" %in% names(df)) df[["osm_acreage"]] else df[["final_acreage"]]
     }
 
-    # Nearest-feature spatial join: attach pooled_opp_cost from a point sf object
-    # to a polygon sf object, discarding matches beyond JOIN_DIST_CAP metres.
-    # Returns the polygon sf with added columns pooled_opp_cost and join_dist_m.
-    join_oc_to_polygons <- function(polygons_sf, pts_sf, oc_vals) {
-        nn_idx <- st_nearest_feature(polygons_sf, pts_sf)
-        join_dist <- as.numeric(
-            st_distance(polygons_sf, pts_sf[nn_idx, ], by_element = TRUE)
-        )
-        polygons_sf |>
-            mutate(
-                pooled_opp_cost = oc_vals[nn_idx],
-                join_dist_m = join_dist,
-                pooled_opp_cost = if_else(
-                    join_dist_m > JOIN_DIST_CAP, NA_real_, pooled_opp_cost
-                )
-            )
+    # P5-12 (2026-07-28): st_nearest_feature()'s unverified many-to-one geometric snap
+    # silently merged distinct, adjacent courses (Kahuku, Hoakalei, Ted Makalena -> the
+    # wrong polygon) both in Phase 5's own Step 3 and in this script's polygon join.
+    # build_crosswalk_keeplist() replicates Phase 5 Step 3's crosswalk-based course
+    # identification for one language's own Phase 1 baseline (Course_Name, coordinates
+    # rounded to 6dp -- P5-01 already found exact-float coordinate joins silently drop
+    # rows across a CSV round-trip; the crosswalk itself is language-agnostic (one file,
+    # shared by all three), only the Phase 1 Course_Name/coordinate join differs per language.
+    # P5-17 (2026-07-28): Python/Julia's Phase 1 Course_Name carries a "-City,State" suffix
+    # R's does not ("Pearl Country Club-Aiea,HI" vs "Pearl Country Club") -- joining the
+    # crosswalk (R-sourced Course_Name) against Python/Julia's own baseline by Course_Name
+    # matches zero rows. Resolve the crosswalk against R's baseline for canonical
+    # coordinates (VERIFIED: rounded coordinates match 37-of-37 across all three languages'
+    # independent Phase 1 outputs), then match those coordinates into phase1_path's own
+    # Holes/Baseline_Value_Per_Acre -- works for R's own call too (coordinates match
+    # themselves trivially), so one code path serves all three languages.
+    build_crosswalk_keeplist <- function(phase1_path, crosswalk, phase1_r_path) {
+        baseline_r <- read_csv(phase1_r_path, show_col_types = FALSE) |>
+            filter(County_Name == "Honolulu" | FIPS == 15003) |>
+            mutate(lon6 = round(Longitude, 6), lat6 = round(Latitude, 6)) |>
+            select(Course_Name, lon6, lat6)
+        baseline_own <- read_csv(phase1_path, show_col_types = FALSE) |>
+            filter(County_Name == "Honolulu" | FIPS == 15003) |>
+            mutate(lon6 = round(Longitude, 6), lat6 = round(Latitude, 6)) |>
+            select(lon6, lat6, Holes)
+        baseline <- baseline_r |> left_join(baseline_own, by = c("lon6", "lat6"))
+        crosswalk |>
+            left_join(baseline, by = "Course_Name") |>
+            mutate(group_id = ifelse(
+                is.na(Poly_OSM_ID),
+                paste0("solo_", Course_Name),
+                paste0("osmid_", Poly_OSM_ID)
+            )) |>
+            # Makaha Valley/Makaha Resort share a polygon and are genuinely ambiguous
+            # (crosswalk Notes); keep the higher-Holes record.
+            arrange(group_id, desc(Holes)) |>
+            filter(!duplicated(group_id)) |>
+            select(group_id, lon6, lat6, Holes, Poly_OSM_ID)
     }
 
-    # Filter one language's imputed datasets to the Oahu bounding box, compute OC
-    # per course coordinate for each imputation, then return Rubin's q_bar (mean).
-    pool_oahu_oc <- function(paths, lang_label) {
+    # Direct crosswalk join: attach pooled_opp_cost to each polygon by matching its own
+    # osm_id against the pooled group's Poly_OSM_ID -- no distance, no snapping, no cap.
+    # Solo/orphan courses (no Poly_OSM_ID, e.g. Barbers Point, Luana Hills) have no
+    # polygon to render onto and are correctly left unmatched (gray on the map), same as
+    # a course that exceeded the old distance cap -- but for a documented reason instead
+    # of a silent one.
+    join_oc_to_polygons <- function(polygons_sf, pooled_df) {
+        polygons_sf |>
+            mutate(osm_id_num = as.numeric(osm_id)) |>
+            left_join(
+                pooled_df |> filter(!is.na(Poly_OSM_ID)) |> select(Poly_OSM_ID, pooled_opp_cost),
+                by = c("osm_id_num" = "Poly_OSM_ID")
+            ) |>
+            select(-osm_id_num)
+    }
+
+    # Filter one language's imputed datasets to the Oahu bounding box, identify courses
+    # via the crosswalk-based keep_list (not raw bbox + no dedup), compute OC per course
+    # for each imputation, then return Rubin's q_bar (mean), keyed by the crosswalk's
+    # stable group_id (not exact-float Longitude/Latitude -- see P5-01).
+    pool_oahu_oc <- function(paths, lang_label, keep_list) {
         total_list <- vector("list", M)
-        cat(sprintf("  [%s] Pooling %d imputations...\n", lang_label, M))
+        cat(sprintf("  [%s] Pooling %d imputations (crosswalk-identified)...\n", lang_label, M))
         for (i in seq_len(M)) {
             df <- read_csv(paths[i], show_col_types = FALSE) |>
                 filter(
@@ -1763,12 +1817,16 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
                 ) |>
                 mutate(
                     acreage  = get_acreage(pick(everything())),
-                    opp_cost = acreage * Baseline_Value_Per_Acre
-                )
+                    opp_cost = acreage * Baseline_Value_Per_Acre,
+                    lon6 = round(Longitude, 6),
+                    lat6 = round(Latitude, 6)
+                ) |>
+                inner_join(keep_list, by = c("lon6", "lat6", "Holes"))
             total_list[[i]] <- df |>
-                group_by(Longitude, Latitude) |>
+                group_by(group_id) |>
                 summarise(
                     total_opp_cost = sum(opp_cost, na.rm = TRUE),
+                    Poly_OSM_ID     = first(Poly_OSM_ID),
                     .groups        = "drop"
                 ) |>
                 mutate(imputation = i)
@@ -1778,9 +1836,10 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
         # [METHODOLOGY] Rubin's Rules q_bar: mean of per-imputation course-level OC
         #               values across M = 100 imputations for this language group.
         bind_rows(total_list) |>
-            group_by(Longitude, Latitude) |>
+            group_by(group_id) |>
             summarise(
                 pooled_opp_cost = mean(total_opp_cost, na.rm = TRUE),
+                Poly_OSM_ID     = first(Poly_OSM_ID),
                 .groups         = "drop"
             )
     }
@@ -1866,37 +1925,47 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
     dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
     for (f in c(
-        POLYGONS_GPKG, PARCELS_GPKG, PHASE2_CSV,
+        POLYGONS_GPKG, PARCELS_GPKG, PHASE2_CSV, CROSSWALK_CSV,
+        PHASE1_R_PATH, PHASE1_PY_PATH, PHASE1_JL_PATH,
         R_IMPUTED_PATHS, PY_IMPUTED_PATHS, JL_IMPUTED_PATHS
     )) {
         if (!file.exists(f)) stop(sprintf("[FATAL] Input not found:\n  %s", f))
     }
 
+    crosswalk_raw <- read_csv(CROSSWALK_CSV, show_col_types = FALSE)
+    keep_list_r  <- build_crosswalk_keeplist(PHASE1_R_PATH,  crosswalk_raw, PHASE1_R_PATH)
+    keep_list_py <- build_crosswalk_keeplist(PHASE1_PY_PATH, crosswalk_raw, PHASE1_R_PATH)
+    keep_list_jl <- build_crosswalk_keeplist(PHASE1_JL_PATH, crosswalk_raw, PHASE1_R_PATH)
 
-    #  Step 1: Filter imputed datasets to Oahu and pool OC per language; compute Grand Mean
 
-    cat("[Step 1] Filtering imputed datasets to Oahu and pooling OC (tri-language)...\n")
-    pooled_r <- pool_oahu_oc(R_IMPUTED_PATHS, "R")
-    pooled_py <- pool_oahu_oc(PY_IMPUTED_PATHS, "Py")
-    pooled_jl <- pool_oahu_oc(JL_IMPUTED_PATHS, "Jl")
+    #  Step 1: Filter imputed datasets to Oahu, identify courses via the crosswalk, and
+    #          pool OC per language; compute Grand Mean
+
+    cat("[Step 1] Filtering imputed datasets to Oahu and pooling OC (tri-language, crosswalk-identified)...\n")
+    pooled_r <- pool_oahu_oc(R_IMPUTED_PATHS, "R", keep_list_r)
+    pooled_py <- pool_oahu_oc(PY_IMPUTED_PATHS, "Py", keep_list_py)
+    pooled_jl <- pool_oahu_oc(JL_IMPUTED_PATHS, "Jl", keep_list_jl)
 
     # [METHODOLOGY] Grand Mean = arithmetic mean of three independently Rubin-pooled
-    #               OC vectors (M=100 each). full_join on coordinate key preserves all
-    #               courses regardless of which language-dataset covers them.
+    #               OC vectors (M=100 each). full_join on the crosswalk's group_id --
+    #               a stable string key shared identically across all three languages'
+    #               copies of the crosswalk -- replaces the P5-01-identified exact-float
+    #               (Longitude, Latitude) join, which silently dropped 2 of 39 courses to
+    #               floating-point mismatch across the R/Python/Julia CSV round-trip.
     pooled_oahu <- pooled_r |>
-        rename(oc_r = pooled_opp_cost) |>
+        select(group_id, Poly_OSM_ID, oc_r = pooled_opp_cost) |>
         full_join(
-            pooled_py |> rename(oc_py = pooled_opp_cost),
-            by = c("Longitude", "Latitude")
+            pooled_py |> select(group_id, oc_py = pooled_opp_cost),
+            by = "group_id"
         ) |>
         full_join(
-            pooled_jl |> rename(oc_jl = pooled_opp_cost),
-            by = c("Longitude", "Latitude")
+            pooled_jl |> select(group_id, oc_jl = pooled_opp_cost),
+            by = "group_id"
         ) |>
         mutate(
             pooled_opp_cost = rowMeans(cbind(oc_r, oc_py, oc_jl), na.rm = TRUE)
         ) |>
-        select(Longitude, Latitude, pooled_opp_cost)
+        select(group_id, Poly_OSM_ID, pooled_opp_cost)
 
     cat(sprintf(
         "\n  Grand Mean Oahu total: $%.3fB across %d courses\n",
@@ -1924,33 +1993,20 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
     ))
 
 
-    #  Step 3: Spatial join - Grand Mean points to polygons
+    #  Step 3: Crosswalk join - Grand Mean group_ids to polygons (P5-12)
 
-    cat("\n[Step 3] Spatial join for Map 9.1 (Grand Mean points → polygons)...\n")
+    cat("\n[Step 3] Crosswalk join for Map 9.1 (Grand Mean -> polygons)...\n")
 
-    # [METHODOLOGY] st_as_sf converts the Longitude/Latitude coordinate key to point
-    #               geometry; st_transform reprojects to EPSG 32604 to match polygon CRS.
-    oahu_pts_mice <- pooled_oahu |>
-        st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) |>
-        st_transform(OAHU_CRS)
-
-    # [METHODOLOGY] join_oc_to_polygons uses st_nearest_feature() to assign each golf
-    #               polygon its nearest Grand Mean OC point; matches > JOIN_DIST_CAP
-    #               (500 m) are set to NA to prevent spurious long-range assignments.
-    golf_oc_mice <- join_oc_to_polygons(
-        golf_polygons_sf, oahu_pts_mice, pooled_oahu$pooled_opp_cost
-    )
+    # [METHODOLOGY] join_oc_to_polygons now matches each polygon to its pooled OC by its
+    # own osm_id (P5-12 crosswalk), replacing st_nearest_feature() -- no distance, no cap,
+    # no risk of snapping to a geometrically-closer-but-wrong neighboring course.
+    golf_oc_mice <- join_oc_to_polygons(golf_polygons_sf, pooled_oahu)
 
     n_matched_mice <- sum(!is.na(golf_oc_mice$pooled_opp_cost))
     n_unmatched_mice <- sum(is.na(golf_oc_mice$pooled_opp_cost))
     cat(sprintf(
-        "  %d matched within %d m  |  %d exceeded cap (gray).\n",
-        n_matched_mice, JOIN_DIST_CAP, n_unmatched_mice
-    ))
-    cat(sprintf(
-        "  Median join distance: %.1f m  |  Max: %.1f m\n",
-        median(golf_oc_mice$join_dist_m),
-        max(golf_oc_mice$join_dist_m)
+        "  %d polygons matched via crosswalk  |  %d unmatched (gray -- no baseline course resolved to this polygon, e.g. P5-16).\n",
+        n_matched_mice, n_unmatched_mice
     ))
 
 
@@ -1986,7 +2042,7 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
         caption_text = paste0(
             "Opportunity Cost = Grand Mean of three independently Rubin-pooled OC estimates ",
             "(100 Python, 100 R, 100 Julia MICE imputations). ",
-            "Polygon-to-point assignment via nearest-feature spatial join (cap: 500 m).\n",
+            "Polygon-to-course assignment via the hand-verified Oahu crosswalk (P5-12).\n",
             "Sources: OpenStreetMap; FHFA residential land price index (urban); ",
             "USDA agricultural land values (rural). CRS: WGS 84 / UTM Zone 4N (EPSG 32604)."
         )
@@ -1996,23 +2052,30 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
 
 
     #  Step 6: Observed-only Oahu OC from Phase 2
+
+    cat("\n[Step 6] Computing observed-only Oahu OC from Phase 2 (crosswalk-identified)...\n")
+
     # [METHODOLOGY] Phase 2 acreage_source identifies directly measured courses.
     #               Filtering to acreage_source != "MICE_Target" and the Oahu
     #               bounding box yields observed-only OC values with no imputation.
-    #               No pooling required - one observed value per course.
-
-    cat("\n[Step 6] Computing observed-only Oahu OC from Phase 2...\n")
-
     obs_oahu <- read_csv(PHASE2_CSV, show_col_types = FALSE) |>
         filter(
             acreage_source != "MICE_Target",
             Latitude >= OAHU_LAT_MIN, Latitude <= OAHU_LAT_MAX,
             Longitude >= OAHU_LON_MIN, Longitude <= OAHU_LON_MAX
         ) |>
-        mutate(opp_cost = final_acreage * Baseline_Value_Per_Acre) |>
-        group_by(Longitude, Latitude) |>
+        mutate(
+            opp_cost = final_acreage * Baseline_Value_Per_Acre,
+            lon6 = round(Longitude, 6),
+            lat6 = round(Latitude, 6)
+        ) |>
+        # P5-12: identify by the R crosswalk (PHASE2_CSV is R-sourced), not raw coordinates,
+        # so a course split across duplicate/adjacent records still resolves to one polygon.
+        inner_join(keep_list_r |> select(group_id, lon6, lat6, Poly_OSM_ID), by = c("lon6", "lat6")) |>
+        group_by(group_id) |>
         summarise(
             pooled_opp_cost = sum(opp_cost, na.rm = TRUE),
+            Poly_OSM_ID     = first(Poly_OSM_ID),
             .groups         = "drop"
         )
 
@@ -2027,28 +2090,17 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
     ))
 
 
-    #  Step 7: Spatial join - observed-only points to polygons
+    #  Step 7: Crosswalk join - observed-only group_ids to polygons
 
-    cat("\n[Step 7] Spatial join for Map 9.2 (observed points → polygons)...\n")
+    cat("\n[Step 7] Crosswalk join for Map 9.2 (observed -> polygons)...\n")
 
-    # [METHODOLOGY] st_as_sf converts observed coordinate key to point geometry;
-    #               st_transform reprojects to EPSG 32604 to match polygon CRS.
-    oahu_pts_obs <- obs_oahu |>
-        st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) |>
-        st_transform(OAHU_CRS)
-
-    # [METHODOLOGY] join_oc_to_polygons uses st_nearest_feature() to assign each
-    #               golf polygon its nearest observed OC point; matches > JOIN_DIST_CAP
-    #               (500 m) are set to NA.
-    golf_oc_obs <- join_oc_to_polygons(
-        golf_polygons_sf, oahu_pts_obs, obs_oahu$pooled_opp_cost
-    )
+    golf_oc_obs <- join_oc_to_polygons(golf_polygons_sf, obs_oahu)
 
     n_matched_obs <- sum(!is.na(golf_oc_obs$pooled_opp_cost))
     n_unmatched_obs <- sum(is.na(golf_oc_obs$pooled_opp_cost))
     cat(sprintf(
-        "  %d matched within %d m  |  %d exceeded cap or no observed data (gray).\n",
-        n_matched_obs, JOIN_DIST_CAP, n_unmatched_obs
+        "  %d polygons matched via crosswalk  |  %d unmatched (gray -- no observed, non-MICE_Target course resolved to this polygon).\n",
+        n_matched_obs, n_unmatched_obs
     ))
 
 
@@ -2067,7 +2119,7 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
         caption_text = paste0(
             "Opportunity Cost = directly measured OSM acreage × baseline land value per acre. ",
             "Restricted to courses with acreage_source ≠ MICE_Target. ",
-            "Polygon-to-point assignment via nearest-feature spatial join (cap: 500 m).\n",
+            "Polygon-to-course assignment via the hand-verified Oahu crosswalk (P5-12).\n",
             "Sources: OpenStreetMap; FHFA residential land price index (urban); ",
             "USDA agricultural land values (rural). CRS: WGS 84 / UTM Zone 4N (EPSG 32604)."
         )
@@ -2094,6 +2146,15 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
     PHASE1_R_PATH <- file.path(
         WORK_DIR, "Phase 1 Parsing", "Data", "R",
         "R_Phase1_Baseline_Golf_Valuation.csv"
+    )
+    PHASE1_PY_PATH <- file.path(
+        WORK_DIR, "Phase 1 Parsing", "Data", "python", "Py_Phase1_Baseline_Golf_Valuation.csv"
+    )
+    PHASE1_JL_PATH <- file.path(
+        WORK_DIR, "Phase 1 Parsing", "Data", "Julia", "Jl_Phase1_Baseline_Golf_Valuation.csv"
+    )
+    CROSSWALK_CSV <- file.path(
+        WORK_DIR, "Phase 5 The Hawaii Micro-Case Study", "Data", "Oahu_Course_Polygon_Crosswalk.csv"
     )
     DEV_PLAN_GEOJSON <- file.path(
         WORK_DIR, "00 - Data Sources", "Honolulu", "Zoning_Map_Boundary.geojson"
@@ -2177,11 +2238,37 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
         df$Baseline_Value_Per_Acre[[1]]
     }
 
-    # Build a poly_id -> Zone_Code lookup from golf course polygon centroids joined
-    # against the Development Plan boundary layer (ZONMAP_NO 0-24).
+    # P5-12/P5-17 (2026-07-28): same crosswalk-based course identification as run_9 --
+    # resolve the R-sourced crosswalk against R's baseline for canonical coordinates
+    # (P5-17: Python/Julia's own Course_Name field doesn't match the crosswalk's), then
+    # match those coordinates into phase1_path's own Holes/Baseline_Value_Per_Acre.
+    build_crosswalk_keeplist <- function(phase1_path, crosswalk, phase1_r_path) {
+        baseline_r <- read_csv(phase1_r_path, show_col_types = FALSE) |>
+            filter(County_Name == "Honolulu" | FIPS == 15003) |>
+            mutate(lon6 = round(Longitude, 6), lat6 = round(Latitude, 6)) |>
+            select(Course_Name, lon6, lat6)
+        baseline_own <- read_csv(phase1_path, show_col_types = FALSE) |>
+            filter(County_Name == "Honolulu" | FIPS == 15003) |>
+            mutate(lon6 = round(Longitude, 6), lat6 = round(Latitude, 6)) |>
+            select(lon6, lat6, Holes)
+        baseline <- baseline_r |> left_join(baseline_own, by = c("lon6", "lat6"))
+        crosswalk |>
+            left_join(baseline, by = "Course_Name") |>
+            mutate(group_id = ifelse(
+                is.na(Poly_OSM_ID),
+                paste0("solo_", Course_Name),
+                paste0("osmid_", Poly_OSM_ID)
+            )) |>
+            arrange(group_id, desc(Holes)) |>
+            filter(!duplicated(group_id)) |>
+            select(group_id, lon6, lat6, Holes, Poly_OSM_ID)
+    }
+
+    # Build an osm_id -> Zone_Code lookup from golf course polygon centroids joined
+    # against the Development Plan boundary layer (ZONMAP_NO 0-24). osm_id (not
+    # positional poly_id) so this lookup composes safely with the P5-12 crosswalk below.
     build_devplan_lookup <- function(golf_polygons_sf, devplan_sf) {
         golf_centroids <- golf_polygons_sf |>
-            mutate(poly_id = row_number()) |>
             st_centroid()  # [METHODOLOGY]
 
         zone_sf <- st_join(  # [METHODOLOGY]
@@ -2193,56 +2280,44 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
 
         poly_zones <- zone_sf |>
             st_drop_geometry() |>
-            group_by(poly_id) |>
+            group_by(osm_id) |>
             slice_head(n = 1) |>
             ungroup() |>
             mutate(Zone_Code = as.character(ZONMAP_NO)) |>
-            select(poly_id, Zone_Code)
+            select(osm_id, Zone_Code)
 
-        na_ids <- poly_zones |> filter(is.na(Zone_Code)) |> pull(poly_id)
+        na_ids <- poly_zones |> filter(is.na(Zone_Code)) |> pull(osm_id)
         if (length(na_ids) > 0) {
-            na_centroids <- golf_centroids |> filter(poly_id %in% na_ids)
+            na_centroids <- golf_centroids |> filter(osm_id %in% na_ids)
             nn_idx <- st_nearest_feature(na_centroids, devplan_sf)  # [METHODOLOGY]
             fallback <- tibble(
-                poly_id   = na_centroids$poly_id,
+                osm_id    = na_centroids$osm_id,
                 Zone_Code = as.character(devplan_sf$ZONMAP_NO[nn_idx])
             )
             poly_zones <- poly_zones |>
-                filter(!poly_id %in% na_ids) |>
+                filter(!osm_id %in% na_ids) |>
                 bind_rows(fallback)
         }
         poly_zones
     }
 
-    # Assign each Oahu course coordinate to a Development Plan zone via nearest
-    # golf polygon. Returns course_coords with Zone_Code and join_dist_m appended.
-    assign_course_zones <- function(course_coords, golf_polygons_sf, poly_zones) {
-        course_pts_sf <- course_coords |>
-            st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) |>  # [METHODOLOGY]
-            st_transform(OAHU_CRS)  # [METHODOLOGY]
-
-        nn_idx  <- st_nearest_feature(course_pts_sf, golf_polygons_sf)  # [METHODOLOGY]
-        nn_dist <- as.numeric(
-            st_distance(course_pts_sf, golf_polygons_sf[nn_idx, ], by_element = TRUE)
-        )
-
-        course_coords |>
-            mutate(
-                poly_id     = if_else(nn_dist <= JOIN_DIST_CAP, nn_idx, NA_integer_),
-                join_dist_m = nn_dist
-            ) |>
-            left_join(poly_zones, by = "poly_id") |>
-            select(Longitude, Latitude, Zone_Code, join_dist_m)
+    # P5-12 (2026-07-28): each course's Development Plan zone is now looked up via its
+    # OWN crosswalk-resolved polygon (Poly_OSM_ID), replacing st_nearest_feature() --
+    # which could assign a course the zone of a geometrically-closer but wrong neighbor
+    # (the same defect class found in Phase 5's Step 3 and this script's own pooling join).
+    assign_course_zones <- function(keep_list, poly_zones) {
+        keep_list |> left_join(poly_zones, by = c("Poly_OSM_ID" = "osm_id"))
     }
 
-    # Pool one language group's 100 imputed datasets with the Development Plan
-    # zone BVPA override. All Oahu BVPA values are first normalized to fhfa_value,
-    # then courses in rural_zones are overridden with usda_value.
-    pool_oahu_oc_sensitivity <- function(paths, lang_label, zone_lookup,
+    # Pool one language group's 100 imputed datasets with the Development Plan zone
+    # BVPA override, identifying courses via the crosswalk-based keep_list (not raw
+    # bbox + no dedup -- P5-12). All Oahu BVPA values are first normalized to
+    # fhfa_value, then courses in rural_zones are overridden with usda_value.
+    pool_oahu_oc_sensitivity <- function(paths, lang_label, keep_list_with_zone,
                                             fhfa_value, usda_value, rural_zones) {
         total_list <- vector("list", M)
         cat(sprintf(
-            "  [%s] Pooling %d imputations (FHFA normalization + Dev Plan rural override)...\n",
+            "  [%s] Pooling %d imputations (FHFA normalization + Dev Plan rural override, crosswalk-identified)...\n",
             lang_label, M
         ))
         for (i in seq_len(M)) {
@@ -2251,10 +2326,8 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
                     Latitude  >= OAHU_LAT_MIN, Latitude  <= OAHU_LAT_MAX,
                     Longitude >= OAHU_LON_MIN, Longitude <= OAHU_LON_MAX
                 ) |>
-                left_join(
-                    zone_lookup |> select(Longitude, Latitude, Zone_Code),
-                    by = c("Longitude", "Latitude")
-                ) |>
+                mutate(lon6 = round(Longitude, 6), lat6 = round(Latitude, 6)) |>
+                inner_join(keep_list_with_zone, by = c("lon6", "lat6", "Holes")) |>
                 mutate(
                     # Normalize ALL Oahu BVPA to verified FHFA value first.
                     # Corrects FIPS-NA courses (Hawaii Kai, Mid-Pacific) whose BVPA
@@ -2271,9 +2344,10 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
                 )
 
             total_list[[i]] <- df |>
-                group_by(Longitude, Latitude) |>
+                group_by(group_id) |>
                 summarise(
                     total_opp_cost = sum(opp_cost, na.rm = TRUE),
+                    Poly_OSM_ID     = first(Poly_OSM_ID),
                     .groups        = "drop"
                 ) |>
                 mutate(imputation = i)
@@ -2284,27 +2358,24 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
         # [METHODOLOGY] Rubin's Rules q_bar: mean of per-imputation course-level OC
         #               values across M = 100 imputations for this language group.
         bind_rows(total_list) |>
-            group_by(Longitude, Latitude) |>
+            group_by(group_id) |>
             summarise(
                 pooled_opp_cost = mean(total_opp_cost, na.rm = TRUE),
+                Poly_OSM_ID     = first(Poly_OSM_ID),
                 .groups         = "drop"
             )
     }
 
-    # Nearest-feature spatial join: attach pooled OC values to golf polygon sf.
-    join_oc_to_polygons <- function(polygons_sf, pts_sf, oc_vals) {
-        nn_idx    <- st_nearest_feature(polygons_sf, pts_sf)  # [METHODOLOGY]
-        join_dist <- as.numeric(
-            st_distance(polygons_sf, pts_sf[nn_idx, ], by_element = TRUE)
-        )
+    # Direct crosswalk join (P5-12): attach pooled OC values to each polygon by its
+    # own osm_id, replacing st_nearest_feature().
+    join_oc_to_polygons <- function(polygons_sf, pooled_df) {
         polygons_sf |>
-            mutate(
-                pooled_opp_cost = oc_vals[nn_idx],
-                join_dist_m     = join_dist,
-                pooled_opp_cost = if_else(
-                    join_dist_m > JOIN_DIST_CAP, NA_real_, pooled_opp_cost
-                )
-            )
+            mutate(osm_id_num = as.numeric(osm_id)) |>
+            left_join(
+                pooled_df |> filter(!is.na(Poly_OSM_ID)) |> select(Poly_OSM_ID, pooled_opp_cost),
+                by = c("osm_id_num" = "Poly_OSM_ID")
+            ) |>
+            select(-osm_id_num)
     }
 
     build_oahu_oc_map <- function(golf_oc_sf, oahu_outline_sf,
@@ -2440,9 +2511,9 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
     cat(sprintf("  %d parcel polygons loaded.\n", nrow(parcels_sf)))
 
 
-    #  Step 3: Build Development Plan zone lookup for Oahu course coordinates
+    #  Step 3: Build Development Plan zone lookup + crosswalk-identified courses (P5-12)
 
-    cat("\n[Step 3] Building Development Plan zone lookup...\n")
+    cat("\n[Step 3] Building Development Plan zone lookup and crosswalk keep-lists...\n")
 
     poly_zones <- build_devplan_lookup(golf_polygons_sf, devplan_sf)
     cat(sprintf(
@@ -2451,18 +2522,17 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
         nrow(golf_polygons_sf)
     ))
 
-    coords_df <- read_csv(R_IMPUTED_PATHS[1], show_col_types = FALSE) |>
-        filter(
-            Latitude  >= OAHU_LAT_MIN, Latitude  <= OAHU_LAT_MAX,
-            Longitude >= OAHU_LON_MIN, Longitude <= OAHU_LON_MAX
-        ) |>
-        select(Longitude, Latitude) |>
-        distinct()
+    crosswalk_raw <- read_csv(CROSSWALK_CSV, show_col_types = FALSE)
+    keep_list_r  <- build_crosswalk_keeplist(PHASE1_R_PATH,  crosswalk_raw, PHASE1_R_PATH)
+    keep_list_py <- build_crosswalk_keeplist(PHASE1_PY_PATH, crosswalk_raw, PHASE1_R_PATH)
+    keep_list_jl <- build_crosswalk_keeplist(PHASE1_JL_PATH, crosswalk_raw, PHASE1_R_PATH)
 
-    zone_lookup <- assign_course_zones(coords_df, golf_polygons_sf, poly_zones)
+    keep_list_r_zone  <- assign_course_zones(keep_list_r,  poly_zones)
+    keep_list_py_zone <- assign_course_zones(keep_list_py, poly_zones)
+    keep_list_jl_zone <- assign_course_zones(keep_list_jl, poly_zones)
 
-    n_rural    <- sum(!is.na(zone_lookup$Zone_Code) & zone_lookup$Zone_Code %in% RURAL_ZONES)
-    n_nonrural <- nrow(zone_lookup) - n_rural
+    n_rural    <- sum(!is.na(keep_list_r_zone$Zone_Code) & keep_list_r_zone$Zone_Code %in% RURAL_ZONES)
+    n_nonrural <- nrow(keep_list_r_zone) - n_rural
     cat(sprintf(
         "  Rural USDA override: %d courses (zones %s)  |  FHFA retained: %d courses\n",
         n_rural, paste(RURAL_ZONES, collapse = "/"), n_nonrural
@@ -2474,32 +2544,34 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
     cat("\n[Step 4] Pooling tri-language MICE (FHFA normalization + Dev Plan rural override)...\n")
 
     pooled_r  <- pool_oahu_oc_sensitivity(
-        R_IMPUTED_PATHS,  "R",  zone_lookup, FHFA_OAHU_VALUE, USDA_RURAL_VALUE, RURAL_ZONES
+        R_IMPUTED_PATHS,  "R",  keep_list_r_zone, FHFA_OAHU_VALUE, USDA_RURAL_VALUE, RURAL_ZONES
     )
     pooled_py <- pool_oahu_oc_sensitivity(
-        PY_IMPUTED_PATHS, "Py", zone_lookup, FHFA_OAHU_VALUE, USDA_RURAL_VALUE, RURAL_ZONES
+        PY_IMPUTED_PATHS, "Py", keep_list_py_zone, FHFA_OAHU_VALUE, USDA_RURAL_VALUE, RURAL_ZONES
     )
     pooled_jl <- pool_oahu_oc_sensitivity(
-        JL_IMPUTED_PATHS, "Jl", zone_lookup, FHFA_OAHU_VALUE, USDA_RURAL_VALUE, RURAL_ZONES
+        JL_IMPUTED_PATHS, "Jl", keep_list_jl_zone, FHFA_OAHU_VALUE, USDA_RURAL_VALUE, RURAL_ZONES
     )
 
     # [METHODOLOGY] Grand Mean = arithmetic mean of three independently Rubin-pooled
-    #               OC vectors (M=100 each). full_join on coordinate key preserves all
-    #               courses regardless of which language-dataset covers them.
+    #               OC vectors (M=100 each). full_join on the crosswalk's group_id --
+    #               a stable string key shared identically across all three languages'
+    #               copies of the crosswalk -- replaces the P5-01-identified exact-float
+    #               (Longitude, Latitude) join.
     pooled_oahu <- pooled_r |>
-        rename(oc_r = pooled_opp_cost) |>
+        select(group_id, Poly_OSM_ID, oc_r = pooled_opp_cost) |>
         full_join(
-            pooled_py |> rename(oc_py = pooled_opp_cost),
-            by = c("Longitude", "Latitude")
+            pooled_py |> select(group_id, oc_py = pooled_opp_cost),
+            by = "group_id"
         ) |>
         full_join(
-            pooled_jl |> rename(oc_jl = pooled_opp_cost),
-            by = c("Longitude", "Latitude")
+            pooled_jl |> select(group_id, oc_jl = pooled_opp_cost),
+            by = "group_id"
         ) |>
         mutate(
             pooled_opp_cost = rowMeans(cbind(oc_r, oc_py, oc_jl), na.rm = TRUE)
         ) |>
-        select(Longitude, Latitude, pooled_opp_cost)
+        select(group_id, Poly_OSM_ID, pooled_opp_cost)
 
     cat(sprintf(
         "\n  Grand Mean Oahu total (Rural-USDA Sensitivity): $%.3fB across %d courses\n",
@@ -2513,33 +2585,18 @@ run_9b_Oahu_OC_Rural_USDA_Sensitivity <- function() {
     ))
 
 
-    #  Step 5: Spatial join Grand Mean sensitivity points to golf polygons
+    #  Step 5: Crosswalk join Grand Mean sensitivity group_ids to golf polygons
 
-    cat("\n[Step 5] Spatial join (Grand Mean sensitivity points -> polygons)...\n")
+    cat("\n[Step 5] Crosswalk join (Grand Mean sensitivity -> polygons)...\n")
 
-    # [METHODOLOGY] st_as_sf converts Longitude/Latitude coordinate key to point
-    #               geometry; st_transform reprojects to EPSG 32604 to match polygon CRS.
-    oahu_pts_sensitivity <- pooled_oahu |>
-        st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) |>
-        st_transform(OAHU_CRS)
-
-    golf_oc_sens <- join_oc_to_polygons(
-        golf_polygons_sf, oahu_pts_sensitivity, pooled_oahu$pooled_opp_cost
-    )
+    golf_oc_sens <- join_oc_to_polygons(golf_polygons_sf, pooled_oahu)
 
     n_matched   <- sum(!is.na(golf_oc_sens$pooled_opp_cost))
     n_unmatched <- sum( is.na(golf_oc_sens$pooled_opp_cost))
     cat(sprintf(
-        "  %d matched within %d m  |  %d exceeded cap (gray).\n",
-        n_matched, JOIN_DIST_CAP, n_unmatched
+        "  %d polygons matched via crosswalk  |  %d unmatched (gray).\n",
+        n_matched, n_unmatched
     ))
-    cat(sprintf(
-        "  Median join distance: %.1f m  |  Max: %.1f m\n",
-        median(golf_oc_sens$join_dist_m),
-        max(golf_oc_sens$join_dist_m)
-    ))
-
-
     #  Step 6: Build Oahu island outline from parcels
 
     cat("\n[Step 6] Dissolving parcels to island outline (~20 sec)...\n")
