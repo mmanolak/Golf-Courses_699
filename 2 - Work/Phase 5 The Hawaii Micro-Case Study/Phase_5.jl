@@ -219,6 +219,15 @@ function main()
     println("  Points missing a polygon        : $(n_total - hits)")
     @printf("  Direct Point Match Rate         : %.1f%%\n", hits / n_total * 100)
 
+    # P5-13 (2026-07-28): the raw cadastre carries an unreconciled duplicate tax-boundary
+    # layer (type==3, tmk always missing) that geometrically overlaps already-TMK-assessed
+    # parcels for large single-ownership tracts -- summing both roughly doubled Step 2's
+    # acreage for ~half of Oahu's golf courses. Drop the untracked duplicate before any
+    # intersection; tmk-missing is an exact proxy for type==3 (VERIFIED 1:1 correspondence).
+    n_before_dedup = nrow(parcels_geo)
+    filter!(row -> !ismissing(row.tmk), parcels_geo)
+    println("  [P5-13] Dropped $(n_before_dedup - nrow(parcels_geo)) duplicate tax-boundary parcels (tmk missing) of $n_before_dedup total.")
+
     # Step 2 only needs geometry + tmk; dropping other columns avoids all-Missing
     # columns that GeoDataFrames.write can't convert to OGR field types.
     select!(parcels_geo, [:geometry, :tmk])

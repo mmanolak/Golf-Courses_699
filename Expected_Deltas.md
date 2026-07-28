@@ -169,3 +169,29 @@ prediction above — a wrong prediction that's honestly recorded is worth more t
 essentially flat, Python +$2.787B, Julia +$4.071B. Full reconciliation, including a new and far
 more consequential finding about Julia's actual imputation method, is in the post-cascade
 diff report (chat record, 2026-07-28) and `Issue_Register.md`.
+
+---
+
+## Phase 5 Hawaii micro-case study — P5-13 / P5-12 prediction (2026-07-28)
+
+**Registered before either fix is verified against the full pipeline, per Decision 5 discipline.**
+Two independent Oahu acreage figures exist, both currently wrong for different reasons:
+
+- Step 2 (`osm_derived_acres`, polygon ∩ cadastre): **8,564.23 ac**, inflated by **P5-13**'s
+  duplicate tax-boundary parcel layer. Corrected (tmk-present fragments only): **6,031.80 ac**.
+- Step 3 (national-imputed, spatially deduplicated to 33 courses): **5,420.26 ac**, undercounted
+  by **P5-12**'s wrong-polygon collapse dropping 3 verified-distinct courses (Kahuku, Hoakalei,
+  Ted Makalena — the Makaha pair is genuinely ambiguous and is not added back).
+
+**Prediction: adding the three verified orphans' own polygon acreage back to Step 3
+(58.75 + 244.07 + 149.26 = 452.08 ac) brings Step 3 to 5,872.34 ac, against Step 2's
+P5-13-corrected 6,031.80 ac — a 2.6% gap between two entirely independent data paths (parcel-
+intersected OSM geometry vs. national MICE-imputed acreage).** If the two fixes land near that
+gap, it is genuine internal validation of the Hawaii study. If the gap stays materially wider
+than ~3%, something in P5-12 or P5-13 remains unfound or the fixes don't fully resolve as scoped.
+
+**Status: prediction recorded, not yet checked against a code-verified P5-12 crosswalk fix**
+(P5-12's fix is a hand-verified name→polygon crosswalk, not yet built at the time this
+prediction was written; P5-13's fix is implemented in all three languages but only checked via
+the diagnostic re-computation, not a full Phase 5 re-run). Will report the actual number here
+once both fixes are applied.

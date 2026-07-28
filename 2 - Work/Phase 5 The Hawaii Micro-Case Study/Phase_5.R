@@ -118,6 +118,19 @@ osm_golf_sf <- st_read(OSM_IN, quiet = TRUE)
 if (!file.exists(PARCELS_GPKG)) stop(paste("Input file not found:", PARCELS_GPKG))
 parcels_sf  <- st_read(PARCELS_GPKG, quiet = TRUE)
 
+# P5-13 (2026-07-28): the raw cadastre carries an unreconciled duplicate tax-boundary
+# layer (type==3, tmk always NA) that geometrically overlaps already-TMK-assessed
+# parcels for large single-ownership tracts -- summing both roughly doubled Step 2's
+# acreage for ~half of Oahu's golf courses. Drop the untracked duplicate before any
+# intersection; tmk-NA is an exact proxy for type==3 (VERIFIED 1:1 correspondence).
+n_before_dedup <- nrow(parcels_sf)
+parcels_sf <- parcels_sf |> filter(!is.na(tmk))
+cat(sprintf(
+    "  [P5-13] Dropped %s duplicate tax-boundary parcels (tmk NA) of %s total.\n",
+    formatC(n_before_dedup - nrow(parcels_sf), big.mark = ","),
+    formatC(n_before_dedup, big.mark = ",")
+))
+
 cat("  Reading Oahu boundary (vendored TIGER/Line)...\n")
 if (!file.exists(COUNTY_SHP)) stop(paste("Input file not found:", COUNTY_SHP))
 oahu_boundary_sf <- st_read(COUNTY_SHP, quiet = TRUE) |>

@@ -132,6 +132,16 @@ def run_step1():
     # [METHODOLOGY] gpd.read_file - spatial read of Honolulu cadastral parcel layer
     parcels_geo  = gpd.read_file(PARCELS_IN)
 
+    # P5-13 (2026-07-28): the raw cadastre carries an unreconciled duplicate tax-boundary
+    # layer (type==3, tmk always NA) that geometrically overlaps already-TMK-assessed
+    # parcels for large single-ownership tracts -- summing both roughly doubled Step 2's
+    # acreage for ~half of Oahu's golf courses. Drop the untracked duplicate before any
+    # intersection; tmk-NA is an exact proxy for type==3 (VERIFIED 1:1 correspondence).
+    n_before_dedup = len(parcels_geo)
+    parcels_geo = parcels_geo[parcels_geo["tmk"].notna()].copy()
+    print(f"  [P5-13] Dropped {n_before_dedup - len(parcels_geo):,} duplicate tax-boundary "
+          f"parcels (tmk NA) of {n_before_dedup:,} total.")
+
     print("Reading Oahu boundary (vendored TIGER/Line)...")
     oahu_boundary_geo = (
         gpd.read_file(COUNTY_SHP)
