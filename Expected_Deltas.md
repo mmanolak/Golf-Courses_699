@@ -172,7 +172,17 @@ diff report (chat record, 2026-07-28) and `Issue_Register.md`.
 
 ---
 
-## Phase 5 Hawaii micro-case study — P5-13 / P5-12 prediction (2026-07-28)
+## Phase 5 Hawaii micro-case study — P5-13 / P5-12 prediction, VALIDATED (2026-07-28)
+
+**Result: the prediction was validated — 2.15% actual against 2.6% predicted. This is an
+internal-validation result, not a reconciliation.** Two data paths that share no computation
+after Phase 3 — Step 2's parcel-intersected OSM geometry and Step 3's national MICE-imputed,
+course-deduplicated acreage — were predicted in advance to converge to within a few percent once
+their independent defects (P5-13's duplicate parcels, P5-12's wrong-polygon collapses) were
+corrected. They did, closer than predicted. Two methodologically independent measurements of the
+same physical quantity (Oahu's true golf-course acreage) agreeing to ~2% *is* the validation a
+micro-case study exists to produce — worth stating in those terms in the thesis itself, not just
+in this audit log. Full mechanism below.
 
 **Registered before either fix is verified against the full pipeline, per Decision 5 discipline.**
 Two independent Oahu acreage figures exist, both currently wrong for different reasons:
