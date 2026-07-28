@@ -1793,6 +1793,14 @@ Oahu pipeline (`Phase5_Oahu_Comparison.csv` family) is authoritative over Script
 byproduct — but see **P5-11** and **P5-12** below: Phase 5's own $26.844B(R)-family figure turned
 out to have defects of its own, found while reconciling it against Script 9.
 
+**Final production figures (2026-07-28), superseding every number above in this entry:**
+headline $28.778B (Step 2 measured, all three languages identical), consistency check
+~$30.5B (Step 3, national-imputed/crosswalk, varies slightly by language, ~$30.49B Grand
+Mean), rural-USDA sensitivity $25.188B. Script 9 and Phase 5's own Step 3 now agree by
+construction (same crosswalk, same course set) rather than needing reconciliation — see
+**P5-11**, **P5-12**, **P5-13**, **P5-15** for the fixes and `Expected_Deltas.md` for the full
+reconciliation.
+
 ### P5-02 — Summary and Documentation disagree on whether the P-1 discrepancy was resolved
 **Severity:** Major, downgraded from live discrepancy · **Status:** Resolved — Summary is correct, Documentation is stale · **Locus:** Docs
 
@@ -2109,12 +2117,20 @@ fixed in code, is materially lower).
   not general imputation-model uncertainty**, and should be stated as such wherever this figure
   is used, not left to an unlabeled confidence interval to imply otherwise.
 
-**This raises the headline Oahu figure from $26.844B to $28.778B** (Step 2 measured basis). The
-Rural-USDA sensitivity question (`run_9b_...`, Development Plan zones 15-20) remains open and
-unresolved — its effect, if adopted for the headline spec, would push in the opposite direction
-(down, since it reprices some Oahu acreage from the flat urban FHFA rate to the lower rural USDA
-rate). Both movements are real and independent; neither should be presented as netting the other
-out without actually running the sensitivity against the corrected acreage basis.
+**This raises the headline Oahu figure from $26.844B to $28.778B** (Step 2 measured basis).
+
+**Rural-USDA sensitivity, run against the corrected basis (2026-07-28), `VERIFIED` production
+run:** `run_9b_Oahu_OC_Rural_USDA_Sensitivity()` — 3 of 38 polygons fall in unambiguously rural
+Development Plan zones (15-20) and are repriced from the flat FHFA rate ($4,952,600/ac) to the
+2022 USDA agricultural rate ($29,887/ac); the other 35 stay at FHFA. Crosswalk-identified,
+Grand Mean across R/Python/Julia (M=300, 100 each): **$25.188B across the same 36 courses** —
+**$3.590B lower than the flat-rate headline ($28.778B), a 12.5% reduction.** Confirms the
+direction predicted above (down, since it moves the *opposite* way from P5-12/P5-13's $2B
+upward correction) and gives it an actual magnitude for the first time. **Whether rural
+differentiation becomes the headline Oahu specification is the author's call, not resolved
+here** — both the flat-rate headline ($28.778B) and this sensitivity ($25.188B) are now
+reported figures on the same corrected acreage/course basis, not a hypothetical vs. a measured
+one.
 
 ### P5-12 — Phase 5's Oahu spatial deduplication frequently merges distinct, adjacent golf courses, not just true duplicates — confirmed at both Oahu and national scale
 **Severity:** Critical · **Status:** Confirmed, root cause identified, not fixed · **Locus:** Code
@@ -2662,6 +2678,35 @@ pattern at `2827-2829` for Script 15). Confirms the fix does what the checklist 
 bug it replaced (a bare `df$final_acreage` reference, which would silently return `NULL`/error
 for Python/Julia's `osm_acreage`-named frames and degrade the Grand Mean to R-only) is fully
 closed, not just patched in one call site.
+
+### P6-08 — `Phase_6.jl`'s end-of-run provenance call has silently failed on every past run
+**Severity:** Minor (instrumentation only, no analysis-output impact) · **Status:** `VERIFIED`, fixed · **Locus:** Code
+
+Found while re-running `Phase_6.jl` for the P5-12/P5-13/P5-15 fixes (2026-07-28): the run
+completed with a caught warning, `UndefVarError: record_provenance not defined in Main`, and no
+row appeared in `Run_Provenance_Julia.csv`. Root cause: `include(joinpath(SCRIPT_DIR, "..",
+"provenance.jl"))` was only ever called *inside* `module Mod_5_Econometric_Plots` (the first of
+seven `module ... end` blocks in the file) — this defines `record_provenance` in
+`Mod_5_Econometric_Plots`'s own namespace, not `Main`. The actual end-of-run call,
+`record_provenance("Phase 6", "Phase_6.jl", SCRIPT_DIR, PROV_START)`, sits at top-level/`Main`
+scope near the bottom of the file, where that name was never defined — every historical run of
+this file has silently failed to record provenance, caught by the call site's own `try`/`catch`
+(so it never surfaced as a hard error, only as a warning easy to miss in a long console log).
+Not a Hawaii-specific or P5-1x-family defect — a standalone Phase 6 instrumentation bug,
+unrelated to any analysis output (`provenance.R`'s own header: "Not part of the analysis
+pipeline itself - instrumentation only").
+
+**Fixed:** moved `const SCRIPT_DIR`, `const PROV_START`, and the `include(provenance.jl)` call
+to true top-level scope, before any `module` block opens — `record_provenance` is now defined
+in `Main` where the final call site needs it. `Mod_5`'s own redundant local copy left in place
+(harmless — a second `include` into a different module's namespace, no conflict). `VERIFIED` by
+re-running: a `Phase 6 / Julia / Phase_6.jl` row now appears in `Run_Provenance_Julia.csv`.
+
+**Also note, not fixed:** the same re-run showed `Julia threads available: 1` — invoked without
+`--threads=auto`, so the file's own documented parallel-module execution (`Threads.@spawn` across
+7 modules) ran fully sequentially instead. Purely a performance concern for this run, not a
+correctness one (all modules still executed, just one after another) — flagging so a future run
+remembers the flag, not logging as a defect.
 
 ---
 

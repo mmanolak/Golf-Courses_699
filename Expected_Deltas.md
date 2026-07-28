@@ -258,3 +258,23 @@ prediction's qualitative claim (the two paths would converge to a few percent on
 were fixed) held; its specific number did not survive contact with the actual corrected code.
 Caught by running the real pipeline rather than trusting a hand-rolled prototype — exactly the
 reason production re-runs, not standalone diagnostics, are the final word on a number like this.
+
+**Final production confirmation, all fixes wired into `Phase_5.R`/`.py`/`.jl` and
+`Phase_6.R`/`.jl`, full pipeline re-run 2026-07-28:**
+
+| | R | Python | Julia | Grand Mean |
+|---|---|---|---|---|
+| Headline (Step 2 measured, $B) | 28.778 | 28.778 | 28.778 | 28.778 |
+| Consistency check (Step 3, $B) | 30.515 | 30.256 | 30.700 | 30.491 |
+| Rural-USDA sensitivity ($B) | — | — | — | 25.188 |
+
+Headline is identical to three decimal places across all three languages — Step 2's measured
+acreage (5,810.62 ac) is effectively language-invariant, since all three intersect the same
+national OSM extract against the same Honolulu cadastre. Script 9's Grand Mean ($30.491B)
+matches the average of the three languages' own Step 3 consistency-check figures
+((30.515+30.256+30.700)/3 = 30.490) to the third decimal — Script 9 and Phase 5 now agree by
+construction (same crosswalk, same course identification), closing **P5-01** for good rather
+than needing further reconciliation. Rural-USDA sensitivity run against this same corrected
+basis: $25.188B, a $3.590B (12.5%) reduction from the flat-rate headline. Verified via full,
+real re-runs of all five master scripts (not isolated function tests) — see provenance CSVs
+for git SHAs and wall-clock times.

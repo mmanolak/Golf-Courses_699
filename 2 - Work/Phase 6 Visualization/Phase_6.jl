@@ -4,6 +4,16 @@ Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
 
 using Printf
 
+# Bug found 2026-07-28: provenance.jl was only ever `include`d inside Mod_5's module scope
+# (below), so `record_provenance` was never defined in Main, where the actual end-of-run call
+# (bottom of this file) executes -- every past run of this file silently failed to record
+# provenance (caught by that call's own try/catch, so it never surfaced as an error). Including
+# it here, at Main scope, before any module opens, fixes the call site without touching Mod_5's
+# own (harmless, redundant) copy.
+const SCRIPT_DIR = @__DIR__
+const PROV_START = time()
+include(joinpath(SCRIPT_DIR, "..", "provenance.jl"))
+
 # Purpose: Generate all Julia-based Phase 6 statistical visualization outputs.
 #          Runs the complete pipeline end-to-end for scripts 5, 6, and 10-14.
 # Inputs:  Phase 4 Econometric Modeling/Data/[python|R|Julia]/[Py|R|Jl]_Regression_Results.csv
