@@ -143,6 +143,21 @@ cat("  Extracting OSM polygons within Oahu...\n")
 oahu_golf_sf <- st_filter(osm_golf_sf, oahu_boundary_sf, .predicate = st_intersects)
 if (nrow(oahu_golf_sf) == 0) stop("[FATAL] No OSM polygons found on Oahu.")
 
+# P5-15 (2026-07-28): osm_id 22249545 ("Ko'olau Golf Club") is a 100%-geometrically-identical
+# duplicate of osm_id 479916082 (same course, digitized twice in the source OSM data) --
+# VERIFIED via direct geometry comparison (0m apart, full-area overlap). Left in, this polygon
+# double-counts ~221 ac in Step 2's intersection sum and double-renders the course on every
+# downstream map. Canonical crosswalk keeps 479916082; exclude the duplicate here so every
+# consumer of oahu_golf_sf (Step 2 acreage, Step 4/6 TMK & zoning breakdowns) inherits the fix.
+n_before_koolau_dedup <- nrow(oahu_golf_sf)
+oahu_golf_sf <- oahu_golf_sf |> filter(osm_id != 22249545)
+if (nrow(oahu_golf_sf) < n_before_koolau_dedup) {
+    cat(sprintf(
+        "  [P5-15] Dropped %d duplicate OSM polygon (osm_id 22249545, Ko'olau Golf Club).\n",
+        n_before_koolau_dedup - nrow(oahu_golf_sf)
+    ))
+}
+
 oahu_baseline_sf <- baseline_df |>
     filter(County_Name == "Honolulu" | FIPS == 15003) |>
     # [METHODOLOGY] st_as_sf - convert Phase 1 tabular baseline to spatial points
@@ -240,41 +255,41 @@ for (i in seq_len(M)) {
 }
 oahu_all <- bind_rows(oahu_estimates)
 
-cat("  Applying Spatial Deduplication using true OSM Polygons...\n")
+cat("  Assigning courses to polygons via the hand-verified Oahu crosswalk (P5-12)...\n")
 osm_polys_sf <- oahu_golf_sf |> mutate(poly_id = row_number())
 
-unique_courses <- oahu_all |>
-    select(Longitude, Latitude, Holes) |>
-    group_by(Longitude, Latitude) |>
-    summarise(Holes = max(Holes, na.rm = TRUE), .groups = "drop")
+# P5-12 (2026-07-28): st_nearest_feature()'s unverified many-to-one geometric snap
+# silently merged distinct, adjacent courses (Kahuku, Hoakalei, Ted Makalena -> the
+# wrong polygon) because it never checked that a course's nearest polygon was actually
+# ITS OWN polygon. Replaced with a hand-verified name-based crosswalk (37 Oahu courses,
+# one row each, Makaha's genuine ambiguity and 2 unresolved courses documented rather
+# than silently decided by geometry). Joined on osm_id (stable across runs), not the
+# crosswalk's row-order Poly_ID (which shifts once the P5-15 Ko'olau duplicate above is
+# excluded from oahu_golf_sf).
+CROSSWALK_PATH <- file.path(SCRIPT_DIR, "Data", "Oahu_Course_Polygon_Crosswalk.csv")
+if (!file.exists(CROSSWALK_PATH)) stop(paste("[FATAL] Crosswalk not found:", CROSSWALK_PATH))
+crosswalk <- read_csv(CROSSWALK_PATH, show_col_types = FALSE)
 
-courses_sf <- unique_courses |>
-    # [METHODOLOGY] st_as_sf - convert deduplicated baseline points to spatial
-    st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326, remove = FALSE) |>
-    # [METHODOLOGY] st_transform - reproject baseline points to match OSM CRS
-    st_transform(st_crs(osm_polys_sf))
+oahu_baseline_courses <- baseline_df |>
+    filter(County_Name == "Honolulu" | FIPS == 15003) |>
+    select(Course_Name, Longitude, Latitude, Holes, Baseline_Value_Per_Acre)
 
-# [METHODOLOGY] st_nearest_feature - assign each Phase 1 point to nearest OSM polygon
-nearest_idx  <- st_nearest_feature(courses_sf, osm_polys_sf)
-# [METHODOLOGY] st_distance - 500m nearest-neighbor cap: points beyond threshold become orphans
-nearest_dist <- as.numeric(st_distance(
-    courses_sf, osm_polys_sf[nearest_idx, ], by_element = TRUE
-))
-courses_sf$poly_id <- ifelse(nearest_dist <= 500, osm_polys_sf$poly_id[nearest_idx], NA)
-
-master_keep_list <- courses_sf |>
+master_keep_list <- crosswalk |>
+    left_join(oahu_baseline_courses, by = "Course_Name") |>
     mutate(group_id = ifelse(
-        is.na(poly_id),
-        paste0("orphan_", row_number()),
-        as.character(poly_id)
+        is.na(Poly_OSM_ID),
+        paste0("solo_", Course_Name),
+        paste0("osmid_", Poly_OSM_ID)
     )) |>
+    # Makaha Valley/Makaha Resort share a polygon and are genuinely ambiguous (crosswalk
+    # Notes); keep the higher-Holes record, consistent with the pre-crosswalk convention
+    # for true duplicates.
     arrange(group_id, desc(Holes)) |>
     filter(!duplicated(group_id)) |>
-    st_drop_geometry() |>
     select(Longitude, Latitude, Holes)
 
 cat(sprintf(
-    "  Unique Oahu courses after spatial deduplication: %d\n",
+    "  Unique Oahu courses after crosswalk-based identification: %d\n",
     nrow(master_keep_list)
 ))
 
@@ -288,6 +303,12 @@ oahu_agg_dedup <- sapply(
     oahu_deduped_list,
     function(d) sum(d$Total_Opportunity_Cost, na.rm = TRUE)
 )
+# [METHODOLOGY] mean measured/imputed acreage across M=100, for the Step 3 consistency
+# check reported alongside the Step 2 headline (P5-11).
+step3_mean_acreage <- mean(sapply(
+    oahu_deduped_list,
+    function(d) sum(d$final_acreage, na.rm = TRUE)
+))
 
 q_bar <- mean(oahu_agg_dedup)
 v_w   <- mean(sapply(
@@ -301,28 +322,63 @@ ci_lo <- q_bar - 2.576 * se
 ci_hi <- q_bar + 2.576 * se
 
 cat(sprintf(
-    "  Pooled Oahu Opportunity Cost: $%.3fB (99%% CI: $%.3fB - $%.3fB)\n",
-    q_bar / 1e9, ci_lo / 1e9, ci_hi / 1e9
+    "  Step 3 consistency check (national-imputed, crosswalk-identified): $%.3fB (99%% CI: $%.3fB - $%.3fB), %.2f ac\n",
+    q_bar / 1e9, ci_lo / 1e9, ci_hi / 1e9, step3_mean_acreage
+))
+
+# ---------- Headline: Step 2 measured footprint, priced at the flat FHFA rate ----------
+# P5-11 (2026-07-28, author's decision): headline the measured (Step 2) acreage --
+# parcel-verified, which is the entire purpose of a micro-case study -- rather than the
+# national-imputed (Step 3) figure. Step 3 is retained above as a reported consistency
+# check, not the headline. All Oahu courses currently price at the single flat Honolulu
+# Urban FHFA rate (P5-12 finding); pulled from the data rather than hardcoded.
+oahu_bvpa      <- oahu_baseline_courses$Baseline_Value_Per_Acre
+oahu_flat_rate <- unique(oahu_bvpa[!is.na(oahu_bvpa)])
+if (length(oahu_flat_rate) != 1) {
+    warning(sprintf(
+        "[P5-11] Expected a single flat Oahu Baseline_Value_Per_Acre, found %d distinct values -- using the first.",
+        length(oahu_flat_rate)
+    ))
+    oahu_flat_rate <- oahu_flat_rate[1]
+}
+headline_oc <- osm_derived_acres * oahu_flat_rate
+pct_agreement <- 100 * abs(step3_mean_acreage - osm_derived_acres) / osm_derived_acres
+
+cat(sprintf(
+    "  HEADLINE Oahu Opportunity Cost (Step 2 measured %.2f ac x flat FHFA rate $%.0f/ac): $%.3fB\n",
+    osm_derived_acres, oahu_flat_rate, headline_oc / 1e9
+))
+cat(sprintf(
+    "  Headline (Step 2) vs. consistency-check (Step 3) acreage agreement: %.2f%%\n",
+    pct_agreement
 ))
 
 comparison_df <- data.frame(
     Metric = c(
-        "Total Golf Courses (Oahu, OSM polygons)",
+        "Total Golf Courses (Oahu, OSM polygons, Ko'olau duplicate excluded)",
         "Total Unique TMKs (Step 2)",
-        "OSM-Derived Legal Footprint (acres)",
-        "Pooled Oahu Opportunity Cost - q_bar ($B)",
-        "Standard Error ($B)",
-        "95% CI Lower ($B)",
-        "95% CI Upper ($B)"
+        "HEADLINE: OSM-Derived Legal Footprint (acres, Step 2, P5-13/P5-15-corrected)",
+        "HEADLINE: Oahu Opportunity Cost (Step 2 measured acreage x flat FHFA rate, $B)",
+        "Consistency Check: Unique Oahu Courses (Step 3, crosswalk-identified)",
+        "Consistency Check: Mean Acreage (Step 3, national-imputed, ac)",
+        "Consistency Check: Pooled Oahu Opportunity Cost - q_bar ($B)",
+        "Consistency Check: Standard Error ($B)",
+        "Consistency Check: 99% CI Lower ($B)",
+        "Consistency Check: 99% CI Upper ($B)",
+        "Headline vs. Consistency-Check Acreage Agreement (%)"
     ),
     Value = c(
         nrow(osm_polys_sf),
         nrow(tmk_df),
         formatC(osm_derived_acres, format = "f", digits = 2, big.mark = ","),
+        sprintf("%.3f", headline_oc / 1e9),
+        nrow(master_keep_list),
+        formatC(step3_mean_acreage, format = "f", digits = 2, big.mark = ","),
         sprintf("%.3f", q_bar / 1e9),
         sprintf("%.3f", se / 1e9),
         sprintf("%.3f", ci_lo / 1e9),
-        sprintf("%.3f", ci_hi / 1e9)
+        sprintf("%.3f", ci_hi / 1e9),
+        sprintf("%.2f%%", pct_agreement)
     )
 )
 write_csv(comparison_df, COMPARISON_OUT)

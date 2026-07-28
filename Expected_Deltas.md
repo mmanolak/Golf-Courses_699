@@ -172,17 +172,16 @@ diff report (chat record, 2026-07-28) and `Issue_Register.md`.
 
 ---
 
-## Phase 5 Hawaii micro-case study — P5-13 / P5-12 prediction, VALIDATED (2026-07-28)
+## Phase 5 Hawaii micro-case study — P5-13 / P5-12 prediction (2026-07-28, corrected below)
 
-**Result: the prediction was validated — 2.15% actual against 2.6% predicted. This is an
-internal-validation result, not a reconciliation.** Two data paths that share no computation
-after Phase 3 — Step 2's parcel-intersected OSM geometry and Step 3's national MICE-imputed,
-course-deduplicated acreage — were predicted in advance to converge to within a few percent once
-their independent defects (P5-13's duplicate parcels, P5-12's wrong-polygon collapses) were
-corrected. They did, closer than predicted. Two methodologically independent measurements of the
-same physical quantity (Oahu's true golf-course acreage) agreeing to ~2% *is* the validation a
-micro-case study exists to produce — worth stating in those terms in the thesis itself, not just
-in this audit log. Full mechanism below.
+**Superseded — see the 2026-07-28 production-run correction near the end of this section. The
+2.15%/"validated" result below was computed with a standalone prototype that itself still had
+an uncaught defect (P5-15's Ko'olau duplicate polygon, inflating Step 2 by ~221 ac). The actual
+production-code result, after fixing P5-13, P5-15, and P5-12 together, is a 6.04% gap, not
+2.15%. Left the original text in place rather than rewritten, per this document's own standard
+of logging a wrong prediction honestly instead of quietly revising it — this is the second time
+in this document that a first-pass number needed correcting after implementation (see the P1-01
+correction above).**
 
 **Registered before either fix is verified against the full pipeline, per Decision 5 discipline.**
 Two independent Oahu acreage figures exist, both currently wrong for different reasons:
@@ -236,3 +235,26 @@ paths — parcel-intersected OSM geometry (Step 2) and national MICE-imputed acr
 double-counted parcels and P5-12's wrong-polygon collapses are both corrected. Not yet reflected
 in `Phase_5.R`'s actual Step 3 (the crosswalk exists but Step 3 hasn't been re-wired to use it) —
 see **P5-11** decision entry for what happens next.
+
+**Correction, production run, 2026-07-28: the real gap is 6.04%, not 2.15%.** Implementing
+P5-13 and P5-15 as actual code (not a standalone re-derivation) in `Phase_5.R`'s own Step 1/2 —
+excluding both the duplicate tax-boundary parcels *and* the duplicate Ko'olau OSM polygon
+(osm_id 22249545) before Step 2's intersection — moved Step 2's headline footprint from
+6,031.80 ac (the figure used above, P5-13-corrected only) to **5,810.62 ac** (P5-13 *and*
+P5-15 corrected). The 2.15% figure above was never wrong about Step 3; it was computed against
+a Step 2 number that still silently double-counted Ko'olau's ~221 ac, the same class of error
+this whole audit exists to catch. With both Step 2 defects actually fixed in code and both
+languages' outputs regenerated:
+
+- **Step 2 (headline, measured): 5,810.62 ac.**
+- **Step 3 (consistency check, crosswalk-corrected): 6,161.49 ac** (unchanged — this side of the
+  computation didn't involve the Ko'olau polygon).
+- **Gap: 350.87 ac, 6.04%.**
+
+**This is still a real, useful consistency result — two independent data paths within 6% of each
+other, not the original 58% — but it is a materially different number than "2.15%, tighter than
+predicted," and the "validated" framing in this section's original heading was premature.** The
+prediction's qualitative claim (the two paths would converge to a few percent once both defects
+were fixed) held; its specific number did not survive contact with the actual corrected code.
+Caught by running the real pipeline rather than trusting a hand-rolled prototype — exactly the
+reason production re-runs, not standalone diagnostics, are the final word on a number like this.

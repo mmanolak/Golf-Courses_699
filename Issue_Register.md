@@ -2086,13 +2086,21 @@ defect in the 8,564.23 ac figure itself, found while answering the three questio
    swapping it for the other 31 would not.
 
 **Decided (2026-07-28), author's call:** report both figures; headline the measured one.
+**Implemented and run in production (2026-07-28) — numbers below are from the actual re-run of
+`Phase_5.R`, superseding the standalone-prototype figures first reported when this decision was
+made** (see the correction in `Expected_Deltas.md`: the prototype's Step 2 figure still
+double-counted the P5-15 Ko'olau duplicate; the production Step 2, with P5-13 *and* P5-15 both
+fixed in code, is materially lower).
 
-- **Headline: Step 2's P5-13-corrected 6,031.80 ac (~$29.9B at the flat FHFA rate)** — measured,
-  parcel-verified footprint, which is the entire purpose of running a micro-case study rather
-  than trusting the national model alone.
-- **Consistency check, reported alongside: Step 3's crosswalk-corrected figure (6,161.49 ac,
-  q_bar = $30.515B)**, with the 2.15%-vs-2.6%-predicted agreement stated explicitly as internal
-  validation — see the now-validated prediction entry in `Expected_Deltas.md`.
+- **Headline: Step 2's P5-13/P5-15-corrected 5,810.62 ac ($28.778B at the flat FHFA rate,
+  $4,952,600/ac)** — measured, parcel-verified footprint, which is the entire purpose of running
+  a micro-case study rather than trusting the national model alone.
+- **Consistency check, reported alongside: Step 3's crosswalk-corrected figure (36 courses,
+  6,161.49 ac, q_bar = $30.515B, 99% CI $27.741B–$33.290B)**, with the **6.04% acreage
+  agreement** stated explicitly — a real, useful internal-consistency result (two independent
+  data paths within 6% of each other, not the original 58%), though not as tight as the
+  standalone prototype's 2.15% first suggested; see `Expected_Deltas.md` for the full
+  correction.
 - **CI note carried forward, not left implicit:** per the variance finding above, 84% of Oahu
   courses contribute zero imputation variance — `Baseline_Value_Per_Acre` is deterministic
   everywhere, `final_acreage` is deterministic (OSM-observed) for all but 6 courses, and those 6
@@ -2101,7 +2109,7 @@ defect in the 8,564.23 ac figure itself, found while answering the three questio
   not general imputation-model uncertainty**, and should be stated as such wherever this figure
   is used, not left to an unlabeled confidence interval to imply otherwise.
 
-**This raises the headline Oahu figure from $26.844B to ~$29.9B** (Step 2 measured basis). The
+**This raises the headline Oahu figure from $26.844B to $28.778B** (Step 2 measured basis). The
 Rural-USDA sensitivity question (`run_9b_...`, Development Plan zones 15-20) remains open and
 unresolved — its effect, if adopted for the headline spec, would push in the opposite direction
 (down, since it reprices some Oahu acreage from the flat urban FHFA rate to the lower rural USDA
@@ -2226,9 +2234,14 @@ building it, beyond the three already known:
   Golf Club") — the same physical course digitized twice in the source OSM data itself, upstream
   of anything this pipeline does. Crosswalk keeps 24, excludes 22. **This means Oahu's true
   distinct-physical-course polygon count is 38, not 39** — a correction to every "39 courses"
-  figure in **P5-01**, **P5-11**, and this entry, though the acreage effect is zero (both
-  polygons carry the same area; nothing was being double-counted in Step 2 or Step 3, only the
-  course *count* was overstated by one).
+  figure in **P5-01**, **P5-11**, and this entry.
+  **Correction (2026-07-28): the "acreage effect is zero" claim made when this bullet was first
+  written was wrong, caught on implementing the actual production fix, not by re-derivation.**
+  `st_intersection(oahu_golf_sf, parcels_sf)` sums fragment area across *all* rows passed to it;
+  with both identical polygons present, Step 2 genuinely summed Ko'olau's ~221 ac twice. Excluding
+  osm_id 22249545 upstream in the production Step 2 fix (below) moved the headline footprint from
+  6,031.80 ac (P5-13-corrected only) to **5,810.62 ac** (P5-13 + P5-15 corrected) — a real ~221 ac,
+  ~3.7% reduction, not a zero-impact course-count-only correction as originally claimed.
 - **Makaha Valley Country Club / Makaha Resort Golf Club remain genuinely ambiguous** — both
   baseline points sit 90 m and 106 m from the same single polygon, no second candidate polygon
   exists within 15 km. Crosswalk records both rows pointing at polygon 27 with an explicit
@@ -2289,6 +2302,10 @@ Sum across all 39, TMK-present fragments only: **6,031.80 ac** — vs. the repor
 (TMK-present + TMK-`NA` combined). The TMK-`NA` ("shadow") share is **29.6% of the reported
 total, 2,532.44 ac**, concentrated almost entirely in the 17+3 affected polygons.
 
+**Not the final figure — see P5-15.** This 6,031.80 ac is P5-13-corrected *only*; it still
+includes both copies of the P5-15 Ko'olau duplicate polygon (~221 ac counted twice). The
+P5-13-*and*-P5-15-corrected production figure is **5,810.62 ac** (below).
+
 **This means the 8,564.23 ac headline figure — which stands as the polygon-verified basis for
 the entire micro-case study — is itself overstated, independent of and prior to the P5-11/P5-12
 Step 3 reconciliation question.** At the flat FHFA rate ($4,952,600/ac), the reported 8,564.23 ac
@@ -2305,8 +2322,9 @@ purely `type==3` in every case and needs a closer look before implementing — f
 prescribing, per audit scope. This is a Phase-5-Hawaii-only defect (`Honolulu_Parcels_
 Reprojected.gpkg` is Oahu-specific input data); does not touch Phase 1-4 or the national figure.
 
-### P5-14 — Phase 1 baseline coordinates for at least 4 Oahu courses are mis-geocoded by 1.3–5.8 km; national prevalence partially quantified
-**Severity:** Major · **Status:** Confirmed (Oahu sample), national scope partially quantified · **Locus:** Data (Phase 1)
+### P5-14 — Phase 1 baseline coordinates for at least 4 Oahu courses are mis-geocoded by 1.3–5.8 km; national impact measured and closed
+**Severity:** Major (Oahu evidence) / Minor (national impact, measured) · **Status:** Closed —
+quantified, accepted limitation, not pursued as a fix · **Locus:** Data (Phase 1)
 
 Surfaced testing a fix for **P5-12**. Kahuku Golf Course, Hoakalei Country Club At Ocean Pointe,
 Ted Makalena Golf Course, and (found while building **P5-12**'s crosswalk) Hawaii Country Club
@@ -2420,6 +2438,38 @@ looked like ~10 hours; the actual post-optimization runtime is 26 minutes (see t
 implementation record). That cost basis no longer justifies narrowing what gets measured here —
 this diagnostic was run to completion rather than scoped down, and the national total's
 insensitivity to the fix is a measured result, not an assumption made to protect the freeze.
+
+**Closed (2026-07-28), author's decision: no national re-run.** A ~0.25% ($2.3B) exposure on a
+figure whose own cross-language spread is 1.65% is below this project's own measurement
+resolution — fixing it nationally would move the headline by less than the noise floor already
+present between R/Python/Julia. Logged as a **quantified, accepted limitation**, not carried
+forward as an open defect. The Oahu-scale finding (4 confirmed mis-geocoded courses, fixed via
+the **P5-12** crosswalk) stands on its own and is unaffected by this closure — only the national
+generalization is closed.
+
+**Promoted to a substantive limitations finding, in the author's own analytical terms, for the
+paper's limitations section: MICE's random-forest acreage imputation is upward-biased for
+atypical course formats because `Holes` is a predictor and those formats are outliers on it.**
+Par-3 courses, driving ranges, and RV-resort golf courses are legitimately small (6-30 acres)
+but are not distinguishable from a standard 18-hole course by the predictors MICE has available
+in the same way a course-type/format flag would distinguish them — the imputation model appears
+to regress atypical-format courses toward the acreage scale of the dominant (18-hole) mode in
+the training data. This produced the worst individual-course errors found in the impact test
+above (up to +2,213%, e.g. Raritan Valley, NJ) while barely moving the national total, because
+the affected courses are numerically few and their format is not correlated with any systematic
+regional or valuation pattern that would compound at scale. **This is a mechanistically
+explained limitation of the imputation approach, not a data-quality accident** — it says
+something specific and citable about what the model can and cannot represent, and belongs in the
+paper's limitations discussion rather than only in this audit log.
+
+**Also log the county-boundary/FIPS exposure as a bound, explicitly not an error count.** 1,101
+of 16,292 national baseline courses (6.76%) sit within 5 km of a county line where the
+neighboring county carries a different Urban/Rural classification. This measures *exposure* to
+a geocoding-driven FHFA↔USDA misclassification risk, not confirmed misclassification — none of
+the 1,101 has been individually checked against its true location the way the four Oahu cases
+were. Worth stating in the paper's limitations section as an untested residual risk alongside
+the MICE small-course finding above; not investigated further, not a blocker for anything else
+in this entry's closure.
 
 ### P5-15 — Ko'olau's duplicate OSM polygon suggests golf courses may be double-digitized in OpenStreetMap nationally, not just on Oahu
 **Severity:** Minor · **Status:** Confirmed (1 instance, Oahu), national scope not tested · **Locus:** Data (OSM source)

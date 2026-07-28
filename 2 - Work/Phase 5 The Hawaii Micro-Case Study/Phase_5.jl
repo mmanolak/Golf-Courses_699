@@ -192,6 +192,17 @@ function main()
     oahu_golf_geo = osm_golf_geo[oahu_mask, :]
     nrow(oahu_golf_geo) > 0 || error("[FATAL] No OSM polygons found on Oahu.")
 
+    # P5-15 (2026-07-28): osm_id 22249545 ("Ko'olau Golf Club") is a 100%-geometrically-
+    # identical duplicate of osm_id 479916082 (same course, digitized twice in the source
+    # OSM data) -- VERIFIED via direct geometry comparison (0m apart, full-area overlap).
+    # Left in, this polygon double-counts ~221 ac in Step 2's intersection sum and
+    # double-renders the course downstream. Canonical crosswalk keeps 479916082.
+    n_before_koolau_dedup = nrow(oahu_golf_geo)
+    oahu_golf_geo = oahu_golf_geo[oahu_golf_geo.osm_id .!= 22249545, :]
+    if nrow(oahu_golf_geo) < n_before_koolau_dedup
+        println("  [P5-15] Dropped $(n_before_koolau_dedup - nrow(oahu_golf_geo)) duplicate OSM polygon (osm_id 22249545, Ko'olau Golf Club).")
+    end
+
     oahu_baseline = filter(baseline_df) do row
         (!ismissing(row.County_Name) && row.County_Name == "Honolulu") ||
         (!ismissing(row.FIPS)        && row.FIPS        == 15003)
