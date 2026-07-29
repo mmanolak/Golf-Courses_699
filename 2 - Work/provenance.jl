@@ -6,8 +6,12 @@
 using Dates
 using Pkg
 
+# P0-01 (2026-07-28): BetaML replaces Plots -- BetaML is Mice.jl's actual
+# random-forest imputation backend (Phase_3.jl, using BetaML) and was
+# missing from this whitelist even after X-10 wired it into Project.toml;
+# Plots was never a real dependency (CairoMakie is what Phase_6.jl uses).
 const _KEY_PACKAGE_WHITELIST = [
-    "DataFrames", "CSV", "Mice", "ArchGDAL", "GeoDataFrames", "CairoMakie", "Plots",
+    "DataFrames", "CSV", "Mice", "ArchGDAL", "GeoDataFrames", "CairoMakie", "BetaML",
 ]
 
 function _git(repo_dir::AbstractString, args...)

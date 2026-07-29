@@ -3,6 +3,16 @@
 #          at the end of its run, to append one row to Run_Provenance_R.csv.
 # Not part of the analysis pipeline itself - instrumentation only.
 
+# P0-01 (2026-07-28): packages that matter for reproducibility but are loaded
+# via requireNamespace() internally by another package's own dispatch (never
+# attached, so they never appear in sessionInfo()$otherPkgs) -- e.g. `ranger`,
+# Phase_3.R's actual random-forest imputation backend via mice::mice.impute.rf,
+# invisible to key_packages until now. R has no whitelist mechanism analogous
+# to provenance.py/provenance.jl's _KEY_PACKAGE_WHITELIST (key_packages here is
+# a dynamic reflection, not a fixed list), so this plays the same role: a small,
+# explicit, extensible list of namespace-only packages worth recording anyway.
+.EXTRA_KEY_PACKAGES <- c("ranger")
+
 record_provenance <- function(phase, script, script_dir, start_time,
                                M = NA, maxit = NA, n_workers = NA, seed = NA,
                                key_packages = NULL) {
@@ -24,12 +34,21 @@ record_provenance <- function(phase, script, script_dir, start_time,
 
     if (is.null(key_packages)) {
       pkgs <- tryCatch(utils::sessionInfo()$otherPkgs, error = function(e) NULL)
-      key_packages <- if (length(pkgs) > 0) {
-        paste(sprintf("%s=%s", names(pkgs), vapply(pkgs, function(p) p$Version, character(1))),
-              collapse = ";")
+      attached_parts <- if (length(pkgs) > 0) {
+        sprintf("%s=%s", names(pkgs), vapply(pkgs, function(p) p$Version, character(1)))
       } else {
-        NA_character_
+        character(0)
       }
+      extra_parts <- vapply(.EXTRA_KEY_PACKAGES, function(p) {
+        if (requireNamespace(p, quietly = TRUE)) {
+          sprintf("%s=%s", p, as.character(utils::packageVersion(p)))
+        } else {
+          NA_character_
+        }
+      }, character(1))
+      extra_parts <- extra_parts[!is.na(extra_parts)]
+      all_parts <- c(attached_parts, extra_parts)
+      key_packages <- if (length(all_parts) > 0) paste(all_parts, collapse = ";") else NA_character_
     }
 
     row <- data.frame(

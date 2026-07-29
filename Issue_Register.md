@@ -59,6 +59,15 @@ wrong when X-08 happened and was never updated; the same `.xlsx`-reader gap (`XL
 (mice's real, undocumented-by-any-list RF backend — not `randomForest`, correcting the author's
 own stated premise after checking directly). No frozen number affected; freeze holds regardless.)*
 
+*(2026-07-28, same day: **P0-01 reclassified Reported → Partially fixed.** Author-authorized two
+fixes: (1) `ranger`/`BetaML` added to the provenance mechanisms, `Plots` dropped, frozen-run
+versions annotated (`ranger` 0.18.0, `BetaML` 0.12.6 — the latter correcting **X-10**'s "v0.13-line"
+description); (2) all three `install_packages.{R,py,jl}` rewritten to restore from
+`renv.lock`/`Manifest.toml`/`requirements.txt` with the prior ad hoc behaviour as fallback,
+verified by execution on this machine. 19 installed-but-unused packages and the Phase-0-provenance-
+row question logged as deferred/accepted, not implemented. Phase 0 infrastructure work stops here
+per explicit instruction. Severity/count in the table above unchanged — same entry, status only.)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -66,9 +75,11 @@ own stated premise after checking directly). No frozen number affected; freeze h
 ### P0-01 — `install_packages.{R,py,jl}` has never been audited; its package lists have drifted out of sync with what the pipeline actually needs. This is X-08's real root cause, and it still conflicts with the pinning that closed X-08
 **Severity:** Major (reproducibility-blocking on a fresh machine, confirmed in all three languages)
 / N/A (no numeric impact — Phase 0 produces no data and touches no frozen number) · **Status:**
-Reported, not fixed — read-only per author instruction; freeze holds (irrelevant to frozen
-numbers by construction, so not itself a freeze concern, but no code touched regardless) ·
-**Locus:** Environment / Code (`2 - Work/Phase 0 Packages and Details/install_packages.{R,py,jl}`)
+**Partially fixed (2026-07-28)** — root cause, cross-language gap, provenance blind spot,
+pinning conflict, and stdlib entries fixed and tested; unused-package cleanup and the
+provenance-row question deferred by explicit author decision, logged below. Freeze not
+implicated either way (Phase 0 touches no frozen number). · **Locus:** Environment / Code
+(`2 - Work/Phase 0 Packages and Details/install_packages.{R,py,jl}`, `2 - Work/provenance.{R,jl}`)
 · **Relates to:** **X-08**, **X-10**
 
 Phase 0 (`2 - Work/Phase 0 Packages and Details/`) sits outside the `Phase_1..6` numbering
@@ -228,8 +239,88 @@ contributor who follows Phase 0 as documented (rather than going straight to the
 hits the identical class of failure X-08 already fixed once, in all three languages, not only
 Julia.
 
-**Not fixed. Read-only per explicit author instruction ("Report before scoping any change"); the
-freeze is not implicated (Phase 0 touches no frozen number) but no code was changed regardless.**
+**Fixed (2026-07-28), author-authorized, two changes, `VERIFIED` by execution — Phase 0 work stops
+after this per explicit instruction.**
+
+**Fix 1 — provenance now records the actual imputation backends.** `key_packages` recorded `mice`
+and `Mice` but not `ranger`/`BetaML`, the packages that actually perform the imputation — a
+reproduction attempt against a different `ranger` version could produce different numbers with
+nothing in the record explaining why.
+- **Julia** (`provenance.jl`): `_KEY_PACKAGE_WHITELIST` — dropped `Plots` (never a real
+  dependency, see item 1 above), added `BetaML`.
+- **R** (`provenance.R`): R has no whitelist mechanism to extend — `key_packages` here is a
+  dynamic reflection of `sessionInfo()$otherPkgs`, which only sees *attached* packages, and
+  `ranger` is never attached (loaded internally by `mice` via `requireNamespace()`, see item 1
+  above). Added a small, explicit `.EXTRA_KEY_PACKAGES <- c("ranger")` constant checked via
+  `requireNamespace()` + `packageVersion()` and appended to the recorded string, playing the same
+  role Julia's/Python's whitelists play, adapted to R's different underlying mechanism rather than
+  forcing an identical implementation onto a language whose provenance capture works differently.
+- **`VERIFIED` by execution**, not just read: isolated test of the new R logic (without writing to
+  the real ledger) confirmed it now produces `ranger=0.18.0` even though `ranger` was never
+  attached. `provenance.R` and `provenance.jl` both re-parsed clean after the edit.
+- **A better-still enhancement (recording a lockfile hash/version-stamp alongside `key_packages`,
+  so the full environment is identifiable rather than any hand-picked subset, however corrected)
+  was proposed but *not implemented* — reported to the author as a design choice with options,
+  per instruction to report before implementing it. Remains open, not part of this fix.**
+- **One-time annotation, since this cannot retroactively fix the frozen run's already-written
+  provenance rows:** the frozen cascade's R Phase 3 run used **`ranger` 0.18.0** (confirmed
+  installed version, cross-checked against `renv.lock`'s own pinned `"ranger": {"Version":
+  "0.18.0", ...}` entry — both agree). Julia's Phase 3 run used **`BetaML` 0.12.6** (per
+  `Manifest.toml`'s `[[deps.BetaML]] version = "0.12.6"` — note this corrects **X-10**'s own
+  write-up, which described "pulling BetaML v0.13-line"; the actually-pinned and actually-used
+  version is 0.12.6, not 0.13.x — a small discrepancy worth recording accurately rather than
+  repeating). `Run_Provenance_R.csv`/`Run_Provenance_Julia.csv`'s existing rows are not edited —
+  doing so would mean hand-altering a written record of what a specific past run actually did,
+  which this register exists to avoid, not perform. This paragraph is the durable record instead.
+
+**Fix 2 — Phase 0 now restores from lockfiles instead of resolving fresh, with the old behaviour
+as fallback.** All three `install_packages.{R,py,jl}` rewritten:
+- **R:** locates its own directory the same package-free way every `Phase_1..6.R` master script's
+  bootstrap does (`commandArgs()` parsing, works before anything is installed), then: if
+  `renv.lock` + `renv/activate.R` exist, sources `renv/activate.R` (with the `RENV_PROJECT` env
+  var **X-08** found load-bearing) and calls `renv::restore(prompt = FALSE)`. Falls back to the
+  original ad hoc `install.packages()` loop when no `renv.lock` exists yet.
+- **Julia:** calls `Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)` first — the
+  exact call every master script makes and this script never did, which is X-08's actual root
+  cause (item 0 above) — then, if `Manifest.toml` exists there, `Pkg.instantiate()`. Falls back to
+  the original ad hoc `Pkg.add()` loop otherwise.
+- **Python:** if `requirements.txt` exists at the project root, `pip install -r requirements.txt`
+  in place of the per-package loop. Falls back to the original loop otherwise. Simplest of the
+  three — `sys.executable` already ties installation to whichever interpreter runs the script.
+- **Fallback lists updated per instruction, scoped narrowly:** added `readxl` (R) and `openpyxl`
+  (Python) — `XLSX` (Julia) was already present as the symptom X-08 fixed directly in that list.
+  Dropped the standard-library entries (`pathlib`/`time`/`re`/`warnings`/`multiprocessing` from
+  Python; `Statistics`/`Printf`/`Random`/`Serialization`/`LinearAlgebra` from Julia) — these were
+  never genuinely installable. **The 19 installed-but-unused packages (item 1's table above) were
+  left untouched in all three fallback lists, on explicit instruction — that cleanup is deliberately
+  not entangled with this fix.**
+- **`VERIFIED` by execution, all three, on this machine** (where every lockfile already exists and
+  matches installed state, so this is exactly the currently-inert-but-real-on-a-fresh-machine
+  scenario item 2 originally described, now closed): `Rscript install_packages.R` → "The library is
+  already synchronized with the lockfile." `julia install_packages.jl` → `Pkg.instantiate()`
+  completed with no changes. `python install_packages.py` → every pinned version already
+  satisfied. All three correctly detected their lockfile, restored from it, and no-op'd cleanly
+  since nothing had drifted — confirms the new logic is idempotent and safe to run repeatedly, not
+  just correct in principle.
+
+**Deferred / accepted, logged per explicit instruction, not pursued further:**
+- **The 19 installed-but-unused packages** (10 R, 7 Julia, 2 Python — item 1's table above):
+  left in place in both the fallback install lists and the real environments. Removing them is a
+  separate cleanup, deliberately not entangled with this fix. Still flagged here as known,
+  harmless-but-untidy cruft.
+- **Standard-library-entries finding: resolved as part of Fix 2** (dropped from the R/Julia/Python
+  fallback lists directly), not merely deferred — recorded as closed, not open.
+- **Whether Phase 0 should record its own provenance row:** accepted as an open design question,
+  not implemented. The schema-semantics complication described above (a Phase 0 row would have
+  `M`/`maxit`/`seed` all meaningless by construction) remains unresolved and is not blocking
+  anything — Phase 0's *effect* on reproducibility is now covered by Fix 2 regardless of whether
+  its own execution is separately logged.
+
+**After these two fixes, Phase 0 infrastructure work stops per explicit instruction.** Phase 0 is
+now the mechanism that enforces reproducibility (restores from the exact pinned lockfiles) rather
+than a route around it, and the drift this entire entry documents can no longer recur silently for
+any dependency already captured in a lockfile — including ones no static package list would ever
+catch by inspection, like `ranger` and `BetaML`.
 ### X-01 — Published Phase 3 results were produced at M = 5, not M = 100
 **Severity:** Critical · **Status:** Confirmed · **Locus:** Docs (code is correct)
 

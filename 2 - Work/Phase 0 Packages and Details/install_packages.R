@@ -1,9 +1,27 @@
 # === 1. GLOBALS & PATHS ===
 
-# All packages required across Phases 1-5
+# P0-01 (2026-07-28): locate this script's own directory without depending on
+# any package (mirrors the bootstrap every Phase_1..6.R master script runs in
+# its own LIBRARIES section) so the project root and renv.lock can be found
+# even on a machine with nothing installed yet, including renv itself.
+SCRIPT_DIR <- local({
+    cmd_args <- commandArgs(trailingOnly = FALSE)
+    m <- grep("^--file=", cmd_args)
+    if (length(m) == 0) return(getwd())
+    dirname(normalizePath(sub("^--file=", "", cmd_args[m])))
+})
+PROJ_DIR   <- dirname(SCRIPT_DIR)
+RENV_LOCK  <- file.path(PROJ_DIR, "renv.lock")
+ACTIVATE_R <- file.path(PROJ_DIR, "renv", "activate.R")
+
+# Fallback package list -- used only when renv.lock is absent (see EXECUTION).
+# When renv.lock is present, renv::restore() installs exactly what it pins,
+# including packages invoked only via another package's internal dispatch
+# (e.g. `ranger`, mice's real random-forest backend -- see P0-01) that no
+# hand-maintained list like this one can ever fully capture.
 PACKAGES <- c(
     # Phase 1 Parsing, Phase 2 Spatial Polygons, Phase 5 Hawaii Micro-Case Study
-    "tidyverse", "wooldridge", "sf", "tigris",
+    "tidyverse", "wooldridge", "sf", "tigris", "readxl",
     "future", "furrr", "parallelly", "this.path",
     # Phase 3 Economic Merge and MICE Imputation
     "mice", "VIM", "patchwork", "ggmice",
@@ -86,4 +104,19 @@ install_and_verify <- function(pkg_list) {
 
 # === 3. EXECUTION ===
 
-install_and_verify(PACKAGES)
+# P0-01 (2026-07-28): restore the pinned environment from renv.lock when one
+# exists, rather than resolving whatever's currently newest on CRAN for any
+# package this script decides is missing -- the old behaviour silently
+# defeated X-08's fix on a fresh machine. Falls back to the pre-existing
+# ad hoc install-what's-missing behaviour when no renv.lock is present yet.
+if (file.exists(RENV_LOCK) && file.exists(ACTIVATE_R)) {
+    cat(sprintf("Found renv.lock at %s -- restoring pinned environment...\n", RENV_LOCK))
+    Sys.setenv(RENV_PROJECT = PROJ_DIR)
+    source(ACTIVATE_R)
+    renv::restore(project = PROJ_DIR, prompt = FALSE)
+    cat("\nrenv::restore() complete -- environment matches renv.lock.\n")
+} else {
+    cat("No renv.lock found -- falling back to ad hoc installation of the package list below.\n")
+    cat("(This does not pin versions -- run renv::init() + renv::snapshot() once installed to fix that.)\n")
+    install_and_verify(PACKAGES)
+}

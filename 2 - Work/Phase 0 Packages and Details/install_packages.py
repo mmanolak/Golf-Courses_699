@@ -2,36 +2,44 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 
 # === 2. GLOBALS & PATHS ===
 
-# All packages required across Phases 1-5.
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJ_DIR = SCRIPT_DIR.parent
+REQUIREMENTS_TXT = PROJ_DIR / "requirements.txt"
+
+# Fallback package list -- used only when requirements.txt is absent (see
+# EXECUTION). P0-01 (2026-07-28): dropped the standard-library entries
+# (pathlib/time/re/warnings/multiprocessing are never actually installable --
+# `pip install pathlib` in particular pulls a real, long-deprecated PyPI
+# backport that can conflict with the Python 3.4+ built-in module of the same
+# name) and added openpyxl, which pandas needs to read Phase 1's one .xlsx
+# source file (Phase_1.py:183) but which this list never listed.
 # Format: (install_name, import_name)
 # These differ when the PyPI package name does not match the importable module name.
 PACKAGES = [
     # Phase 1 Parsing
-    ("pathlib",         "pathlib"),
     ("pandas",          "pandas"),
     ("geopandas",       "geopandas"),
     ("shapely",         "shapely"),
+    ("openpyxl",        "openpyxl"),
     # Phase 2 Spatial Polygons and True Acreage
-    ("time",            "time"),
     ("osmium",          "osmium"),
     # Note: pygeos is deprecated — its functionality is now in shapely >= 2.0.
     # If on older Shapely, run: pip install pygeos, or upgrade: pip install "shapely>=2.0"
     # Phase 3 Economic Merge and MICE Imputation
-    ("multiprocessing", "multiprocessing"),
     ("miceforest",      "miceforest"),
     ("numpy",           "numpy"),
     # Phase 4 Econometric Modeling
     ("scipy",           "scipy"),
     ("statsmodels",     "statsmodels"),
     # Phase 5 Hawaii Micro-Case Study
-    ("re",              "re"),
     ("pygris",          "pygris"),
-    # Phase 6 Visualization
-    ("warnings",        "warnings"),
+    # Phase 6 Visualization -- not required by any master script (no Python
+    # arm; see P0-01), kept installed but flagged as unused, not removed here.
     ("matplotlib",      "matplotlib"),
     ("seaborn",         "seaborn"),
 ]
@@ -123,5 +131,17 @@ def install_and_verify(pkg_list):
 
 # === 4. EXECUTION ===
 
+# P0-01 (2026-07-28): restore the pinned environment from requirements.txt
+# when one exists, rather than resolving whatever's currently newest on PyPI
+# for any package this script decides is missing. Falls back to the
+# pre-existing ad hoc install-what's-missing behaviour when requirements.txt
+# is absent.
 if __name__ == "__main__":
-    install_and_verify(PACKAGES)
+    if REQUIREMENTS_TXT.exists():
+        print(f"Found requirements.txt at {REQUIREMENTS_TXT} -- restoring pinned environment...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(REQUIREMENTS_TXT)])
+        print("\npip install -r requirements.txt complete -- environment matches the pinned versions.")
+    else:
+        print("No requirements.txt found -- falling back to ad hoc installation of the package list below.")
+        print("(This does not pin versions -- run `pip freeze > requirements.txt` once installed to fix that.)")
+        install_and_verify(PACKAGES)
