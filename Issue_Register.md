@@ -34,16 +34,19 @@ still a wrong published number.
 |---|---|---|---|---|---|
 | Cross-cutting | 3 | 5 | 1 | 0 | 9 |
 | Phase 1 | 0 | 2 | 6 | 2 | 10 |
-| Phase 2 | 0 | 0 | 4 | 0 | 4 |
+| Phase 2 | 0 | 1 | 4 | 0 | 5 |
 | Phase 3 | 2 | 2 | 4 | 0 | 8 |
 | Phase 4 | 0 | 2 | 1 | 1 | 4 |
 | Phase 5 | 0 | 3 | 6 | 1 | 10 |
 | Phase 6 | 0 | 2 | 1 | 2 | 5 |
-| **Total** | **5** | **16** | **23** | **6** | **50** |
+| **Total** | **5** | **17** | **23** | **6** | **51** |
 
 *(2026-07-27: +2 net — new **X-09** (vendoring policy, Major, Fixed) and **P1-10** (`extract_holes`
 fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as N/A/verified-sound,
 same convention as before.)*
+
+*(2026-07-28: +1 net — new **P2-05** (Pass-2 nearest-feature national mis-assignment, Major/
+course-level, Minor/aggregate-$, Confirmed — quantified, not fixed, freeze holds).)*
 
 ---
 
@@ -1340,6 +1343,107 @@ independent errors (Python's and Julia's arbitrary tie-breaks) partially cancell
 other and against R, not a clean read of the real divergence. See **P3-01** for the full table and
 the standing-candidate ranking this changes — P2-04 is now *ruled out* as a driver of the spread,
 having demonstrably suppressed rather than caused it.
+
+---
+
+### P2-05 — Phase 2's Pass-2 nearest-feature fallback silently mis-assigns polygons for ~572-1,437 courses nationally; the same defect class as P5-14's Kahuku/Hoakalei/Ted Makalena, now measured at scale
+**Severity:** Major (course-level evidence, national scope) / Minor (aggregate $ impact, measured)
+· **Status:** Confirmed — quantified, read-only per author instruction; **not fixed, freeze
+holds** · **Locus:** Code (`Phase_2.R:321-338`'s Pass-2 fallback; identical logic in `Phase_2.py`/
+`Phase_2.jl`, not independently re-verified here — see caveat below) · **Relates to:** **P5-12**,
+**P5-14**
+
+Surfaced by the author, generalizing P5-14's Kahuku/Hoakalei/Ted Makalena finding: those three
+Oahu courses carry `acreage_source == "OSM"` with zero apparent uncertainty, yet were assigned a
+*different, adjacent* course's polygon by Pass 2's unverified nearest-neighbour fallback — a
+confidently-wrong measurement, invisible to every downstream check because it looks identical to
+a correct OSM match. This entry asks the same question nationally, read-only, no fix scoped.
+
+**Method, `VERIFIED`:** Phase 2's own output CSV (`R_Phase2_Acreage_Matched_v2.csv`) retains
+`acreage_source` and `final_acreage` but not which pass matched a course or which polygon it got.
+Reproduced `Phase_2.R`'s Pass 1 (`st_intersects`) + Pass 2 (`st_nearest_feature`, ≤500 m) logic
+exactly, reading only the already-produced `R_Phase2_OSM_Golf_Polygons.gpkg` and
+`R_Phase1_Baseline_Golf_Valuation.csv` (no re-parse of the 11 GB PBF, no write to `Data/`) —
+Pass 1: 5,458 matches; Pass 2: **6,147 matches** (matches the author's own figure exactly);
+combined 11,605 — cross-checks exactly against the production `acreage_source == "OSM"` count.
+Then applied the identical tokenize-and-Jaccard name-match method **P5-14** used nationally.
+
+**1. Name-plausibility of the 6,147 Pass-2 assignments, `VERIFIED`:**
+
+| Category | Count | % of 6,147 |
+|---|---:|---:|
+| Exact/near-exact name match (Jaccard ≥ 0.9) | 3,868 | 62.9% |
+| Strong match (Jaccard ≥ 0.5) | 4,435 | 72.1% |
+| Weak match (0 < Jaccard < 0.5) | 275 | 4.5% |
+| Zero name-token overlap (naive "confirmed-error" reading) | 1,437 | 23.4% |
+
+**The naive 1,437 overstates the real count, the same way P5-14's "within 5 km" ceiling overstated
+its count by 2.6×.** 865 of the 1,437 (60.2%) are zero-overlap only because the *assigned polygon
+has no name at all in OSM* (`name == "Unknown"`) — unverifiable by name in either direction, not
+provably wrong. Excluding those: **572 of 6,147 (9.3% of Pass-2 matches; 3.5% of the entire
+16,292-course national baseline) are assigned to a real, differently-named polygon** — the same
+mechanism, individually verified, that produced Kahuku/Hoakalei/Ted Makalena. This 572 is the
+number that should be cited as "confirmed-error," not 1,437.
+
+**2. Duplicate polygon assignment, `VERIFIED`, checked against the full matched population
+(Pass 1 + Pass 2, 11,605 courses), since a Pass-2 course can collide with either pass:** 319 of
+6,147 Pass-2 matches (5.2%) share their assigned polygon with at least one other course in the
+dataset (298 with exactly one other course, 21 with two or more) — the clearest possible
+signature of a wrong match, since two real golf courses essentially never occupy one polygon.
+**This signal strongly corroborates item 1 rather than being independent of it:** of the 572
+true-confirmed-wrong courses, 156 (27.3%) are also duplicate-flagged, a 5.2× enrichment over the
+5.2% base rate across all Pass-2 matches — two independently-derived signals (name mismatch,
+polygon reuse) converging on much of the same defect.
+
+**3. Orphaned polygons near the 572 true-confirmed-wrong courses, `VERIFIED`:** 3,803 of 15,166
+national OSM golf polygons (25.1%) are claimed by no course under either pass. Of the 572:
+- 317 (55.4%) have no unclaimed polygon within 5 km at all — most likely these courses simply
+  aren't digitized as a distinct OSM polygon (an unmatchable case masquerading as a matched one).
+- 165 (28.8%) have unclaimed candidate(s) nearby but none name-plausible — ambiguous, not
+  resolved further here.
+- **90 (15.7%) are recoverable: a name-plausible unclaimed polygon exists within 5 km** —
+  concrete, checkable evidence of what the correct assignment likely is.
+
+**4. Aggregate impact, `VERIFIED`, on the 90 recoverable courses (wrong-assigned acreage vs. the
+name-matched orphan's acreage):**
+- Sum wrong-assigned: 15,109.3 ac. Sum likely-correct: 15,169.3 ac.
+- **Net delta: +59.9 ac. Gross Σ|delta| (no cancellation): 8,468.0 ac** — a 141× ratio between
+  gross and net, the same "large individual errors, negligible aggregate" pattern **P5-14** found.
+  Individual swings are not small: several single-course deltas exceed 500 ac.
+- At the national implied rate ($942B / 2,309,532.7 ac = $407,875/ac, same basis P5-14 used):
+  **net $ impact ≈ $0.024B (0.0026% of the $942B headline); gross (unnetted) $ impact ≈ $3.454B**
+  if summed without cancellation. **Consistent with P5-14: this defect is real and material at
+  the course level, and does not move the national headline.**
+- This impact figure covers only the 90 recoverable-with-evidence courses; the 482 remaining
+  confirmed-wrong courses (317 + 165, item 3) are known-wrong but have no verified replacement
+  value here, so their true impact is unmeasured, not zero.
+
+**5. Pass-2 match-distance distribution, `VERIFIED` — answers the "cheap fix?" question directly:**
+
+| Subset (n) | Median dist (m) | Mean dist (m) | % ≥ 400m (near 500m cap) | % ≥ 450m |
+|---|---:|---:|---:|---:|
+| All Pass-2 (6,147) | 44.5 | 86.4 | 2.4% | 1.1% |
+| True confirmed-wrong (572) | 62.0 | 113.4 | 4.7% | 1.9% |
+| Name-matched, Jaccard>0 (4,710) | 41.1 | 82.1 | 2.4% | 1.0% |
+
+Confirmed-wrong matches skew moderately farther (median +51%, mean +38% vs. correctly-matched)
+— a real but modest signal — but are **not concentrated near the 500 m cap**: over 95% of the 572
+sit below 400 m, the same range most correct matches occupy. **Tightening the radius would be a
+low-yield partial fix** (it would catch only the worst few percent of wrong matches while also
+discarding correct matches at the same distances) — **per the author's own framing, this is the
+"spread evenly" case: name verification, not a shorter cap, is what actually separates correct
+from wrong.**
+
+**Not fixed. Freeze holds, per explicit author instruction ("Report before scoping any fix").**
+No candidate remediation designed here — whether/how to correct the 572 (or extend recovery
+beyond the 90 with-evidence cases, e.g. via a stricter within-pass duplicate-resolution rule) is
+an author call, same as **P5-14**'s national generalization.
+
+**Caveat, stated plainly rather than assumed:** this diagnostic reproduces only `Phase_2.R`'s
+Pass-2 logic. `Phase_2.py`/`Phase_2.jl` consume the same shared OSM polygon set (**X-06**) and, by
+inspection at the time of **P2-04**, implement the same point-in-polygon-then-nearest-neighbour
+two-tier structure, so this defect is expected to reproduce identically in all three languages —
+**not independently re-verified for Python/Julia in this pass** (`INFERRED`, not `VERIFIED`).
 
 ---
 
