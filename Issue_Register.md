@@ -32,6 +32,7 @@ still a wrong published number.
 
 | Phase | Critical | Major | Minor | Cosmetic | Total |
 |---|---|---|---|---|---|
+| Phase 0 | 0 | 1 | 0 | 0 | 1 |
 | Cross-cutting | 3 | 5 | 1 | 0 | 9 |
 | Phase 1 | 0 | 2 | 6 | 2 | 10 |
 | Phase 2 | 0 | 1 | 4 | 0 | 5 |
@@ -39,7 +40,7 @@ still a wrong published number.
 | Phase 4 | 0 | 2 | 1 | 1 | 4 |
 | Phase 5 | 0 | 3 | 6 | 1 | 10 |
 | Phase 6 | 0 | 2 | 1 | 2 | 5 |
-| **Total** | **5** | **17** | **23** | **6** | **51** |
+| **Total** | **5** | **18** | **23** | **6** | **52** |
 
 *(2026-07-27: +2 net — new **X-09** (vendoring policy, Major, Fixed) and **P1-10** (`extract_holes`
 fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as N/A/verified-sound,
@@ -51,10 +52,184 @@ limitation after three independent bias tests (name-verified subset, placebo/mec
 test, MICE-distribution percentile test) all found no detectable systematic effect; not fixed,
 freeze holds).)*
 
+*(2026-07-28: +1 net — new **P0-01**, first-ever Phase 0 audit (`install_packages.{R,py,jl}`,
+Major, Reported/not fixed). Root cause of **X-08**'s `XLSX` crash — Phase 0's list was already
+wrong when X-08 happened and was never updated; the same `.xlsx`-reader gap (`XLSX`/`readxl`/
+`openpyxl`) found independently in all three languages, plus `BetaML` (**X-10**) and `ranger`
+(mice's real, undocumented-by-any-list RF backend — not `randomForest`, correcting the author's
+own stated premise after checking directly). No frozen number affected; freeze holds regardless.)*
+
 ---
 
-## Cross-cutting
+## Phase 0 — Package Installation & Environment Bootstrap
 
+### P0-01 — `install_packages.{R,py,jl}` has never been audited; its package lists have drifted out of sync with what the pipeline actually needs. This is X-08's real root cause, and it still conflicts with the pinning that closed X-08
+**Severity:** Major (reproducibility-blocking on a fresh machine, confirmed in all three languages)
+/ N/A (no numeric impact — Phase 0 produces no data and touches no frozen number) · **Status:**
+Reported, not fixed — read-only per author instruction; freeze holds (irrelevant to frozen
+numbers by construction, so not itself a freeze concern, but no code touched regardless) ·
+**Locus:** Environment / Code (`2 - Work/Phase 0 Packages and Details/install_packages.{R,py,jl}`)
+· **Relates to:** **X-08**, **X-10**
+
+Phase 0 (`2 - Work/Phase 0 Packages and Details/`) sits outside the `Phase_1..6` numbering
+CLAUDE.md's repository map and this register's own scope statement enumerate, and had never been
+read as part of this audit. Surfaced by the author: it is the actual mechanism behind **X-08**'s
+`XLSX` crash, and it was never updated when X-08 was fixed.
+
+**0. Root cause of X-08, `VERIFIED`.** `Phase_1.jl:24` — `using CSV, DataFrames, GeoDataFrames,
+ArchGDAL, XLSX, Printf, Statistics`. `install_packages.jl:9-19`'s `PACKAGES` list has no `XLSX`
+entry. A machine that runs *only* Phase 0 (the documented bootstrap path for a new contributor)
+would install every package it lists, then still crash on `Phase_1.jl` exactly as X-08 found —
+Phase 0's list was already wrong on the day X-08 happened; X-08 fixed the *symptom* (added `XLSX`
+to the pinned `Project.toml`, generated after the fact) without touching the *list that produced
+the gap*. Compounding this: `install_packages.jl` never calls `Pkg.activate()` — it runs against
+whichever Julia environment is ambient (the global default unless invoked with `--project=`),
+**not** the project-local environment X-08's fix created and every master script now activates
+explicitly. Phase 0 and the pinned environment are, right now, two disconnected dependency
+universes that happen to overlap by accident on this machine.
+
+**1. Same class, checked across all three languages, `VERIFIED` — every phase's `library()`/
+`import`/`using` statement compared against its installer's list, and against each language's
+own authoritative pinned-dependency record** (Julia: `Project.toml`'s `[deps]`, built by X-08
+from what's genuinely used; R/Python: no equivalent single-source list exists, so compared
+against a full grep of all `Phase_1..6` master scripts directly):
+
+| Language | Required, not installed by Phase 0 | Installed by Phase 0, never used by any phase |
+|---|---|---|
+| Julia | `XLSX` (X-08's crash) · `BetaML` (**X-10**'s RF backend — `Phase_3.jl:31`, added to `Project.toml` but never added to `install_packages.jl`) | `LibGEOS`, `CovarianceMatrices`, `Latexify`, `GeoInterfaceMakie`, `StatsBase`, `ZipFile`, `Plots` |
+| R | `readxl` (`Phase_1.R:37`, reads the same `.xlsx` file XLSX.jl reads) · `ranger` (see correction below) | `VIM`, `patchwork`, `ggmice`, `fixest`, `estimatr`, `plm`, `marginaleffects`, `modelsummary`, `xtable`, `ggdist` |
+| Python | `openpyxl` (`Phase_1.py:183`, `pd.read_excel` — pandas has no bundled `.xlsx` engine) | `matplotlib`, `seaborn` |
+
+**The `.xlsx`-reading dependency is missing from Phase 0's list in all three languages
+independently — `XLSX`/`readxl`/`openpyxl` — the same class of gap, three times, not a
+Julia-specific oversight.** This is the strongest evidence Phase 0's lists were hand-written once
+and never re-derived from the actual code: the one non-CSV/non-GIS input format in the whole
+pipeline (`2024 - FHFA June 20 Land Prices.xlsx`, read once, by all three languages, in Phase 1)
+was missed by whoever wrote each of the three installers, independently.
+
+**Correction to the author's stated premise, checked directly rather than confirmed as asked —
+`VERIFIED` against `mice`'s own source, not assumed:** `Rscript -e 'deparse(mice::mice.impute.rf)'`
+shows `rfPackage = c("ranger", "randomForest", "literanger")` with `match.arg()` selecting the
+*first* value absent an explicit override — **`ranger`, not `randomForest`, is the actual default
+backend.** `Phase_3.R:156` passes `method = method_vec` with no `rfPackage` argument anywhere in
+the script (`grep`'d directly), so it runs on `ranger`. `randomForest`'s three appearances in
+`renv.lock` are all inside *other* packages' `Suggests` arrays (`e1071`, `foreach`, `mice` itself)
+— it has no top-level package entry of its own and `requireNamespace("randomForest", quietly=
+TRUE)` returns `FALSE` inside the activated project **right now**, confirming it genuinely isn't
+installed and isn't needed. **`randomForest` is a red herring; `ranger` is the real, verified gap**
+— it *is* installed and correctly pinned in `renv.lock` (has its own top-level entry, `ranger:
+{...}`), but is absent from `install_packages.R`'s list because it is never `library()`'d or
+`::`-called anywhere in `Phase_3.R` — it is invoked only inside `mice`'s internal dispatch, which
+is exactly the class of dependency a static package-name list is structurally unable to catch.
+**This is the same failure mode as `BetaML`, one level more hidden**: `BetaML` is at least a
+direct `using` statement Phase 0 could have grepped for; `ranger` isn't even that — no static
+analysis of `Phase_3.R`'s own text would ever surface it. Cross-checked against the R provenance
+ledger's `key_packages` field (`Run_Provenance_R.csv`, populated from `sessionInfo()$otherPkgs`)
+as a second, independent signal: `ranger` **does not appear there either**, for the same reason —
+`sessionInfo()$otherPkgs` only reflects *attached* packages, and `mice` loads `ranger` via
+`requireNamespace()` without attaching it. **Two independent automated checks (static grep,
+runtime provenance) both miss `ranger`; only reading `mice.impute.rf`'s source found it.**
+
+**"Installed but never used" cross-checked against real run evidence where the mechanism allows
+it, not just static grep, `VERIFIED`:** R's `key_packages` field reflects genuinely-attached
+packages per run — all 10 flagged-unused R packages (`VIM` through `ggdist`) are absent from
+`key_packages` across all 11 recorded R provenance rows, corroborating the static-grep result with
+independent runtime evidence. `readxl` **is** present there, confirming it's genuinely used.
+Julia's and Python's `key_packages` fields are whitelist-based (`_KEY_PACKAGE_WHITELIST` in each
+`provenance.{py,jl}`), reporting a package's installed version if it's on the whitelist and
+resolvable — **not** whether the current script imported it, so they can't independently confirm
+"unused" the way R's mechanism can. Two related, smaller findings surfaced by inspecting those
+whitelists directly: **`Plots` is in Julia's `_KEY_PACKAGE_WHITELIST` — the same orphaned package
+name appears in both `install_packages.jl` and `provenance.jl`, suggesting a genuine earlier
+design (Plots.jl before the switch to CairoMakie) whose references were never fully removed**;
+`Run_Provenance_Julia.csv` confirms `Plots=` never appears in any of the 12 real recorded runs, as
+expected since it isn't in the pinned `Project.toml`. Separately, **Python's whitelist references
+`scikit-learn`, which is not imported by any master script and not even present in
+`install_packages.py`'s own list** — a phantom reference nowhere else in the codebase, likely a
+leftover from before `miceforest`/LightGBM. And **`BetaML` is absent from Julia's provenance
+whitelist**, so even after X-10 wired it into `Project.toml`, the provenance ledger itself was
+never updated to know it's a key package — the identical drift pattern (a hand-maintained list,
+once written, never revisited when the code it describes changes) recurring in a third file.
+
+**2. The pinning conflict — report only, no change made.** All three installers, unconditionally:
+`install.packages(pkg, quiet = TRUE)` (R, no version argument), `pip install {name}` (Python, no
+version pin), `Pkg.add(pkg)` (Julia, no version argument) — always latest-available, regardless of
+what `renv.lock`/`requirements.txt`/`Project.toml`+`Manifest.toml` say should be installed.
+**Currently inert on this machine**: every package each installer checks for is already present
+via the pinned environments, so `find_missing()` returns empty and no install call ever fires.
+**On a genuinely fresh machine, this would silently defeat the whole point of X-08's fix** — Phase
+0 would resolve whatever's currently newest on CRAN/PyPI/the Julia General registry for any
+package it deems missing, which is very unlikely to be the exact version the frozen cascade was
+validated against, and there would be no error, no warning — just a subtly different environment
+than the one that produced the committed numbers.
+
+What restoring from the lockfiles would require, per language, with a fallback when a lockfile is
+absent (report only, nothing implemented):
+
+- **R:** `install_packages.R` would need to locate `2 - Work/renv.lock` and, if present, source
+  `renv/activate.R` (with the same explicit `RENV_PROJECT` env var X-08 found load-bearing for the
+  master scripts — omitting it risks bootstrapping a second, wrong renv project) then call
+  `renv::restore(prompt = FALSE)`. Fallback if `renv.lock` is absent: keep today's loose
+  `install.packages()` loop, so the script still works as a bare bootstrapper before renv exists.
+- **Julia:** would need `Pkg.activate(normpath(joinpath(@__DIR__, "..")))` first (mirroring the
+  master scripts' own X-08 fix), then, if `Manifest.toml` exists there, `Pkg.instantiate()`
+  instead of per-package `Pkg.add()`. Fallback if absent: today's loose `Pkg.add()` against
+  whatever's active — though *whether* that should mean staying on the global environment or
+  activating-and-populating a fresh project-local one is itself a design choice, not resolved here.
+- **Python:** would need to check for `2 - Work/requirements.txt` and, if present, run
+  `pip install -r requirements.txt` in place of the per-package loop. Fallback if absent: today's
+  per-package loose install. Simplest of the three — `sys.executable` already ties installation to
+  whichever interpreter runs the script, no separate activation step needed.
+- **A consequence worth the author weighing before this is scoped, not just a mechanical swap:**
+  lockfile-restore semantics (`renv::restore()`/`Pkg.instantiate()`/`pip install -r`) reconcile the
+  *whole* environment to match the lock — potentially **upgrading or downgrading** packages a user
+  already has installed at a different version — whereas today's logic only ever adds what's
+  missing and never touches what's already there. That's a behavior change beyond "also check the
+  lockfile," and could surprise someone who intentionally has newer versions installed for
+  unrelated work.
+
+**3. Standard-library entries listed as installable — report only, two different risk profiles,
+not one.** Python: `pathlib`, `time`, `re`, `warnings`, `multiprocessing` are all stdlib, always
+importable, so `find_missing()` will never flag them and the `pip install` fallback path for them
+is currently dead code — but if it ever fired, `pip install pathlib` installs a real, separate,
+long-deprecated PyPI backport package (pre-dating Python 3.4's built-in `pathlib`; its own PyPI
+listing warns against installing it on modern Python) that could conflict with or shadow the
+built-in module. This is a documented, known packaging trap, not a guess — flagged as `ASSUMED`
+general Python-packaging knowledge, not independently re-verified by attempting the install (which
+would itself violate this task's read-only/no-environment-change instruction). The same risk was
+not independently checked for `time`/`re`/`warnings`/`multiprocessing` individually — no evidence
+either way that PyPI carries conflicting packages under those exact names, so this is reported as
+the same *design pattern*, not five equally-confirmed risks. **Julia's case is materially lower-
+risk**: `Statistics`, `Printf`, `Random`, `Serialization`, `LinearAlgebra` are true Julia stdlibs,
+and `Pkg.add()` on a stdlib name is standard, supported Julia package-manager behavior with no
+separate-namesake-package risk the way `pip install <stdlib-name>` carries — Julia's `Pkg` and
+Python's `pip` do not behave analogously here, and treating them as the same finding would
+overstate the Julia side.
+
+**4. Whether Phase 0 should record a provenance row — discussion, not a decision.** None of
+`install_packages.{R,py,jl}` currently calls `record_provenance()`/`_record_provenance()`; Phase 0
+is invisible to `Run_Provenance_{R,Python,Julia}.csv` entirely. In favor: it would create a durable
+record of what package versions were actually resolved at bootstrap time, directly useful for
+diagnosing exactly the kind of drift this entry documents. Against, or at least complicating a
+simple "just add the call": Phase 0 produces no data and has no `phase`/`M`/`maxit`/`seed` in the
+sense the existing schema means those fields for Phase 1-6 — a Phase 0 row would answer "was the
+environment ready at time Y," not "did this run produce this frozen number," which is a different
+kind of provenance than every existing row in the ledger. Recording it would mean either extending
+the ledger's schema/semantics or accepting a `phase = "Phase 0"` row that leaves several columns
+meaningless (`M`, `maxit`, `seed` all `NA` by construction) — an author call, not implemented here.
+
+**Addendum to X-08 (2026-07-28): "Fixed" there refers to the pinned-lockfile path, not the Phase 0
+bootstrap path — stated explicitly here so the two aren't read as the same fix.** X-08's fix
+(`Project.toml`/`Manifest.toml`/`renv.lock`/`requirements.txt`, all wired into the master scripts'
+own self-activation) is real and correctly closes the reproducibility gap **for anyone who clones
+the repo and runs the master scripts directly**. It does not touch `install_packages.{R,py,jl}` at
+all — those three files are exactly as stale today as they were the day X-08 was found; a
+contributor who follows Phase 0 as documented (rather than going straight to the pinned lockfiles)
+hits the identical class of failure X-08 already fixed once, in all three languages, not only
+Julia.
+
+**Not fixed. Read-only per explicit author instruction ("Report before scoping any change"); the
+freeze is not implicated (Phase 0 touches no frozen number) but no code was changed regardless.**
 ### X-01 — Published Phase 3 results were produced at M = 5, not M = 100
 **Severity:** Critical · **Status:** Confirmed · **Locus:** Docs (code is correct)
 
