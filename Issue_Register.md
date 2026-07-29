@@ -46,7 +46,10 @@ fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as 
 same convention as before.)*
 
 *(2026-07-28: +1 net — new **P2-05** (Pass-2 nearest-feature national mis-assignment, Major/
-course-level, Minor/aggregate-$, Confirmed — quantified, not fixed, freeze holds).)*
+course-level, Minor-converging-on-negligible/aggregate-$; Closed same day — quantified, accepted
+limitation after three independent bias tests (name-verified subset, placebo/mechanical-bias
+test, MICE-distribution percentile test) all found no detectable systematic effect; not fixed,
+freeze holds).)*
 
 ---
 
@@ -1347,11 +1350,12 @@ having demonstrably suppressed rather than caused it.
 ---
 
 ### P2-05 — Phase 2's Pass-2 nearest-feature fallback silently mis-assigns polygons for ~572-1,437 courses nationally; the same defect class as P5-14's Kahuku/Hoakalei/Ted Makalena, now measured at scale
-**Severity:** Major, confirmed three-language (course-level evidence, national scope) / Minor
-(aggregate $ impact on the measured subset — see correction below) · **Status:** Confirmed —
-quantified, read-only per author instruction; **not fixed, freeze holds** · **Locus:** Code, all
-three languages (`Phase_2.R:321-338`, `Phase_2.py:178-196`, `Phase_2.jl:211-231` — see item 0
-below) · **Relates to:** **P5-12**, **P5-14**
+**Severity:** Major, confirmed three-language (course-level evidence: individual courses like
+Kahuku carry a confidently-wrong measurement) / Minor, converging on negligible (aggregate $
+impact — three independent tests found no detectable systematic bias; see item 4/5/7) ·
+**Status:** Closed (2026-07-28) — quantified, accepted limitation, not pursued as a fix ·
+**Locus:** Code, all three languages (`Phase_2.R:321-338`, `Phase_2.py:178-196`,
+`Phase_2.jl:211-231` — see item 0 below) · **Relates to:** **P5-12**, **P5-14**
 
 Surfaced by the author, generalizing P5-14's Kahuku/Hoakalei/Ted Makalena finding: those three
 Oahu courses carry `acreage_source == "OSM"` with zero apparent uncertainty, yet were assigned a
@@ -1413,69 +1417,61 @@ national OSM golf polygons (25.1%) are claimed by no course under either pass. O
 - **90 (15.7%) are recoverable: a name-plausible unclaimed polygon exists within 5 km** —
   concrete, checkable evidence of what the correct assignment likely is.
 
-**4. CORRECTION (2026-07-28), author-caught: the original aggregate impact figure ($0.024B /
-0.0026%) was scoped to the wrong population.** It covered only the 90 recoverable-with-evidence
-courses and reported them as if they represented the full 572 — the other 482 (84.3%) were
-*excluded from the calculation*, not shown to be harmless. Re-measured against a corrected 255-
-course population (90 name-matched + 165 with a best-available nearest-candidate reference; the
-remaining 317 are addressed separately below, not folded into this figure):
+**4. SECOND CORRECTION (2026-07-28), author-caught: the $2.084B/0.221% figure above (this
+entry's prior revision) was itself invalid — do not quote it.** The 165-subset "reference" (nearest
+*unclaimed* polygon) is mechanically biased small relative to the assigned (claimed) polygon,
+independent of whether the original match was right or wrong: a larger polygon is the
+nearest-feature target for a larger catchment of points, so larger polygons get claimed more
+often, leaving smaller polygons systematically over-represented among what remains unclaimed.
+Tested this directly, `VERIFIED`:
 
-- **165-subset method, `VERIFIED`:** for courses with unclaimed candidates nearby but zero name
-  overlap with any of them, "best candidate" = nearest unclaimed polygon by distance (name cannot
-  discriminate among them, so proximity is the only available signal).
-- Sum wrong-assigned acreage (255 courses): 39,656.2 ac. Sum reference (likely-true) acreage:
-  34,547.8 ac. **Net delta (assigned − reference): +5,108.4 ac. Gross Σ|delta|: 23,403.2 ac.**
-- At the national implied rate ($942B / 2,309,532.7 ac = $407,875/ac): **net $ impact ≈ $2.084B
-  (0.221% of the $942B headline, sign: the headline is currently slightly overstated by this
-  amount on the 255-course evidence available); gross (unnetted) $ impact ≈ $9.546B.** This
-  supersedes the earlier $0.024B/0.0026% figure, which is retracted as under-scoped, not merely
-  refined — it answered a different, narrower question than the one asked.
-- **Confidence is not uniform across the 255.** Split by reference basis:
+- **Population-wide, no course pairing at all:** mean area of all 11,363 claimed polygons =
+  146.7 ac; mean area of all 3,803 unclaimed polygons = 96.3 ac (median 137.5 vs. 65.8 ac). A
+  50.4 ac mean / 71.7 ac median gap exists **for every claimed-vs-unclaimed comparison in this
+  dataset, with no relationship to correctness.**
+- **Placebo test:** applied the identical "assigned acreage minus nearest-unclaimed-polygon
+  acreage" construction to a sample of 460 courses from the *confidently-correct* population
+  (Pass 1 + Pass-2 Jaccard ≥ 0.5) that happen to have an unclaimed candidate within 5 km. **Mean
+  placebo gap: +47.8 ac** — larger than the 165-subset's own observed +31.3 ac gap.
+- **Residual after subtracting the placebo baseline from the 165-subset's observed gap: −16.4
+  ac.** Negative. The 165-subset shows *less* apparent oversizing than the construction artifact
+  alone predicts. **The entire +31.3 ac effect is fully explained by how the reference was built;
+  none of it is evidence of a real defect-specific bias.** The $2.084B figure built on it is
+  retracted, not refined — it measured a research-design artifact.
 
-  | Reference basis | n | % assigned larger than reference | Mean signed diff (ac) | Median signed diff (ac) |
-  |---|---:|---:|---:|---:|
-  | Name-matched orphan (recoverable, high confidence) | 90 | 43.3% | −0.7 | −10.8 |
-  | Nearest orphan, no name match (lower confidence) | 165 | 58.8% | +31.3 | +21.6 |
+**Corrected primary finding: the name-verified 90-course subset is the only evidence-backed
+impact estimate, and it shows no detectable bias.** Mean signed diff −0.7 ac/course (median
+−10.8 ac), 43.3% assigned larger vs. 56.7% smaller — indistinguishable from noise. Scaled: 90 ×
+(−0.7 ac) ≈ **−63 ac total, ≈ −$0.026B, ≈ −0.003% of the $942B headline** — a rounding error, not
+a correction. **The 165-subset's +31.3 ac/course should be reported only as a lower-confidence
+upper bound carrying the methodological caveat above, never as a point estimate.** The **$2.084B
+figure from this entry's previous revision must not be quoted anywhere as the impact estimate.**
 
-  **The net upward bias is concentrated in the lower-confidence 165 subset; the 90 name-confirmed
-  courses show essentially no directional bias (mean −0.7 ac).** This matters for how much weight
-  the $2.084B figure should carry — it rests more heavily on proximity-only references than on
-  name-verified ones.
-- **The 317 with no candidate within 5 km remain genuinely unmeasured — 55.4% of the 572, the
-  single largest bucket.** No spatial reference value exists for them at all; see item 6 below.
+**5. Directionality and the size-inheritance hypothesis: tested, `VERIFIED`, and REJECTED.**
+The author's geometric hypothesis (bigger polygons have bigger Voronoi cells under
+nearest-feature matching, so small courses should disproportionately inherit large neighbours'
+polygons) does not survive three independent tests:
+- **Acreage, name-verified (n=90):** no directional bias (mean −0.7 ac; §4 above).
+- **Acreage, proximity-only (n=165):** the apparent +31.3 ac skew is fully explained by the
+  claimed-vs-unclaimed construction artifact (§4 above); residual is negative.
+- **Archetype spot-check:** of the three original Oahu motivating cases, only Kahuku fits the
+  hypothesis (58.7 ac true vs. 459 ac assigned, +400 ac — and this diagnostic's independently-
+  derived reference of 58.7 ac matches the previously-verified P5-12 crosswalk figure of 58.75 ac
+  almost exactly, a strong validation of the method itself). Hoakalei (244 ac true vs. 150 ac
+  assigned, −94.3 ac) and Ted Makalena (149 ac true vs. 133 ac assigned, −16.5 ac) both go the
+  *other* direction. Two of the three motivating cases do not fit the pattern they motivated.
+- **Holes (independent variable, untouched by Pass-2), `VERIFIED`:** built a clean reference
+  population (Pass 1 + Pass-2 Jaccard ≥ 0.5, 9,893 courses) with median 7.71 ac/hole, mean 8.17.
+  The 572 confirmed-wrong courses (using their wrong assigned acreage): median 7.23 ac/hole
+  (0.94×), mean 8.23 (1.01×) — statistically indistinguishable, slightly *below* on the median.
+  250/572 (43.7%) run above the Holes-implied expectation, 322/572 (56.3%) below.
 
-**5. Directionality test, `VERIFIED`, author-requested — is this a systematic upward bias, not
-noise?** Across the 255: **136 (53.3%) were assigned a LARGER polygon than their likely-true one;
-119 (46.7%) were assigned SMALLER.** Mean signed diff +20.0 ac, median +7.7 ac — a real but modest
-skew toward oversizing, not the dominant pattern the "small-inherits-large" geometric argument
-(bigger polygons have bigger Voronoi cells, so attract more nearest-neighbour points) would
-predict if it dominated. **Spot-checking the three Oahu archetype cases individually, `VERIFIED`:
-only Kahuku fits the hypothesis (58.7 ac true vs. 459 ac assigned, +400 ac — the archetype, and
-this diagnostic's independently-derived reference of 58.7 ac matches the previously-verified
-P5-12 crosswalk figure of 58.75 ac almost exactly, a strong cross-check on the method itself).
-Hoakalei (244 ac true vs. 150 ac assigned, −94.3 ac) and Ted Makalena (149 ac true vs. 133 ac
-assigned, −16.5 ac) both go the *other* direction** — assigned a smaller polygon than their true
-one. Two of the three original motivating cases do not fit the pattern they motivated; Kahuku is
-a real but not representative example.
+**Conclusion: Kahuku is a real, individually striking example, not evidence of a systematic
+national-scale mechanism.** The hypothesis is recorded as tested and rejected — a defensible
+prior that the data does not support at aggregate scale, reported as found rather than adjusted
+to fit the motivating example.
 
-**6. Independent check via `Holes` (a variable Pass-2 never touches), `VERIFIED` — does NOT
-corroborate a systematic size-inheritance bias.** Built a clean/confidently-correct reference
-population (Pass 1 matches + Pass-2 matches with Jaccard ≥ 0.5, 9,893 courses with valid `Holes`)
-and computed acres-per-hole: median 7.71, mean 8.17. For the 572 confirmed-wrong courses (using
-their currently-assigned, wrong acreage): median 7.23 ac/hole (0.94× the clean population), mean
-8.23 ac/hole (1.01× the clean population) — **statistically indistinguishable from the clean
-population, slightly below on the median.** 250 of 572 (43.7%) show an assigned acreage above the
-Holes-implied expectation; 322 (56.3%) show it below. **This is a genuine complication, reported
-as found rather than adjusted to fit the acreage-based result above: the size-inheritance
-hypothesis is only partially supported.** It holds for Kahuku specifically and shows a modest net
-skew in the lower-confidence 165-subset acreage comparison, but an independent, full-572-coverage
-check using a variable the defect mechanism never touches shows no corresponding bias. The
-geometric argument (bigger polygons attract more nearest-neighbour points) may be true of *which
-polygon* gets over-claimed in general without implying that the *specific course* misassigned to
-it is reliably smaller by hole count — golf-course density and local polygon-size mix likely
-confound the relationship enough to wash it out in aggregate.
-
-**7. Pass-2 match-distance distribution, `VERIFIED` — answers the "cheap fix?" question directly:**
+**6. Pass-2 match-distance distribution, `VERIFIED` — answers the "cheap fix?" question directly:**
 
 | Subset (n) | Median dist (m) | Mean dist (m) | % ≥ 400m (near 500m cap) | % ≥ 450m |
 |---|---:|---:|---:|---:|
@@ -1491,29 +1487,50 @@ discarding correct matches at the same distances) — **per the author's own fra
 "spread evenly" case: name verification, not a shorter cap, is what actually separates correct
 from wrong.**
 
-**8. The 317-course residual, `BLOCKED` — escalated, not decided unilaterally.** The author asked
-what MICE would have imputed for the 317 courses that have no candidate polygon within 5 km at
-all (the cleanest sub-case: these should have been `MICE_Target` and never reached Pass 2's
-fallback), to compare against the wrong-neighbour acreage they currently carry. **This cannot be
-answered from the frozen Phase 3 outputs as they exist.** Checked directly: the M=100 imputed
-CSVs fix `final_acreage` at the observed value for every `acreage_source == "OSM"` row, including
-these 317 — MICE only ever imputed rows already flagged `MICE_Target`, so these 317 were never
-run through the imputation model and no fitted model object was saved to disk to score them
-against retroactively (`Data/R` under Phase 3 contains only the 100 completed datasets, no `.rds`
-model artifact). **Producing the number the author asked for means either (a) an explicit,
-scoped, out-of-band re-imputation run of just these 317 against the fitted predictor set — which
-squarely falls under §2.1's "No MICE runs. No re-imputation," with no read-only carve-out for that
-specific line — or (b) a non-MICE proxy** (e.g. the acres-per-hole / regression-style estimate
-used for item 6 above), which would answer a different, weaker question than "what MICE would
-have imputed" and should not be presented as if it were the same thing. Per **CLAUDE.md §5/§9**,
-this is exactly an author-call item, not a judgment call to make silently. **Not attempted. Left
-open pending direction on (a) vs (b) vs leaving the 317 as an unmeasured residual**, as already
-done for the aggregate-impact figure above.
+**7. The 317-course residual, resolved without re-imputation, `VERIFIED` (2026-07-28).** The
+earlier revision of this entry marked the 317 (no candidate polygon within 5 km — the cleanest
+sub-case, since these should have been `MICE_Target` and never should have reached Pass 2's
+fallback) as blocked, because the frozen M=100 datasets never imputed them and no fitted model
+object exists to score them against retroactively. **Resolved per author direction: instead of
+re-imputing, compare each of the 317's wrongly-assigned acreage against the empirical distribution
+of what MICE actually imputed for genuine `MICE_Target` courses matching on `Holes` and
+`county_type`, pooled from the frozen M=100 datasets** — no MICE execution, reads only.
 
-**Not fixed. Freeze holds, per explicit author instruction ("Report before scoping any fix").**
-No candidate remediation designed here — whether/how to correct the 572 (or extend recovery
-beyond the 90/165 with-evidence cases, e.g. via a stricter within-pass duplicate-resolution rule)
-is an author call, same as **P5-14**'s national generalization.
+- **Row-alignment method, `VERIFIED` before trusting any result:** `R_Imputed_Dataset_i.csv`
+  carries no `course_id` (`mice::complete()` strips identifying columns, keeping only the
+  predictor/outcome matrix). `Phase_3.R:108-132` reads `R_Phase2_Acreage_Matched_v2.csv` with
+  `read.csv` (row order preserved) and subsets columns with no reorder and no filter, so row *k*
+  of every imputed CSV is row *k* of `R_Phase2_Acreage_Matched_v2.csv`. Verified directly, not
+  assumed: joined the two by row position and compared `final_acreage` for all 11,605 `OSM`-
+  sourced rows (which MICE never touches) — **0 mismatches across 11,605 rows.** Alignment holds.
+- Pooled `final_acreage` for the 4,687 genuine national `MICE_Target` courses across all M=100
+  datasets (468,700 draws). For each of the 317, built a reference distribution from pooled draws
+  of `MICE_Target` courses sharing the same `Holes` and `county_type`; all 317 had ≥30 reference
+  draws (none skipped for thin reference groups).
+- **Median percentile: 47.6. Mean: 48.9.** Essentially the middle of the distribution — the 317's
+  wrongly-assigned acreage sits almost exactly where genuinely-imputed courses of the same profile
+  land. **Tail check: bottom decile 48/317 (15.1%), top decile 49/317 (15.5%)** — close to
+  symmetric (would be 10%/10% under a perfectly uniform percentile distribution; the modest excess
+  in both tails together, not concentrated in one, is consistent with ordinary dispersion rather
+  than a directional bias). **Mid-distribution result: no aggregate bias detected for the 317,
+  consistent with the null result already found in the 90-subset and the Holes-based check.**
+
+**Aggregate conclusion, all three measurable populations now checked: no detectable systematic
+bias anywhere.** Name-verified (n=90): no bias. Proximity-only (n=165): apparent bias fully
+explained by construction artifact. No-candidate (n=317): mid-distribution against genuine MICE
+draws, symmetric tails. **The size-inheritance hypothesis is rejected at aggregate scale; Kahuku
+remains a real individual example, not a systematic effect.** The true aggregate $ impact of
+P2-05, across everything measured, is indistinguishable from zero and almost certainly smaller
+than the retracted $2.084B figure — likely closer to the −0.003% found in the one population with
+a genuinely clean reference (item 4).
+
+**Closed (2026-07-28), author's decision: quantified, accepted limitation, no further work in
+this class absent an incidental finding.** Both **P5-14** (0.25% national impact) and **P2-05**
+(≤0.22% as an upper bound, more likely ~0% per the three converging null results above) fall
+below this project's own 1.65% cross-language spread — undetectable in the results themselves,
+not just individually small. **Not fixed. Freeze holds.** No candidate remediation designed —
+whether/how to correct the 572 (or the smaller `named-polygon` core) remains an author call if
+ever revisited, but this entry does not carry it forward as open defect-hunting work.
 
 ---
 
