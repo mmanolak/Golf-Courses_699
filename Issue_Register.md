@@ -1347,11 +1347,11 @@ having demonstrably suppressed rather than caused it.
 ---
 
 ### P2-05 — Phase 2's Pass-2 nearest-feature fallback silently mis-assigns polygons for ~572-1,437 courses nationally; the same defect class as P5-14's Kahuku/Hoakalei/Ted Makalena, now measured at scale
-**Severity:** Major (course-level evidence, national scope) / Minor (aggregate $ impact, measured)
-· **Status:** Confirmed — quantified, read-only per author instruction; **not fixed, freeze
-holds** · **Locus:** Code (`Phase_2.R:321-338`'s Pass-2 fallback; identical logic in `Phase_2.py`/
-`Phase_2.jl`, not independently re-verified here — see caveat below) · **Relates to:** **P5-12**,
-**P5-14**
+**Severity:** Major, confirmed three-language (course-level evidence, national scope) / Minor
+(aggregate $ impact on the measured subset — see correction below) · **Status:** Confirmed —
+quantified, read-only per author instruction; **not fixed, freeze holds** · **Locus:** Code, all
+three languages (`Phase_2.R:321-338`, `Phase_2.py:178-196`, `Phase_2.jl:211-231` — see item 0
+below) · **Relates to:** **P5-12**, **P5-14**
 
 Surfaced by the author, generalizing P5-14's Kahuku/Hoakalei/Ted Makalena finding: those three
 Oahu courses carry `acreage_source == "OSM"` with zero apparent uncertainty, yet were assigned a
@@ -1367,6 +1367,15 @@ exactly, reading only the already-produced `R_Phase2_OSM_Golf_Polygons.gpkg` and
 Pass 1: 5,458 matches; Pass 2: **6,147 matches** (matches the author's own figure exactly);
 combined 11,605 — cross-checks exactly against the production `acreage_source == "OSM"` count.
 Then applied the identical tokenize-and-Jaccard name-match method **P5-14** used nationally.
+
+**0. Cross-language check, `VERIFIED` (2026-07-28), upgraded from the prior `INFERRED` claim —
+read directly, not assumed:** `Phase_2.py:183-193` calls `gpd.sjoin_nearest(..., max_distance=
+MAX_NEAREST_M)`, sorts by `(_dist, osm_acreage)` ascending/descending and keeps the first
+(nearest, tie-broken by largest area) — no name check. `Phase_2.jl:211-231` implements the same
+fallback as a manual loop: nearest polygon within `MAX_NEAREST_M`, tie-broken by largest area —
+no name check. **All three languages implement the identical unverified-nearest-neighbour
+mechanism, same 500 m cap, same missing safeguard.** This is a three-language defect, not an
+R-specific one; severity above is set accordingly.
 
 **1. Name-plausibility of the 6,147 Pass-2 assignments, `VERIFIED`:**
 
@@ -1404,21 +1413,69 @@ national OSM golf polygons (25.1%) are claimed by no course under either pass. O
 - **90 (15.7%) are recoverable: a name-plausible unclaimed polygon exists within 5 km** —
   concrete, checkable evidence of what the correct assignment likely is.
 
-**4. Aggregate impact, `VERIFIED`, on the 90 recoverable courses (wrong-assigned acreage vs. the
-name-matched orphan's acreage):**
-- Sum wrong-assigned: 15,109.3 ac. Sum likely-correct: 15,169.3 ac.
-- **Net delta: +59.9 ac. Gross Σ|delta| (no cancellation): 8,468.0 ac** — a 141× ratio between
-  gross and net, the same "large individual errors, negligible aggregate" pattern **P5-14** found.
-  Individual swings are not small: several single-course deltas exceed 500 ac.
-- At the national implied rate ($942B / 2,309,532.7 ac = $407,875/ac, same basis P5-14 used):
-  **net $ impact ≈ $0.024B (0.0026% of the $942B headline); gross (unnetted) $ impact ≈ $3.454B**
-  if summed without cancellation. **Consistent with P5-14: this defect is real and material at
-  the course level, and does not move the national headline.**
-- This impact figure covers only the 90 recoverable-with-evidence courses; the 482 remaining
-  confirmed-wrong courses (317 + 165, item 3) are known-wrong but have no verified replacement
-  value here, so their true impact is unmeasured, not zero.
+**4. CORRECTION (2026-07-28), author-caught: the original aggregate impact figure ($0.024B /
+0.0026%) was scoped to the wrong population.** It covered only the 90 recoverable-with-evidence
+courses and reported them as if they represented the full 572 — the other 482 (84.3%) were
+*excluded from the calculation*, not shown to be harmless. Re-measured against a corrected 255-
+course population (90 name-matched + 165 with a best-available nearest-candidate reference; the
+remaining 317 are addressed separately below, not folded into this figure):
 
-**5. Pass-2 match-distance distribution, `VERIFIED` — answers the "cheap fix?" question directly:**
+- **165-subset method, `VERIFIED`:** for courses with unclaimed candidates nearby but zero name
+  overlap with any of them, "best candidate" = nearest unclaimed polygon by distance (name cannot
+  discriminate among them, so proximity is the only available signal).
+- Sum wrong-assigned acreage (255 courses): 39,656.2 ac. Sum reference (likely-true) acreage:
+  34,547.8 ac. **Net delta (assigned − reference): +5,108.4 ac. Gross Σ|delta|: 23,403.2 ac.**
+- At the national implied rate ($942B / 2,309,532.7 ac = $407,875/ac): **net $ impact ≈ $2.084B
+  (0.221% of the $942B headline, sign: the headline is currently slightly overstated by this
+  amount on the 255-course evidence available); gross (unnetted) $ impact ≈ $9.546B.** This
+  supersedes the earlier $0.024B/0.0026% figure, which is retracted as under-scoped, not merely
+  refined — it answered a different, narrower question than the one asked.
+- **Confidence is not uniform across the 255.** Split by reference basis:
+
+  | Reference basis | n | % assigned larger than reference | Mean signed diff (ac) | Median signed diff (ac) |
+  |---|---:|---:|---:|---:|
+  | Name-matched orphan (recoverable, high confidence) | 90 | 43.3% | −0.7 | −10.8 |
+  | Nearest orphan, no name match (lower confidence) | 165 | 58.8% | +31.3 | +21.6 |
+
+  **The net upward bias is concentrated in the lower-confidence 165 subset; the 90 name-confirmed
+  courses show essentially no directional bias (mean −0.7 ac).** This matters for how much weight
+  the $2.084B figure should carry — it rests more heavily on proximity-only references than on
+  name-verified ones.
+- **The 317 with no candidate within 5 km remain genuinely unmeasured — 55.4% of the 572, the
+  single largest bucket.** No spatial reference value exists for them at all; see item 6 below.
+
+**5. Directionality test, `VERIFIED`, author-requested — is this a systematic upward bias, not
+noise?** Across the 255: **136 (53.3%) were assigned a LARGER polygon than their likely-true one;
+119 (46.7%) were assigned SMALLER.** Mean signed diff +20.0 ac, median +7.7 ac — a real but modest
+skew toward oversizing, not the dominant pattern the "small-inherits-large" geometric argument
+(bigger polygons have bigger Voronoi cells, so attract more nearest-neighbour points) would
+predict if it dominated. **Spot-checking the three Oahu archetype cases individually, `VERIFIED`:
+only Kahuku fits the hypothesis (58.7 ac true vs. 459 ac assigned, +400 ac — the archetype, and
+this diagnostic's independently-derived reference of 58.7 ac matches the previously-verified
+P5-12 crosswalk figure of 58.75 ac almost exactly, a strong cross-check on the method itself).
+Hoakalei (244 ac true vs. 150 ac assigned, −94.3 ac) and Ted Makalena (149 ac true vs. 133 ac
+assigned, −16.5 ac) both go the *other* direction** — assigned a smaller polygon than their true
+one. Two of the three original motivating cases do not fit the pattern they motivated; Kahuku is
+a real but not representative example.
+
+**6. Independent check via `Holes` (a variable Pass-2 never touches), `VERIFIED` — does NOT
+corroborate a systematic size-inheritance bias.** Built a clean/confidently-correct reference
+population (Pass 1 matches + Pass-2 matches with Jaccard ≥ 0.5, 9,893 courses with valid `Holes`)
+and computed acres-per-hole: median 7.71, mean 8.17. For the 572 confirmed-wrong courses (using
+their currently-assigned, wrong acreage): median 7.23 ac/hole (0.94× the clean population), mean
+8.23 ac/hole (1.01× the clean population) — **statistically indistinguishable from the clean
+population, slightly below on the median.** 250 of 572 (43.7%) show an assigned acreage above the
+Holes-implied expectation; 322 (56.3%) show it below. **This is a genuine complication, reported
+as found rather than adjusted to fit the acreage-based result above: the size-inheritance
+hypothesis is only partially supported.** It holds for Kahuku specifically and shows a modest net
+skew in the lower-confidence 165-subset acreage comparison, but an independent, full-572-coverage
+check using a variable the defect mechanism never touches shows no corresponding bias. The
+geometric argument (bigger polygons attract more nearest-neighbour points) may be true of *which
+polygon* gets over-claimed in general without implying that the *specific course* misassigned to
+it is reliably smaller by hole count — golf-course density and local polygon-size mix likely
+confound the relationship enough to wash it out in aggregate.
+
+**7. Pass-2 match-distance distribution, `VERIFIED` — answers the "cheap fix?" question directly:**
 
 | Subset (n) | Median dist (m) | Mean dist (m) | % ≥ 400m (near 500m cap) | % ≥ 450m |
 |---|---:|---:|---:|---:|
@@ -1434,16 +1491,29 @@ discarding correct matches at the same distances) — **per the author's own fra
 "spread evenly" case: name verification, not a shorter cap, is what actually separates correct
 from wrong.**
 
+**8. The 317-course residual, `BLOCKED` — escalated, not decided unilaterally.** The author asked
+what MICE would have imputed for the 317 courses that have no candidate polygon within 5 km at
+all (the cleanest sub-case: these should have been `MICE_Target` and never reached Pass 2's
+fallback), to compare against the wrong-neighbour acreage they currently carry. **This cannot be
+answered from the frozen Phase 3 outputs as they exist.** Checked directly: the M=100 imputed
+CSVs fix `final_acreage` at the observed value for every `acreage_source == "OSM"` row, including
+these 317 — MICE only ever imputed rows already flagged `MICE_Target`, so these 317 were never
+run through the imputation model and no fitted model object was saved to disk to score them
+against retroactively (`Data/R` under Phase 3 contains only the 100 completed datasets, no `.rds`
+model artifact). **Producing the number the author asked for means either (a) an explicit,
+scoped, out-of-band re-imputation run of just these 317 against the fitted predictor set — which
+squarely falls under §2.1's "No MICE runs. No re-imputation," with no read-only carve-out for that
+specific line — or (b) a non-MICE proxy** (e.g. the acres-per-hole / regression-style estimate
+used for item 6 above), which would answer a different, weaker question than "what MICE would
+have imputed" and should not be presented as if it were the same thing. Per **CLAUDE.md §5/§9**,
+this is exactly an author-call item, not a judgment call to make silently. **Not attempted. Left
+open pending direction on (a) vs (b) vs leaving the 317 as an unmeasured residual**, as already
+done for the aggregate-impact figure above.
+
 **Not fixed. Freeze holds, per explicit author instruction ("Report before scoping any fix").**
 No candidate remediation designed here — whether/how to correct the 572 (or extend recovery
-beyond the 90 with-evidence cases, e.g. via a stricter within-pass duplicate-resolution rule) is
-an author call, same as **P5-14**'s national generalization.
-
-**Caveat, stated plainly rather than assumed:** this diagnostic reproduces only `Phase_2.R`'s
-Pass-2 logic. `Phase_2.py`/`Phase_2.jl` consume the same shared OSM polygon set (**X-06**) and, by
-inspection at the time of **P2-04**, implement the same point-in-polygon-then-nearest-neighbour
-two-tier structure, so this defect is expected to reproduce identically in all three languages —
-**not independently re-verified for Python/Julia in this pass** (`INFERRED`, not `VERIFIED`).
+beyond the 90/165 with-evidence cases, e.g. via a stricter within-pass duplicate-resolution rule)
+is an author call, same as **P5-14**'s national generalization.
 
 ---
 
