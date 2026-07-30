@@ -3102,6 +3102,65 @@ pipeline (Phase 1-4 don't appear to join on `Course_Name` after Phase 1 itself, 
 audit's review so far, but that has not been exhaustively re-checked against this specific
 finding), and whether R is the "correct" format or Python/Julia are. Flagging, not fixing.
 
+### P5-18 — Step 2's 5,810.62 ac footprint and Step 6's 5,845.05 ac zoning intersection are two independently computed figures, unreconciled — same class as P5-11
+**Severity:** Minor · **Status:** Confirmed, not fixed · **Locus:** Code
+
+`VERIFIED` by summing `Jl_Phase5_Step6_Zoning_Percentages.csv` (byte-identical across R/Python/
+Julia to 8+ significant figures): the 19 zone-class rows sum to **5,845.045 ac**, not Step 2's
+P5-13/P5-15-corrected headline of **5,810.62 ac** — a **34.4 ac (0.59%) gap**. Both are real,
+current, production-run numbers (not a stale-vs-fresh mismatch like P5-01/P5-11's other entries)
+— they simply come from two different geometry passes over Oahu golf land that were never checked
+against each other: Step 2 intersects OSM golf polygons against Honolulu cadastral **parcels**;
+Step 6 intersects the same polygons against the City & County's **zoning district boundaries**
+(`ZONMAP_NO`, the same layer P5-11's rural-USDA sensitivity analysis uses for its Urban/Rural
+split). Different boundary layers over approximately the same footprint will not, in general,
+produce identical total areas — slivers, boundary-snapping differences, and zoning-district edges
+that don't coincide with parcel edges are all plausible, unexamined causes.
+
+This is the same failure pattern as **P5-11**'s original finding: two numbers that live side by
+side in the same output family (both feed Script 12's waffle chart — the acreage list sums to
+5,845.05 while the chart's own headline dollar figure is anchored to 5,810.62 via
+`Phase5_Oahu_Comparison.csv`) and read as paired without actually being the same computation.
+Not fixed — no reconciliation attempted, since it's not clear which (if either) is "more correct"
+without inspecting both intersections directly; flagged for the author to decide whether this
+needs a note, a reconciliation, or is small enough (0.59%) to leave as stated uncertainty.
+
+### P5-19 — Oahu observed-only aggregate and coverage ratio ($25.728B, 30 courses, 84.38% of $30.491B): computed once in an audit scratchpad, not reproducible from the repo — same reproducibility gap as Table 3
+**Severity:** Minor (numbers verified correct) / Major (provenance) · **Status:** `VERIFIED`, logged 2026-07-29 · **Locus:** Docs / missing artifact
+
+Cited in Section 4.4.2 and the Figure 8 (`9.101_Oahu_Opportunity_Cost_Map_ObservedOnly.png`)
+caption, but until this entry the number existed only as this audit's own scratchpad-run console
+output — not in `Issue_Register.md`, not as a committed CSV, not as any script's saved output. A
+separate LaTeX review pass grepped this register for the figure, found nothing, and concluded it
+had never been computed; this audit's own session had the number in its own (uncommitted)
+scratchpad. Both were right about what they checked — the number is real, but had no durable,
+reproducible home in the repo. **Same defect class as the Table 3 hand-typed assessed values**
+(found earlier this audit): a figure that ends up in the manuscript without a script, a CSV, or a
+register entry a reader could use to regenerate it.
+
+**Computation basis, stated explicitly so this is reproducible without re-deriving it:**
+- **Numerator ($25.728B):** `R_Phase2_Acreage_Matched_v2.csv`, filtered to `acreage_source !=
+  "MICE_Target"` (directly measured OSM polygon acreage, no MICE) and the Oahu bounding box
+  (lat 21.2-21.9, lon -158.5 to -157.6), joined to the P5-12 hand-verified crosswalk
+  (`Oahu_Course_Polygon_Crosswalk.csv`) on rounded `(Longitude, Latitude)` to resolve courses to
+  crosswalk `group_id` — replicates `Phase_6.R` Script 9 Step 6's `obs_oahu` exactly. Per-course
+  `final_acreage × Baseline_Value_Per_Acre`, summed. No MICE pooling needed (values are directly
+  observed, not drawn) — this is why it's 30 courses, not 30×M.
+- **Denominator ($30.491B):** the same crosswalk's full 36-course group_id set, but from the
+  **imputed** datasets — `final_acreage`(R)/`osm_acreage`(Python/Julia) × `Baseline_Value_Per_Acre`
+  per course per imputation, Rubin-pooled per language (M=100 each), then Grand Mean = arithmetic
+  mean of the three language pools. Independently reproduces the $30.491B already cited for Script
+  9 in `Expected_Deltas.md` (line 338) and matches Phase 5b's own Step 3 "Consistency Check" Grand
+  Mean (R $30.700B / Python $30.256B / Julia $30.515B → mean $30.490B) to the dollar — cross-
+  validated two ways, not just a one-off script output.
+- **Coverage ratio: 84.38%** = $25.728B / $30.491B.
+
+**Not "substantially" above the national 83.9% floor, contrary to the manuscript's current
+framing (§4.4.2, "The coverage ratio substantially exceeds the 83.9% national observed-only
+share").** 84.38% vs. the (also-revised, see the open question on the national floor) national
+figure is a 0.6-point gap, not a substantial one under either the old 82.5% or the newly-verified
+~83.8% national figure — flagged for the author's text pass, not corrected here.
+
 ---
 
 ## Phase 6 — Visualization
@@ -3265,9 +3324,49 @@ re-running: a `Phase 6 / Julia / Phase_6.jl` row now appears in `Run_Provenance_
 correctness one (all modules still executed, just one after another) — flagging so a future run
 remembers the flag, not logging as a defect.
 
----
+### P6-09 — `Phase_6.R` Script 15's `get_coef()` silently degraded "Grand Mean" `b_urban` to R-only and `b0` to a 2-language mean, excluding Python — same failure mode as G-5
+**Severity:** Major (found), no manuscript impact (see below) · **Status:** `VERIFIED`, fixed 2026-07-29 · **Locus:** Code
 
-## Verified sound — no issue raised
+Found auditing a reported `Grand Mean b_urban = 4.00504`. `VERIFIED` by direct trace: Script 15's
+Step 1 (`Phase_6.R:2873-2896`) computed `b0`/`b_holes`/`b_urban` via
+`get_coef <- function(df, param) df$Coef[df$Parameter == param]`, called with **one hardcoded,
+R-spelled parameter string** for all three languages — `"factor(county_type)Urban"` for `b_urban`,
+`"(Intercept)"` for `b0`. Each language's regression CSV encodes these differently by construction
+(formula-encoding artifact, already documented correctly in `Phase_6.jl`'s own `grand_mean_coef`,
+lines 571-584): Python uses `"Intercept"` / `"C(county_type)[T.Urban]"`, Julia uses
+`"(Intercept)"` / `"county_type: Urban"`. Matching against the wrong string returns
+`character(0)`/`numeric(0)`, and R's `c()` silently drops zero-length vectors rather than
+erroring — `mean(c(numeric(0), numeric(0), 4.00503613338094))` returns `4.00503613338094`, R's
+own value, not a 3-language mean. Confirmed against the three source CSVs directly:
+- **`b_urban` degraded to R-only**: reported `4.00504` = R's raw `Coef` for
+  `factor(county_type)Urban`, to 6 significant figures. Correct grand mean (Py `4.169274` + R
+  `4.005036` + Jl `4.195171`) / 3 = **4.12316**.
+- **`b0` degraded to a 2-language mean, silently excluding Python**: Python's own CSV spells the
+  intercept row `"Intercept"` (no parens), unlike R/Julia's `"(Intercept)"`, so `b0` averaged only
+  R and Julia. `Holes` unaffected — spelled identically (`"Holes"`) in all three CSVs by
+  coincidence.
+
+**No published-figure impact, confirmed before fixing.** This `b0`/`b_urban` pair feeds only
+Script 15's own `predicted_log` (`Phase_6.R:2822`, the OLS residual-map fitted values) — i.e.
+`15.141_Log_Residual_Map_GrandMean.png` and `15.241_Dollar_Residual_Map_GrandMean.png`. Neither
+file, nor `6.141_Marginal_Effects_Dollar_Value_Combined.png` (which uses the *correct*
+`Phase_6.jl` `grand_mean_coef`, independently verified sound), appears in the thesis. The
+manuscript's Forest Plot (`5.141_Forest_Plot_Combined.png`, `Phase_6.jl` `Mod_5_Econometric_Plots`,
+`Phase_6.jl:100-178`) was checked specifically as the one thesis figure that touches Phase 4's
+regression output: it reads `py_reg`/`r_reg`/`jl_reg` directly and plots each language's own
+`Coef`/`Std_Error` independently, dodged side by side (Python/R/Julia as three separate dot-and-CI
+rows) — no averaging, no `get_coef`, no Grand Mean path of any kind. Not exposed to this bug.
+(Incidental, non-numeric observation made while checking: the Forest Plot's `PARAM_LABELS` dict
+keys the Urban row as `"county_type: Urban"` — Julia's own spelling — but the plot sorts/labels off
+`r_reg`'s rows, whose Parameter is `"factor(county_type)Urban"`; the dict lookup misses and falls
+back to the raw string, so the Urban row's y-axis tick likely reads `factor(county_type)Urban`
+instead of "Urban County." Cosmetic label mismatch only, doesn't touch any plotted value — not
+logged as its own issue, noted here since it was seen in the same file while verifying no numeric
+exposure.)
+
+**Fixed** (`Phase_6.R:2882-2896`): `get_coef()` calls now use each language's own parameter
+spelling for all three coefficients, matching `Phase_6.jl`'s existing correct mapping. Re-derived
+by hand from the three source CSVs: `b0 = 12.28533`, `b_holes = 0.04865`, `b_urban = 4.12316`.
 
 Recorded so the register isn't read as a list of everything that was looked at.
 

@@ -2879,9 +2879,14 @@ run_15_Residual_Map <- function() {
     reg_py <- read_csv(REG_PY_CSV, show_col_types = FALSE)
     reg_jl <- read_csv(REG_JL_CSV, show_col_types = FALSE)
 
+    # P6-09: Parameter names differ per language due to formula encoding in each
+    # software -- R: "(Intercept)"/"factor(county_type)Urban", Python: "Intercept"/
+    # "C(county_type)[T.Urban]", Julia: "(Intercept)"/"county_type: Urban". "Holes"
+    # is identical across all three. Matches the per-language mapping in
+    # Phase_6.jl's grand_mean_coef (Mod_6_Advanced_Econometric_Plots).
     b0 <- mean(c(
         get_coef(reg_r, "(Intercept)"),
-        get_coef(reg_py, "(Intercept)"),
+        get_coef(reg_py, "Intercept"),
         get_coef(reg_jl, "(Intercept)")
     ))
     b_holes <- mean(c(
@@ -2891,8 +2896,8 @@ run_15_Residual_Map <- function() {
     ))
     b_urban <- mean(c(
         get_coef(reg_r, "factor(county_type)Urban"),
-        get_coef(reg_py, "factor(county_type)Urban"),
-        get_coef(reg_jl, "factor(county_type)Urban")
+        get_coef(reg_py, "C(county_type)[T.Urban]"),
+        get_coef(reg_jl, "county_type: Urban")
     ))
 
     cat(sprintf(
