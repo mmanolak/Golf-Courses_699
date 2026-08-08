@@ -27,6 +27,7 @@ using GeoDataFrames
 using ArchGDAL
 using DataFrames
 using CSV
+using Distributions
 using Statistics
 using Printf
 
@@ -428,16 +429,29 @@ function main()
     oahu_per_course = combine(groupby(all_deduped, [:Longitude, :Latitude]), agg_spec...)
     sort!(oahu_per_course, :Longitude)
 
-    # [METHODOLOGY] Rubin's Rules - pooling across M imputations; simplified formula
-    #               using total-level aggregates (see Phase 4 for full coefficient pooling)
+    # P5-XX (2026-07-29): the estimand here is a census total (sum of
+    # Total_Opportunity_Cost over the crosswalk-identified Oahu course set in
+    # one completed imputation), not a sample estimate -- the within-imputation
+    # sampling variance is zero by construction (Rubin 1987). The prior
+    # `var(Total_Opportunity_Cost)` was cross-sectional dispersion across
+    # courses, not the sampling variance of the SUM -- same defect class as
+    # Phase 3's national run_pooling(). Old (z-based, misspecified v_w) values
+    # retained as [superseded] for the audit trail; q_bar is unaffected.
     oahu_agg_dedup = [sum(d.Total_Opportunity_Cost) for d in oahu_deduped_list]
-    q_bar = mean(oahu_agg_dedup)
-    v_w   = mean([var(d.Total_Opportunity_Cost) for d in oahu_deduped_list])
-    v_b   = var(oahu_agg_dedup)
-    v_t   = v_w + v_b + v_b / M
-    se    = sqrt(v_t)
-    ci_lo = q_bar - 2.576 * se
-    ci_hi = q_bar + 2.576 * se
+    q_bar   = mean(oahu_agg_dedup)
+    v_w_old = mean([var(d.Total_Opportunity_Cost) for d in oahu_deduped_list])
+    v_b     = var(oahu_agg_dedup)
+    v_w     = 0.0
+    v_t     = v_w + v_b + v_b / M
+    se      = sqrt(v_t)
+    dof     = M - 1
+    t99     = quantile(TDist(dof), 0.995)
+    ci_lo = q_bar - t99 * se
+    ci_hi = q_bar + t99 * se
+
+    se_old_z    = sqrt(v_w_old + v_b + v_b / M)
+    ci_lo_old_z = q_bar - 2.576 * se_old_z
+    ci_hi_old_z = q_bar + 2.576 * se_old_z
     # [METHODOLOGY] mean measured/imputed acreage across M=100, for the Step 3 consistency
     # check reported alongside the Step 2 headline (P5-11).
     step3_mean_acreage = mean([sum(d.osm_acreage) for d in oahu_deduped_list])
@@ -477,6 +491,10 @@ function main()
     add_row!(rows, "Consistency Check: 99% CI Lower (\$B)",                           @sprintf("%.3f", ci_lo / 1e9))
     add_row!(rows, "Consistency Check: 99% CI Upper (\$B)",                           @sprintf("%.3f", ci_hi / 1e9))
     add_row!(rows, "Headline vs. Consistency-Check Acreage Agreement (%)",            @sprintf("%.2f%%", pct_agreement))
+    add_row!(rows, "[superseded] Within-Imputation Variance (v_w)", @sprintf("%.4e", v_w_old))
+    add_row!(rows, "[superseded] Standard Error (\$B, z-based)",    @sprintf("%.3f", se_old_z / 1e9))
+    add_row!(rows, "[superseded] 99% CI Lower (\$B, z-based)",      @sprintf("%.3f", ci_lo_old_z / 1e9))
+    add_row!(rows, "[superseded] 99% CI Upper (\$B, z-based)",      @sprintf("%.3f", ci_hi_old_z / 1e9))
     !isnan(official_area_acres) &&
         add_row!(rows, "Total Official Area (acres)", @sprintf("%.2f", official_area_acres))
 

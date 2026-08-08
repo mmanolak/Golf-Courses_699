@@ -204,21 +204,38 @@ for (i in 1:M) {
   rm(df); gc()
 }
 
-# [METHODOLOGY] Rubin's Rules pooling - q_bar is the pooled national estimate;
-#               v_t combines within- and between-imputation variance (Rubin 1987)
+# P3-XX (2026-07-29): the estimand here is a census total (sum over all N
+# courses in a completed dataset), not a sample estimate -- given a completed
+# dataset the total is known exactly, so the within-imputation sampling
+# variance is zero (Rubin 1987). `within_vars` (var of individual course
+# values within one imputation) is cross-sectional dispersion, not the
+# sampling variance of the SUM estimator -- conflating the two was the
+# original defect. Matches the v_w=0 treatment pool_acreage() already applies
+# below ("within-variance is zero for a spatially fixed attribute"). Old
+# (z-based, misspecified v_w) values retained as [superseded] for the audit
+# trail; point estimate (q_bar) is unaffected -- only SE/CI change.
 cat("\nApplying Rubin's Rules\n")
 
-q_bar <- mean(aggregates)
-v_w   <- mean(within_vars)
-v_b   <- var(aggregates)
-v_t   <- v_w + v_b + v_b / M
-se    <- sqrt(v_t)
-ci95_lo <- q_bar - 1.960 * se
-ci95_hi <- q_bar + 1.960 * se
-ci99_lo <- q_bar - 2.576 * se
-ci99_hi <- q_bar + 2.576 * se
+q_bar   <- mean(aggregates)
+v_w_old <- mean(within_vars)
+v_b     <- var(aggregates)
+v_w     <- 0
+v_t     <- v_w + v_b + v_b / M
+se      <- sqrt(v_t)
+df      <- M - 1
+t95     <- qt(0.975, df); t99 <- qt(0.995, df)
+ci95_lo <- q_bar - t95 * se
+ci95_hi <- q_bar + t95 * se
+ci99_lo <- q_bar - t99 * se
+ci99_hi <- q_bar + t99 * se
 
-cat("\n=== RUBIN'S RULES RESULTS ===\n")
+se_old_z    <- sqrt(v_w_old + v_b + v_b / M)
+ci95_lo_old <- q_bar - 1.960 * se_old_z
+ci95_hi_old <- q_bar + 1.960 * se_old_z
+ci99_lo_old <- q_bar - 2.576 * se_old_z
+ci99_hi_old <- q_bar + 2.576 * se_old_z
+
+cat("\n=== RUBIN'S RULES RESULTS (corrected: v_w=0, t-distribution) ===\n")
 cat(sprintf("  Pooled Aggregate National Value:  $%10.3f B\n", q_bar / 1e9))
 cat(sprintf("  Within-Imputation Variance (v_w): %.4e\n",      v_w))
 cat(sprintf("  Between-Imputation Variance (v_b):%.4e\n",      v_b))
@@ -241,10 +258,17 @@ pooled_df <- data.frame(
     "Between-Imputation Variance (v_b)",
     "Total Variance (v_t)",
     "Standard Error ($)",
+    "Degrees of Freedom",
     "99% CI Lower ($B)",
     "99% CI Upper ($B)",
     "95% CI Lower ($B)",
     "95% CI Upper ($B)",
+    "[superseded] Within-Imputation Variance (v_w)",
+    "[superseded] Standard Error ($, z-based)",
+    "[superseded] 99% CI Lower ($B, z-based)",
+    "[superseded] 99% CI Upper ($B, z-based)",
+    "[superseded] 95% CI Lower ($B, z-based)",
+    "[superseded] 95% CI Upper ($B, z-based)",
     paste0("Dataset ", 1:M, " Aggregate ($B)")
   ),
   Value = c(
@@ -254,10 +278,17 @@ pooled_df <- data.frame(
     sprintf("%.4e", v_b),
     sprintf("%.4e", v_t),
     format(se, big.mark = ",", scientific = FALSE),
+    sprintf("%d", df),
     sprintf("%.3f", ci99_lo / 1e9),
     sprintf("%.3f", ci99_hi / 1e9),
     sprintf("%.3f", ci95_lo / 1e9),
     sprintf("%.3f", ci95_hi / 1e9),
+    sprintf("%.4e", v_w_old),
+    format(se_old_z, big.mark = ",", scientific = FALSE),
+    sprintf("%.3f", ci99_lo_old / 1e9),
+    sprintf("%.3f", ci99_hi_old / 1e9),
+    sprintf("%.3f", ci95_lo_old / 1e9),
+    sprintf("%.3f", ci95_hi_old / 1e9),
     sprintf("%.3f", aggregates / 1e9)
   )
 )

@@ -19,6 +19,7 @@ import time
 import miceforest as mf
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 import warnings
 warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
@@ -167,19 +168,36 @@ def run_pooling(in_dir, out_csv, m_datasets=M):
     aggregates  = np.array(aggregates)
     within_vars = np.array(within_vars)
 
-    # [METHODOLOGY] Rubin's Rules pooling - q_bar is the pooled national estimate;
-    #               v_t combines within- and between-imputation variance (Rubin 1987)
-    q_bar = aggregates.mean()
-    v_w   = within_vars.mean()
-    v_b   = aggregates.var(ddof=1)
-    v_t   = v_w + v_b + v_b / m_datasets
-    se    = np.sqrt(v_t)
-    ci95_lo = q_bar - 1.960 * se
-    ci95_hi = q_bar + 1.960 * se
-    ci99_lo = q_bar - 2.576 * se
-    ci99_hi = q_bar + 2.576 * se
+    # P3-XX (2026-07-29): the estimand here is a census total (sum over all N
+    # courses in a completed dataset), not a sample estimate -- given a completed
+    # dataset the total is known exactly, so the within-imputation sampling
+    # variance is zero (Rubin 1987). `within_vars` (var of individual course
+    # values within one imputation) is cross-sectional dispersion, not the
+    # sampling variance of the SUM estimator -- conflating the two was the
+    # original defect. This is the same v_w=0 treatment pool_acreage() already
+    # applies below ("within-variance is zero for a spatially fixed attribute").
+    # Retained as [superseded] in the output for the audit trail; point estimate
+    # (q_bar) is unaffected -- only SE/CI change.
+    q_bar     = aggregates.mean()
+    v_w_old   = within_vars.mean()
+    v_b       = aggregates.var(ddof=1)
+    v_w       = 0.0
+    v_t       = v_w + v_b + v_b / m_datasets
+    se        = np.sqrt(v_t)
+    df        = m_datasets - 1
+    t95, t99  = stats.t.ppf(0.975, df), stats.t.ppf(0.995, df)
+    ci95_lo = q_bar - t95 * se
+    ci95_hi = q_bar + t95 * se
+    ci99_lo = q_bar - t99 * se
+    ci99_hi = q_bar + t99 * se
 
-    print("\n=== RUBIN'S RULES RESULTS ===")
+    se_old_z    = np.sqrt(v_w_old + v_b + v_b / m_datasets)
+    ci95_lo_old = q_bar - 1.960 * se_old_z
+    ci95_hi_old = q_bar + 1.960 * se_old_z
+    ci99_lo_old = q_bar - 2.576 * se_old_z
+    ci99_hi_old = q_bar + 2.576 * se_old_z
+
+    print("\n=== RUBIN'S RULES RESULTS (corrected: v_w=0, t-distribution) ===")
     print(f"  Pooled Aggregate National Value:  ${q_bar / 1e9:>10.3f} B")
     print(f"  Within-Imputation Variance (v_w): {v_w:.4e}")
     print(f"  Between-Imputation Variance (v_b):{v_b:.4e}")
@@ -201,10 +219,17 @@ def run_pooling(in_dir, out_csv, m_datasets=M):
         ("Between-Imputation Variance (v_b)",    f"{v_b:.4e}"),
         ("Total Variance (v_t)",                 f"{v_t:.4e}"),
         ("Standard Error ($)",                   f"{se:.2f}"),
+        ("Degrees of Freedom",                   f"{df}"),
         ("99% CI Lower ($B)",                    f"{ci99_lo / 1e9:.3f}"),
         ("99% CI Upper ($B)",                    f"{ci99_hi / 1e9:.3f}"),
         ("95% CI Lower ($B)",                    f"{ci95_lo / 1e9:.3f}"),
         ("95% CI Upper ($B)",                    f"{ci95_hi / 1e9:.3f}"),
+        ("[superseded] Within-Imputation Variance (v_w)", f"{v_w_old:.4e}"),
+        ("[superseded] Standard Error ($, z-based)",       f"{se_old_z:.2f}"),
+        ("[superseded] 99% CI Lower ($B, z-based)",        f"{ci99_lo_old / 1e9:.3f}"),
+        ("[superseded] 99% CI Upper ($B, z-based)",        f"{ci99_hi_old / 1e9:.3f}"),
+        ("[superseded] 95% CI Lower ($B, z-based)",        f"{ci95_lo_old / 1e9:.3f}"),
+        ("[superseded] 95% CI Upper ($B, z-based)",        f"{ci95_hi_old / 1e9:.3f}"),
     ] + [
         (f"Dataset {i} Aggregate ($B)", f"{aggregates[i - 1] / 1e9:.3f}")
         for i in range(1, m_datasets + 1)

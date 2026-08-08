@@ -1,4 +1,4 @@
-# Purpose: Complete Phase 3 pipeline - MICE imputation (m=5) then Rubin's
+# Purpose: Complete Phase 3 pipeline - MICE imputation (m=100) then Rubin's
 #          Rules pooling to produce a national land-value estimate with 95%/99% CI.
 # Inputs:  Phase 2 Spatial Polygons and True Acreage/Data/Julia/
 #            Jl_Phase2_Acreage_Matched.csv
@@ -6,14 +6,18 @@
 #          Data/Julia/Jl_Rubins_Rules_Summary.csv
 #          Data/Julia/Jl_National_Acreage_Summary.csv
 #
-# Rubin's Rules formula summary (m = 100 imputations):
+# Rubin's Rules formula summary (m = 100 imputations), Total_Opportunity_Cost
+# pooling (P3-XX, 2026-07-29): the estimand is a census total (sum over all N
+# courses in a completed dataset), so the within-imputation sampling variance
+# is zero by construction -- all uncertainty is between-imputation:
 #   q_bar = mean(Q_i)           -- pooled point estimate
-#   v_w   = mean(Var_i)         -- within-imputation variance
+#   v_w   = 0                   -- within-imputation variance (census total)
 #   v_b   = var(Q_i, ddof=1)    -- between-imputation variance
-#   v_t   = v_w + v_b + v_b/m  -- total variance
+#   v_t   = v_b + v_b/m         -- total variance
 #   se    = sqrt(v_t)
-#   99%CI = q_bar +/- 2.576 * se
-#   95%CI = q_bar +/- 1.960 * se
+#   df    = m - 1
+#   99%CI = q_bar +/- t99(df) * se
+#   95%CI = q_bar +/- t95(df) * se
 #
 #          for running the script:
 #          julia --threads=auto .\Phase_3.jl
@@ -25,7 +29,7 @@
 import Pkg
 Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)
 
-using CategoricalArrays, CSV, DataFrames, Mice, Printf, Random, Statistics
+using CategoricalArrays, CSV, DataFrames, Distributions, Mice, Printf, Random, Statistics
 # X-10 (2026-07-28): BetaML must be `using`'d (not just a Project.toml dep) to trigger
 # Mice.jl's MiceBetaMLExt package extension, which registers the "rf" imputer.
 using BetaML
@@ -187,21 +191,39 @@ function run_pooling(in_dir::String, out_csv::String; m_datasets::Int = M)
         @printf("  Dataset %d:  \$%10.3f B\n", i, q_i / 1e9)
     end
 
-    # [METHODOLOGY] Rubin's Rules pooling - q_bar is the pooled national estimate;
-    #               v_t combines within- and between-imputation variance (Rubin 1987)
+    # P3-XX (2026-07-29): the estimand here is a census total (sum over all N
+    # courses in a completed dataset), not a sample estimate -- given a completed
+    # dataset the total is known exactly, so the within-imputation sampling
+    # variance is zero (Rubin 1987). `within_vars` (var of individual course
+    # values within one imputation) is cross-sectional dispersion, not the
+    # sampling variance of the SUM estimator -- conflating the two was the
+    # original defect. Matches the v_w=0 treatment pool_acreage() already
+    # applies below ("within-variance is zero for a spatially fixed attribute").
+    # Old (z-based, misspecified v_w) values retained as [superseded] for the
+    # audit trail; point estimate (q_bar) is unaffected -- only SE/CI change.
     println("\n--- 2  Applying Rubin's Rules ---")
 
-    q_bar = mean(aggregates)
-    v_w   = mean(within_vars)
-    v_b   = var(aggregates; corrected = true)
-    v_t   = v_w + v_b + v_b / m_datasets
-    se    = sqrt(v_t)
-    ci95_lo = q_bar - 1.960 * se
-    ci95_hi = q_bar + 1.960 * se
-    ci99_lo = q_bar - 2.576 * se
-    ci99_hi = q_bar + 2.576 * se
+    q_bar   = mean(aggregates)
+    v_w_old = mean(within_vars)
+    v_b     = var(aggregates; corrected = true)
+    v_w     = 0.0
+    v_t     = v_w + v_b + v_b / m_datasets
+    se      = sqrt(v_t)
+    df      = m_datasets - 1
+    t95     = quantile(TDist(df), 0.975)
+    t99     = quantile(TDist(df), 0.995)
+    ci95_lo = q_bar - t95 * se
+    ci95_hi = q_bar + t95 * se
+    ci99_lo = q_bar - t99 * se
+    ci99_hi = q_bar + t99 * se
 
-    println("\n=== RUBIN'S RULES RESULTS ===")
+    se_old_z    = sqrt(v_w_old + v_b + v_b / m_datasets)
+    ci95_lo_old = q_bar - 1.960 * se_old_z
+    ci95_hi_old = q_bar + 1.960 * se_old_z
+    ci99_lo_old = q_bar - 2.576 * se_old_z
+    ci99_hi_old = q_bar + 2.576 * se_old_z
+
+    println("\n=== RUBIN'S RULES RESULTS (corrected: v_w=0, t-distribution) ===")
     @printf("  Pooled Aggregate National Value:  \$%10.3f B\n", q_bar / 1e9)
     @printf("  Within-Imputation Variance (v_w): %.4e\n", v_w)
     @printf("  Between-Imputation Variance (v_b):%.4e\n", v_b)
@@ -225,10 +247,17 @@ function run_pooling(in_dir::String, out_csv::String; m_datasets::Int = M)
                 "Between-Imputation Variance (v_b)",
                 "Total Variance (v_t)",
                 "Standard Error (\$)",
+                "Degrees of Freedom",
                 "99% CI Lower (\$B)",
                 "99% CI Upper (\$B)",
                 "95% CI Lower (\$B)",
                 "95% CI Upper (\$B)",
+                "[superseded] Within-Imputation Variance (v_w)",
+                "[superseded] Standard Error (\$, z-based)",
+                "[superseded] 99% CI Lower (\$B, z-based)",
+                "[superseded] 99% CI Upper (\$B, z-based)",
+                "[superseded] 95% CI Lower (\$B, z-based)",
+                "[superseded] 95% CI Upper (\$B, z-based)",
             ],
             ["Dataset $i Aggregate (\$B)" for i in 1:m_datasets]
         ),
@@ -240,10 +269,17 @@ function run_pooling(in_dir::String, out_csv::String; m_datasets::Int = M)
                 @sprintf("%.4e",  v_b),
                 @sprintf("%.4e",  v_t),
                 @sprintf("%.2f",  se),
+                @sprintf("%d",    df),
                 @sprintf("%.3f",  ci99_lo / 1e9),
                 @sprintf("%.3f",  ci99_hi / 1e9),
                 @sprintf("%.3f",  ci95_lo / 1e9),
                 @sprintf("%.3f",  ci95_hi / 1e9),
+                @sprintf("%.4e",  v_w_old),
+                @sprintf("%.2f",  se_old_z),
+                @sprintf("%.3f",  ci99_lo_old / 1e9),
+                @sprintf("%.3f",  ci99_hi_old / 1e9),
+                @sprintf("%.3f",  ci95_lo_old / 1e9),
+                @sprintf("%.3f",  ci95_hi_old / 1e9),
             ],
             [@sprintf("%.3f", aggregates[i] / 1e9) for i in 1:m_datasets]
         )

@@ -325,16 +325,31 @@ step3_mean_acreage <- mean(sapply(
     function(d) sum(d$final_acreage, na.rm = TRUE)
 ))
 
-q_bar <- mean(oahu_agg_dedup)
-v_w   <- mean(sapply(
+# P5-XX (2026-07-29): the estimand here is a census total (sum of
+# Total_Opportunity_Cost over the crosswalk-identified Oahu course set in one
+# completed imputation), not a sample estimate -- the within-imputation
+# sampling variance is zero by construction (Rubin 1987). The prior
+# `var(Total_Opportunity_Cost)` was cross-sectional dispersion across courses,
+# not the sampling variance of the SUM -- same defect class as Phase 3's
+# national run_pooling(). Old (z-based, misspecified v_w) values retained as
+# [superseded] for the audit trail; q_bar is unaffected.
+q_bar   <- mean(oahu_agg_dedup)
+v_w_old <- mean(sapply(
     oahu_deduped_list,
     function(d) var(d$Total_Opportunity_Cost, na.rm = TRUE)
 ))
 v_b   <- var(oahu_agg_dedup)
+v_w   <- 0
 v_t   <- v_w + v_b + v_b / M
 se    <- sqrt(v_t)
-ci_lo <- q_bar - 2.576 * se
-ci_hi <- q_bar + 2.576 * se
+dof   <- M - 1
+t99   <- qt(0.995, dof)
+ci_lo <- q_bar - t99 * se
+ci_hi <- q_bar + t99 * se
+
+se_old_z    <- sqrt(v_w_old + v_b + v_b / M)
+ci_lo_old_z <- q_bar - 2.576 * se_old_z
+ci_hi_old_z <- q_bar + 2.576 * se_old_z
 
 cat(sprintf(
     "  Step 3 consistency check (national-imputed, crosswalk-identified): $%.3fB (99%% CI: $%.3fB - $%.3fB), %.2f ac\n",
@@ -380,7 +395,11 @@ comparison_df <- data.frame(
         "Consistency Check: Standard Error ($B)",
         "Consistency Check: 99% CI Lower ($B)",
         "Consistency Check: 99% CI Upper ($B)",
-        "Headline vs. Consistency-Check Acreage Agreement (%)"
+        "Headline vs. Consistency-Check Acreage Agreement (%)",
+        "[superseded] Within-Imputation Variance (v_w)",
+        "[superseded] Standard Error ($B, z-based)",
+        "[superseded] 99% CI Lower ($B, z-based)",
+        "[superseded] 99% CI Upper ($B, z-based)"
     ),
     Value = c(
         nrow(osm_polys_sf),
@@ -393,7 +412,11 @@ comparison_df <- data.frame(
         sprintf("%.3f", se / 1e9),
         sprintf("%.3f", ci_lo / 1e9),
         sprintf("%.3f", ci_hi / 1e9),
-        sprintf("%.2f%%", pct_agreement)
+        sprintf("%.2f%%", pct_agreement),
+        sprintf("%.4e", v_w_old),
+        sprintf("%.3f", se_old_z / 1e9),
+        sprintf("%.3f", ci_lo_old_z / 1e9),
+        sprintf("%.3f", ci_hi_old_z / 1e9)
     )
 )
 write_csv(comparison_df, COMPARISON_OUT)

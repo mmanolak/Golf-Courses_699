@@ -2109,6 +2109,72 @@ rather than an opaque library `MethodError` — not implemented here, as it's a 
 improvement beyond what D-5 was scoped to fix, and touches only Julia (no equivalent R/Python
 divergence to correct in parallel under **§3**).
 
+### P3-09 — `run_pooling()`'s within-imputation variance used cross-sectional dispersion of course values, not the sampling variance of the pooled total; same defect independently in all six national/Oahu pooling sites
+**Severity:** Major (specification error, confirmed) / Minor (numerical impact — see magnitudes below) · **Status:** `VERIFIED`, fixed 2026-07-29 · **Locus:** Code
+
+Author-supplied handoff (`repool.py` + accompanying spec), independently verified line-for-line
+before any code changed, per standing practice of not trusting a handoff's file/line claims
+without checking the repo. Confirmed real, identically, in **six** places:
+
+| Site | Python | R | Julia |
+|---|---|---|---|
+| Phase 3 (national) | `Phase_3.py:157` | `Phase_3.R:201` | `Phase_3.jl:181` |
+| Phase 5 (Oahu Step 3) | `Phase_5.py:480` | `Phase_5.R:329-332` | `Phase_5.jl:435` |
+
+`v_w = mean(var(Total_Opportunity_Cost))` — the cross-sectional dispersion of individual
+course-level dollar values within one completed imputation — was used as Rubin's Rules'
+within-imputation variance term. The estimand at every one of these six sites is a **census
+total** (sum over all courses in a completed dataset, national or the Oahu crosswalk set): given
+a completed dataset the total is known exactly, so the true within-imputation sampling variance
+is zero, not the between-course dispersion. **Internal control:** `pool_acreage()` (Phase 3, all
+three languages) already implements `v_w = 0` correctly (`se = sqrt(v_b + v_b/M)`, no within
+term), and R/Julia carry the literal comment *"within-variance is zero for a spatially fixed
+attribute"* — `run_pooling()` diverged from its own neighbor function; not a deliberate modelling
+choice. Cross-language tri-implementation agreement could not catch this, since all three
+implemented the identical (wrong) formula.
+
+**Verified magnitudes, from the actual frozen outputs (not estimated):**
+
+| Scale | sqrt(v_w) | sqrt(v_b) | SE change (v_w→0) | Corrected-vs-published CI99 half-width |
+|---|---:|---:|---:|---:|
+| National (16,297 courses, R) | $145.6M | $2.825B | −0.13% | **1.018×** (wider — t-correction dominates) |
+| Oahu Step 3 (36 courses, R) | $434M | $981M | −8.47% | **0.933×** (narrower) |
+
+The full corrected-vs-published CI99 ratio needs **both** corrections applied together — v_w→0
+alone understates the true delta at national scale, since the originally-published CI used z
+critical values and the corrected one correctly uses t(M−1); z99=2.576 vs t99(df=99)=2.6264.
+Nationally the two corrections nearly cancel (net: published CIs marginally too narrow, not too
+wide — no qualitative claim changes). At Oahu scale v_w's share of total variance is large enough
+(sqrt(v_w)/sqrt(v_b) ≈ 0.44, vs ≈ 0.05 nationally) that the net effect is a real ~6.7% narrowing —
+this **strengthens**, not undermines, the existing §4.4.2 footnote's claim that Oahu's reported
+uncertainty is measurement error concentrated in a handful of identifiable courses, not general
+imputation-model uncertainty: removing an unjustified variance term makes that framing easier to
+defend.
+
+**Fixed at all six sites** (`v_w = 0`, `t(M−1)` critical values in place of z, old z-based
+v_w/SE/CI retained as `[superseded]` rows in each site's output for the audit trail; point
+estimates unaffected — only SE/CI change). `repool.py` (author-supplied, fixed for its own
+hardcoded-`osm_acreage` crash on R's `final_acreage`-named column, verified against all three
+languages) is the standalone re-pool-without-re-imputing utility for Phase 3; the in-place fixes
+above are what a future fresh pipeline run will produce.
+
+**Not applied:** no full pipeline re-run performed. Phase 3's `*_Rubins_Rules_Summary.csv` and
+Phase 5's `Phase5_Oahu_Comparison.csv` still contain the pre-fix (z-based) SE/CI until the author
+re-runs the affected scripts; `repool.py`'s `*_CORRECTED.csv` outputs are the reproducible
+preview of Phase 3's corrected numbers in the meantime. See **P5-20** for a separate, unrelated
+defect found while verifying this one — the Oahu Step 3 q_bar in the committed
+`Phase5_Oahu_Comparison.csv` does not reproduce from the current code at all, independent of this
+v_w fix.
+
+**Three secondary claims in the original handoff, checked and withdrawn — logged so they don't
+recur:**
+
+| Claim | Status |
+|---|---|
+| "R seed doesn't reach `future` workers; needs `furrr_options(seed=TRUE)`" | **Not a defect.** `Phase_3.R` uses `futuremice(..., parallelseed = 42, ...)` — the package's own dedicated parallel-safe seed mechanism. No bare `future_map()` call exists that would need it. |
+| "Julia `m_datasets` default is 5" | **Already covered by P3-02** (fixed 2026-07-25) — current default is `m_datasets::Int = M`, `const M = 100`, and every call site passes `M` explicitly. Only `Phase_3.jl`'s header comment still said "m=5"; corrected here (2026-07-29) as a pure documentation fix, no computational effect. |
+| "Julia thread `ENV` is a no-op" | **Real pattern, but not present in Phase 3.** No `ENV["JULIA_NUM_THREADS"]` assignment exists in `Phase_3.jl`. Already found and fixed in `Phase_1.jl`/`Phase_2.jl` 2026-07-27 (see entries above, lines ~1268-1284). |
+
 ---
 
 ## Phase 4 — Econometric Modeling
@@ -3160,6 +3226,47 @@ framing (§4.4.2, "The coverage ratio substantially exceeds the 83.9% national o
 share").** 84.38% vs. the (also-revised, see the open question on the national floor) national
 figure is a 0.6-point gap, not a substantial one under either the old 82.5% or the newly-verified
 ~83.8% national figure — flagged for the author's text pass, not corrected here.
+
+### P5-20 — `Phase5_Oahu_Comparison.csv`'s Step 3 q_bar (R: $30.700B) does not reproduce from a fresh, verbatim run of the current, committed `Phase_5.R`
+**Severity:** Major · **Status:** Confirmed, root cause not identified, not fixed · **Locus:** Data (frozen output) / possibly Code
+
+Found while resolving the **P3-09** Phase 5 blocker (author-requested: diff course counts/IDs
+between the audit's scratchpad replication and production before applying the pooling fix). Two
+independent scratchpad replications of `Phase_5.R`'s Step 3 (`master_keep_list` construction +
+per-imputation crosswalk join + sum) agreed with each other exactly: **q_bar = $30.5154B**, not
+the frozen CSV's **$30.700B** — a $184.6M (0.6%) gap, close to one mid-sized Oahu course's value.
+
+**This is not a bug in the replication.** `VERIFIED` by executing `Phase_5.R`'s own Step 1-3 code
+**verbatim** (copied unchanged, only output paths redirected to scratchpad so no committed file
+was touched) against the real, current, on-disk inputs — same result: **q_bar = $30.5154B**,
+SE = $1.0772B, 99% CI $27.7405B-$33.2902B. The SE and CI match the frozen CSV's stated $1.077B and
+$27.741B-$33.290B almost to the decimal; **only q_bar diverges.** In the actual code, `q_bar` is
+a single variable computed once (`mean(oahu_agg_dedup)`, `Phase_5.R:328`) and used identically for
+both the SE calculation and the `comparison_df` write (`Phase_5.R:392`) — there is no code path
+in the current file that could produce two different values for it. Ruled out: stale inputs
+(crosswalk, R's Phase 1 baseline, and all 100 `R_Imputed_Dataset_*.csv` files all predate both
+`Phase_5.R`'s last edit and the CSV's write time); uncommitted local edits (`git diff HEAD` on
+`Phase_5.R` is empty — the on-disk file exactly matches the last commit); join-collision or
+Holes-mismatch bugs in the replication (checked directly — zero collisions, zero mismatches, all
+36 crosswalk courses matched in every one of the 100 imputations).
+
+**Most likely explanation, not provable from what's on disk:** an interactive-session artifact —
+e.g. `q_bar` bound in an R environment from an earlier partial run, with only later steps
+(SE/CI/`comparison_df`) re-executed after an edit, rather than a clean `Rscript` batch run
+top-to-bottom. Not asserted as fact; flagging as the leading hypothesis only.
+
+**Practical implication:** the frozen `$30.700B` "Consistency Check" figure for R should be
+treated as unverified pending a clean re-run. Python's ($30.256B) and Julia's ($30.515B) own
+Step 3 q_bar figures were **not** independently verbatim-checked here — same class of risk,
+not yet ruled in or out. **Do not trust any of the three Step 3 q_bar figures in
+`Phase5_Oahu_Comparison.csv` as reproducible until a fresh, clean run confirms them** — the
+**P3-09** pooling fix has been applied to the Step 3 *code* in all three languages regardless
+(it's correct independent of this q_bar mystery, since it operates on whatever `oahu_agg_dedup`
+the code actually computes), but the *committed CSV* will not reflect either fix until the
+scripts are actually re-run. That re-run was not performed here — it would also regenerate
+`Target_Golf_Polygons.gpkg`, `Honolulu_Parcels_Reprojected.gpkg`, and the Step 4-6 outputs
+(`Phase5_Geographic_Breakdown.csv`, zoning tables), a larger and riskier action than a text fix,
+left for the author to run deliberately.
 
 ---
 
