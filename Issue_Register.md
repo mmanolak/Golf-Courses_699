@@ -3268,6 +3268,62 @@ scripts are actually re-run. That re-run was not performed here — it would als
 (`Phase5_Geographic_Breakdown.csv`, zoning tables), a larger and riskier action than a text fix,
 left for the author to run deliberately.
 
+*(2026-08-07: author-directed clean-room re-test, ruling out the "interactive-session artifact"
+hypothesis and narrowing the remaining candidates. Executed against a frozen data archive
+(`E:\My_UH\_ARCHIVE\frozen_2026-08-07\`, SHA256-manifested) and a disposable `git worktree` at
+tag `frozen-pre-P309` (7b274f7) — no writes to the live `Data` tree at any point.*
+
+*Step 0: `git diff --stat thesis-submitted frozen-pre-P309 -- "2 - Work/Phase 5.../"` is empty —
+the two tagged commits are code-identical for Phase 5, so only one worktree state needed testing.*
+
+*Step 4 (input integrity, checked before the run to scope it correctly): SHA256-compared, against
+the archive manifest, every file Step 1-3 reads — `All_Parcels_6378200148342636690.gpkg`,
+`All_Parcels_-4613852522541990741.csv`, `Zoning_-2205419429161838665.gpkg`,
+`tl_2022_us_county.shp`, `R_Phase1_Baseline_Golf_Valuation.csv`,
+`R_Phase2_OSM_Golf_Polygons.gpkg` — all `MATCH` between the live tree and the archive. The 100
+`R_Imputed_Dataset_*.csv` files carry identical mtimes (2026-07-26 21:56:48-21:57:09) in both
+locations, predating the frozen comparison CSV's write time (2026-07-27 23:14:51) by roughly a
+day — they have not been regenerated since, ruling out a Phase 3 re-imputation (stochastic reseed
+or otherwise) as the cause. The crosswalk's last git-tracked change (`63237dd`, 2026-07-27
+23:04:46) also predates the frozen file and is unchanged since.*
+
+*Step 1-2: ran `Phase_5.R`'s Steps 1-3 as a byte-verbatim copy, saved inside the worktree (so
+`this.path::this.dir()` resolves paths identically to production), executed via
+`Rscript --vanilla` — a fresh, non-interactive process with no `.Rprofile`/`.RData`, directly
+testing the leading hypothesis from the prior pass. Data paths were satisfied via directory
+junctions/hardlinks into the archive (git-ignored data directories aren't part of the worktree
+checkout). Steps 1-2 reproduced already-known figures exactly: 38 OSM polygons, 37 Phase 1
+baseline points, 5,810.62-acre Step 2 footprint (matches **P5-18**'s citation).*
+
+*Step 3 result: **q_bar = $30,515,380,108.08** — i.e. $30.5154B, matching the prior pass's scratchpad
+figure to the dollar. 36/36 courses matched via the crosswalk in imputation 1 (full course-level
+and `master_keep_list` dumps retained), so this is also a clean pass on the "Step 3 — set diff"
+hypothesis: no membership difference, because there is nothing to diff against — the two
+independent reproductions (interactive-adjacent scratchpad run, and this fresh isolated
+`--vanilla` run) now agree exactly with each other and disagree only with the frozen CSV.*
+
+*Attempted the strictest version of this test — restoring the exact package versions pinned in
+`renv.lock` as of `frozen-pre-P309`, so the isolated run would match the historical environment
+as closely as possible — but `renv::restore()` failed on this machine's Windows toolchain: `Rcpp`,
+`s2`, and `units` could not build from source in the fresh project library, which cascaded to `sf`
+and everything downstream. Not pursued further (out of scope to debug a compiler toolchain for a
+diagnostic re-run); worked around by junctioning the worktree's `renv/library` to the live tree's
+already-built one, which sacrifices exact historical-version fidelity but keeps every other
+isolation property (fresh process, archived data, no interactive state) intact.*
+
+*Conclusion: the "interactive-session artifact" hypothesis from the prior pass is now considered
+ruled out — a completely fresh, non-interactive process reproduces $30.5154B, not $30.700B. Code,
+every Step 1-3 input, and a second independent execution environment are all confirmed
+identical/unchanged since before the frozen file was written; none of them explain the gap. Root
+cause remains unidentified. The most plausible remaining candidate — untested, unprovable without
+the actual historical environment — is that the 2026-07-27 23:14 production run executed under a
+different ambient package environment than any available today: it predates **P0-01**'s
+lockfile-restore fix (`b280ab1`, 2026-07-28 19:46) by roughly 20 hours, from an era the same entry
+already documents as "two disconnected dependency universes." $30.5154B stands, confirmed twice
+independently; $30.700B remains unreproduced. Python's and Julia's own Step 3 q_bar figures are
+still not independently checked — same open risk as before, not extended to this pass given the
+R result was already conclusive and the toolchain friction encountered.)*
+
 ---
 
 ## Phase 6 — Visualization
