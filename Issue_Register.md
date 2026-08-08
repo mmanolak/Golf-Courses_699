@@ -3228,7 +3228,10 @@ figure is a 0.6-point gap, not a substantial one under either the old 82.5% or t
 ~83.8% national figure — flagged for the author's text pass, not corrected here.
 
 ### P5-20 — `Phase5_Oahu_Comparison.csv`'s Step 3 q_bar (R: $30.700B) does not reproduce from a fresh, verbatim run of the current, committed `Phase_5.R`
-**Severity:** Major · **Status:** Confirmed, root cause not identified, not fixed · **Locus:** Data (frozen output) / possibly Code
+**Severity:** ~~Major~~ **RETRACTED (2026-08-07) — not a defect.** · **Status:** Closed, no code or data
+issue found · **Locus:** N/A — the "discrepancy" was a transcription error in this register's own
+prior reporting. See the closing addendum at the end of this entry before reading anything above
+it as current.
 
 Found while resolving the **P3-09** Phase 5 blocker (author-requested: diff course counts/IDs
 between the audit's scratchpad replication and production before applying the pooling fix). Two
@@ -3323,6 +3326,78 @@ already documents as "two disconnected dependency universes." $30.5154B stands, 
 independently; $30.700B remains unreproduced. Python's and Julia's own Step 3 q_bar figures are
 still not independently checked — same open risk as before, not extended to this pass given the
 R result was already conclusive and the toolchain friction encountered.)*
+
+*(2026-08-07, recorded before extending this check to Python/Julia and before any full pipeline
+re-run: author-agreed tolerance bands for comparing a fresh Step 3 q_bar (or any other
+Monte-Carlo-pooled Phase 3/5 figure) against its currently-frozen counterpart —*
+
+| Deviation | Interpretation | Action |
+|---|---|---|
+| **< 0.1%** | Expected Monte Carlo variation (M=100 draws, floating-point/platform noise) | Accept, no action |
+| **0.1% – 1%** | Larger than expected MC noise alone should produce | Investigate before trusting either figure |
+| **> 1%** | Not explainable by MC variation | Stop; diagnose before proceeding (do not treat as a re-run artifact) |
+
+*For scale: this entry's originally-cited R gap — $30.5154B reproduced vs. a supposed $30.700B
+frozen figure — was later found to be a false comparison (see the closing addendum below): the
+real frozen R figure is $30.515B, a <0.01% deviation, squarely in the "accept" band. These bands
+apply to point estimates (q_bar, pooled aggregates); they are not a substitute for the exact-match
+checks already used elsewhere in this entry for course counts/IDs, which tolerate no deviation
+at all.)*
+
+*(2026-08-07, RETRACTION AND CLOSURE — read this before anything above it in this entry.
+Extending the check to Python and Julia (author-requested, before any full pipeline re-run) first
+required an environment restore for each language in a scratch location, attempted clean-room per
+the author's request:*
+
+- *R: `renv::restore()` against `renv.lock` failed — `Rcpp`, `s2`, and `units` could not build from
+  source on this machine's Windows toolchain, cascading to `sf` and everything downstream (already
+  reported in the addendum above). Worked around via a junction to the live tree's already-built
+  library; exact lockfile-version fidelity was not achieved for R.*
+- *Python: a fresh venv (`python -m pip install -r requirements.txt`, exact-pinned Python 3.13.13)
+  installed all 34 packages cleanly — every dependency, including `geopandas`/`pyogrio`/`shapely`/
+  `pyproj`, resolved to a prebuilt Windows wheel; no compilation needed. Full clean-room success.*
+- *Julia: `Pkg.instantiate()` against the pinned `Manifest.toml` in a fresh project directory
+  succeeded completely — all packages (`ArchGDAL`, `GeoDataFrames`, `Mice`, `BetaML`, etc.)
+  resolved and loaded (`Pkg.status()` clean, explicit `using` load test passed). Full clean-room
+  success.*
+
+*With working Python and Julia environments in hand, ran the same isolated verbatim Step 1-3
+methodology already validated for R against both languages' `frozen-pre-P309`-tagged code, in the
+same archive-linked worktree, comparing against each language's own frozen
+`Phase5_Oahu_Comparison.csv`:*
+
+| Language | Frozen q_bar | Fresh isolated q_bar | Deviation | Band |
+|---|---|---|---|---|
+| R | $30.515B | $30,515,380,108.08 | ~0.001% | Accept |
+| Python | $30.256B | $30,255,804,357.44 | ~0.001% | Accept |
+| Julia | $30.700B | $30,700,465,681.03 | ~0.002% | Accept |
+
+*SE, CI, and mean-acreage figures matched each language's frozen file too, not just q_bar. **All
+three languages reproduce their own frozen Step 3 figure exactly**, well inside the "accept" band
+just recorded above.*
+
+*This directly contradicts this entry's original claim that R's frozen figure was $30.700B. It
+was not. Re-reading `Phase5_Oahu_Comparison.csv` directly from both the archive and the live tree
+(`2 - Work/Phase 5.../Data_stale_2026-08-07/R/Phase5_Oahu_Comparison.csv` — the live `Data` folder
+has since been renamed aside, presumably in preparation for a full pipeline re-run) shows R's real
+frozen q_bar is, and has always been, **$30.515B** — matching every "fresh reproduction" this
+entry ever produced, including the very first one. **$30.700B is Julia's frozen figure, not
+R's.** The two got swapped somewhere in this register's own reporting (most likely when the
+original finding was first drafted, in the session before this one, without re-reading the actual
+CSV directly) — an internal transcription error, not a pipeline defect. A supporting data point:
+an earlier, independent entry in this register (**P5-11**'s 2026-07-28 addendum, written before
+P5-20 existed) already states R's production q_bar as "$30.515B... 99% CI $27.741B–$33.290B" —
+the exact figure this investigation kept re-deriving and mistaking for a mismatch against a
+number that was never actually R's.*
+
+*Net effect: no code changed, no data changed, nothing was actually broken. The multi-session
+diagnostic effort (isolated worktrees, archive hash-verification, input-integrity checks, three
+environment-restore attempts) was not wasted — it now stands as strong, independently-gathered
+evidence that all three languages' Phase 5 Step 3 pipelines are cleanly reproducible from their
+committed code and data, which is exactly the confidence check worth having in hand before a full
+pipeline re-run. Closing P5-20 with no further action. `git worktree remove` cleanup deferred per
+the author's explicit instruction not to delete anything before the re-run; nothing was written to
+the live tree in any case.)*
 
 ---
 
