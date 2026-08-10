@@ -116,6 +116,11 @@ venv/
 *.sbn
 *.sbx
 
+# --- exception: cb_20m county/state boundaries are tracked COMPLETE (all
+#     sidecars). They document the superseded configuration in Appendix A.1.1.
+#     A shapefile is tracked as a set or not at all. ---
+!2 - Work/00 - Data Sources/Original Data/cb_2022_us_county_20m.*
+!2 - Work/00 - Data Sources/Original Data/cb_2022_us_state_20m/cb_2022_us_state_20m.*
 
 # -----------------------------------------------------------------------------
 # 7. TABULAR DATA  --- exclude bulk, admit sources and results
