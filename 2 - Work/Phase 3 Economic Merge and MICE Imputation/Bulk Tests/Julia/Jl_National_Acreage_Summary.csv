@@ -1,0 +1,5 @@
+Category,County_Type,Pooled_Acres,SD_Between,CI_95_Lower_Acres,CI_95_Upper_Acres
+National Total,All,2.29314603e6,2505.5206,2.2877665e6,2.29852557e6
+By County Type,Urban,1.69743244e6,3805.7102,1.68926131e6,1.70560358e6
+By County Type,Rural,591446.42,2400.729,586291.88,596600.96
+By County Type,,4267.17,126.2161,3996.17,4538.16

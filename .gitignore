@@ -1,26 +1,75 @@
-.Rproj.user
+# =============================================================================
+#  Gone_Golfing / Ostrich Effect --- .gitignore
+# =============================================================================
+#  POLICY
+#    Track:   all code, all lockfiles, small irreplaceable source inputs,
+#             pooled results, provenance records, manuscript source.
+#    Exclude: bulk regenerable outputs, multi-GB source archives, build
+#             artifacts, credentials.
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# 1. CREDENTIALS AND SECRETS  (never track, no exceptions)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+*.key
+*.pem
+*credentials*
+*secret*
+settings.local.json
+.claude
+
+
+# -----------------------------------------------------------------------------
+# 2. OS AND EDITOR ARTIFACTS
+# -----------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*~
+*.swp
+
+
+# -----------------------------------------------------------------------------
+# 3. LANGUAGE ENVIRONMENTS
+# -----------------------------------------------------------------------------
+
+# --- R ---
+.Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
-United States April 2025 Shp Files.zip
-us-260413.osm.pbf
-Junk Information/
-extra junk/
-1 - Readings/Books/
-999 - Late Stage/
-*.gpkg
-settings.local.json
-*.zip
-*.idx
-*.csv
-!Run_Provenance_*.csv
-!Oahu_Course_Polygon_Crosswalk.csv
+*.Rproj
+renv/library/
+renv/staging/
+renv/local/
+renv/cellar/
+renv/sandbox/
+!renv.lock
+!renv/activate.R
+!renv/settings.json
+
+# --- Python ---
 __pycache__/
-*.pyc
-*.png
-.claude
-Gone Golfing.Rproj
-.Rhistory
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+!requirements.txt
+
+# --- Julia ---
+!Project.toml
+!Manifest.toml
+
+
+# -----------------------------------------------------------------------------
+# 4. LATEX BUILD ARTIFACTS
+# -----------------------------------------------------------------------------
 *.aux
 *.bbl
 *.bcf
@@ -30,21 +79,97 @@ Gone Golfing.Rproj
 *.idx
 *.ilg
 *.ind
+*.lof
 *.log
+*.lot
 *.out
 *.run.xml
 *.synctex.gz
 *.toc
-*.lof
-*.lot
 *.bbl-SAVE-ERROR
-*.gz
-*.xml
 *.bcf-SAVE-ERROR
-*.cpg
-*.dbf
-*.prj
+*.xml
+
+
+# -----------------------------------------------------------------------------
+# 5. LARGE SOURCE ARCHIVES  (excluded by size; hashes in DATA_PROVENANCE.md)
+# -----------------------------------------------------------------------------
+*.pbf
+*.osm
+*.zip
+*.7z
+*.tar.gz
+*.gz
+
+
+# -----------------------------------------------------------------------------
+# 6. GEOSPATIAL BINARIES
+# -----------------------------------------------------------------------------
+*.gpkg
+*.gpkg-shm
+*.gpkg-wal
 *.shp
 *.shx
-# Archived pre-P309 outputs - never track
+*.dbf
+*.prj
+*.cpg
+*.sbn
+*.sbx
+
+
+# -----------------------------------------------------------------------------
+# 7. TABULAR DATA  --- exclude bulk, admit sources and results
+# -----------------------------------------------------------------------------
+*.csv
+*.tsv
+
+# --- never track: regenerable bulk ---
+*_Imputed_Dataset_*.csv
+
+# --- source inputs (small, irreplaceable) ---
+!2 - Work/00 - Data Sources/**/*.csv
+
+# --- pooled results and diagnostics ---
+!**/*_Rubins_Rules_Summary*.csv
+!**/*_National_Acreage_Summary*.csv
+!**/Phase5_Oahu_Comparison*.csv
+
+# --- provenance and hand-verified crosswalks ---
+!**/Run_Provenance_*.csvg
+!**/Oahu_Course_Polygon_Crosswalk.csv
+!**/MANIFEST.csv
+
+# --- but NOT the large re-obtainable extracts (record in DATA_PROVENANCE.md) ---
+2 - Work/00 - Data Sources/Honolulu/All_Parcels_*.csv
+2 - Work/00 - Data Sources/Honolulu/Cadastral_*.csv
+2 - Work/00 - Data Sources/**/hpi_master.csv
+2 - Work/00 - Data Sources/**/*HPI Master.csv
+
+
+# -----------------------------------------------------------------------------
+# 8. FIGURES
+# -----------------------------------------------------------------------------
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+!**/Final_Thesis_Figures/*.png
+
+
+# -----------------------------------------------------------------------------
+# 9. ARCHIVES AND SCRATCH
+# -----------------------------------------------------------------------------
 2 - Work/00 - Pre-P309 Outputs*/
+**/Data_stale_*/
+Junk Information/
+extra junk/
+999 - Late Stage/
+_P520_TEST/
+_ENV_TEST/
+
+
+# -----------------------------------------------------------------------------
+# 10. COPYRIGHTED READING MATERIAL  (not redistributable)
+# -----------------------------------------------------------------------------
+**/1 - Readings/Books/

@@ -1,0 +1,14 @@
+Metric,Value
+Pooled Aggregate National Value ($),952872531647.04
+Pooled Aggregate National Value ($B),952.873
+Within-Imputation Variance (V_W),2.1585e+16
+Between-Imputation Variance (V_B),8.5472e+18
+Total Variance (V_T),1.0278e+19
+Standard Error ($),3205958191.76
+95% CI Lower ($B),946.589
+95% CI Upper ($B),959.156
+Dataset 1 Aggregate ($B),953.285
+Dataset 2 Aggregate ($B),956.616
+Dataset 3 Aggregate ($B),948.731
+Dataset 4 Aggregate ($B),951.672
+Dataset 5 Aggregate ($B),954.059

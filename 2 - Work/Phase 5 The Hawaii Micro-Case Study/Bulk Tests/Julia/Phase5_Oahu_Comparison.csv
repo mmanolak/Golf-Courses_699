@@ -1,0 +1,14 @@
+Metric,Value
+"Total Golf Courses (Oahu, OSM polygons)",39
+Total Unique TMKs (Step 2),"1,073"
+TMKs Matched in Cadastre,"6,556"
+OSM-Derived Legal Footprint (acres),8342.28
+Oahu Opportunity Cost - Imputation 1 ($B),25.007
+Oahu Opportunity Cost - Imputation 2 ($B),23.480
+Oahu Opportunity Cost - Imputation 3 ($B),25.798
+Oahu Opportunity Cost - Imputation 4 ($B),26.037
+Oahu Opportunity Cost - Imputation 5 ($B),26.677
+Pooled Oahu Opportunity Cost - q_bar ($B),25.400
+Standard Error ($B),1.396
+95% CI Lower ($B),22.663
+95% CI Upper ($B),28.137
