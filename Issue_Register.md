@@ -35,12 +35,12 @@ still a wrong published number.
 | Phase 0 | 0 | 2 | 0 | 0 | 2 |
 | Cross-cutting | 3 | 5 | 1 | 0 | 9 |
 | Phase 1 | 0 | 2 | 6 | 2 | 10 |
-| Phase 2 | 0 | 1 | 5 | 0 | 6 |
+| Phase 2 | 0 | 1 | 6 | 0 | 7 |
 | Phase 3 | 2 | 2 | 4 | 0 | 8 |
 | Phase 4 | 0 | 2 | 1 | 1 | 4 |
 | Phase 5 | 0 | 3 | 6 | 1 | 10 |
 | Phase 6 | 0 | 2 | 1 | 2 | 5 |
-| **Total** | **5** | **19** | **24** | **6** | **54** |
+| **Total** | **5** | **19** | **25** | **6** | **55** |
 
 *(2026-07-27: +2 net — new **X-09** (vendoring policy, Major, Fixed) and **P1-10** (`extract_holes`
 fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as N/A/verified-sound,
@@ -88,6 +88,12 @@ polygon per R's own recomputed distance — 0.55 m past `MAX_NEAREST_M = 500`); 
 divergence is only partially explained (Julia's CRS pipeline confirmed different; the R-vs-Python
 gap is not yet isolated). Manuscript impact: §4.1 footnote 2's 10,926 should read 10,925 for this
 R run, consistent with **P1-11**'s independent reproduction above.)*
+
+*(2026-08-10, same day: **P2-06 closed** — Pass-1 divergence recorded as a known, non-impacting
+cross-language implementation difference (author decision) rather than left open; count unchanged
+(reclassification, not a severity change). **+1 net — new P2-07** (Julia's hand-written PROJ4
+string vs. the authoritative `EPSG:5070` lookup R/Python use, Minor, Open/actionable), split out of
+`P2-06` item 4 as the one part of that investigation with a concrete code fix candidate.)*
 
 ---
 
@@ -1939,9 +1945,17 @@ ever revisited, but this entry does not carry it forward as open defect-hunting 
 
 ### P2-06 — `strix` re-run: R matches 1 fewer course than Python/Julia (11,604 vs 11,605); Pass-1 direct-intersect counts diverge across all three (R 5,463 / Python 5,501 / Julia 5,458)
 **Severity:** Minor (0.006% of the course list; national-aggregate impact not separately
-quantified but bounded by the single-course scale) · **Status:** Confirmed root cause for the
-N discrepancy, `VERIFIED`; Pass-1 divergence partially explained, root cause not fully isolated
-· **Locus:** Code · **Relates to:** P2-02 (`MAX_NEAREST_M = 500` documentation gap)
+quantified but bounded by the single-course scale) · **Status:** **Closed (2026-08-10, author
+decision).** N-discrepancy root cause fully traced (item 2). Pass-1 divergence: recorded as a
+known, non-impacting cross-language implementation difference, not pursued further — Pass 1 is an
+intermediate diagnostic quantity nothing downstream reads, and the 38-course R-vs-Python spread
+reconciles to a single course after Pass 2 (item 1), which is itself explained to sub-meter
+precision (item 2). `sf` and `GeoPandas` calling GEOS through different bindings producing
+sub-meter boundary-predicate differences is the same general class of expected cross-language
+divergence already accepted elsewhere in this pipeline (e.g. **X-02**'s `final_acreage` vs.
+`osm_acreage`). **Julia's CRS pipeline (item 4) is split out as a separate, actionable defect —
+see P2-07 — since it's a real code fix candidate, not just a diagnostic footnote.** · **Locus:**
+Code · **Relates to:** P2-02 (`MAX_NEAREST_M = 500` documentation gap), **P2-07**
 
 Surfaced by the author on the first post-migration `strix` run of Phase 2 in all three languages.
 The three final `acreage_source` counts (Python 11,605 `OSM` / Julia 11,605 `OSM` / R 11,604
@@ -1985,9 +1999,9 @@ identical polygon count (15,166), identical CRS (`NAD83 / Conus Albers`), identi
 three. Whatever is causing the Pass-1 intersect-count spread, it is not a language-specific
 difference in which polygons exist or how large they are.
 
-**4. Partially explained, `VERIFIED` at the code level — Julia's point reprojection uses a
-different CRS pipeline than R and Python's, though this alone does not fully account for the
-larger R-vs-Python gap.** `Phase_2.jl`'s point reprojection (`match_osm_to_courses`, ~line 163)
+**4. Julia's point reprojection uses a different CRS pipeline than R and Python's — real, code-
+verified, but only a partial explanation for the Pass-1 spread; the actionable fix is logged
+separately as `P2-07`.** `Phase_2.jl`'s point reprojection (`match_osm_to_courses`, ~line 163)
 builds its target CRS from a **manually specified PROJ4 string**:
 `+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +ellps=GRS80
 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs` — a hand-rolled Albers Equal Area with an explicit
@@ -1996,27 +2010,51 @@ instead resolve `EPSG:5070` by its authoritative code, going through PROJ's real
 transformation pipeline rather than a null-shift stand-in. WGS84 and NAD83 differ by roughly 1–2 m
 across CONUS depending on location — small, but exactly the right order of magnitude to flip a
 handful of near-boundary Pass-1 matches, and Julia's Pass-1 count (5,458) is the lowest of the
-three, consistent with this being a real contributor. **What this does not explain:** R and Python
-both use the authoritative EPSG:5070 path and should, in principle, reproject the same input
-points near-identically — yet their Pass-1 counts differ by 38 courses (5,463 vs 5,501), the
-largest of the three pairwise gaps. Polygon-set differences are ruled out (item 3), raw input
-coordinates are confirmed near-identical (item 1), so the remaining candidates — different
-GEOS/GDAL binding behavior between `sf` and `geopandas`/`shapely` at exact polygon boundaries, or
-a difference in how each language's spatial join resolves a point matching multiple overlapping
-polygons before the largest-area tie-break is applied — are not yet isolated. **Not chased
-further here; flagged as open, not resolved.**
+three, consistent with this being a real contributor. **What this does not explain, and is not
+pursued further under this entry:** R and Python both use the authoritative EPSG:5070 path yet
+their Pass-1 counts still differ by 38 courses (5,463 vs 5,501) — polygon-set differences are ruled
+out (item 3) and raw input coordinates are confirmed near-identical (item 1), so this residual gap
+is almost certainly `sf`-vs-`GeoPandas` GEOS-binding boundary-predicate behavior, the accepted class
+of divergence per this entry's closing disposition above, not chased to a line-level cause.
 
 **Impact on the manuscript.** §4.1 footnote 2's `11,605 − 679 = 10,926` should read `11,604 − 679
 = 10,925` for R specifically, on this run — consistent with **P1-11**'s independent reproduction
-above (N = 10,925). Whether the footnote should be updated to 10,925, re-derived from a future
-run, or left as an order-of-magnitude citation is an author call, not decided here. The underlying
+above (N = 10,925). Per author instruction, held pending the cascade's completion — §4.1 and
+footnote 2 get synced in one pass from the final tables, not edited piecemeal here. The underlying
 mechanism (item 2) is a single course sitting 0.55 m past a hard 500 m cutoff — not a systematic
 defect — so this does not, on its own, suggest the 71.2%/28.8% split is unstable beyond this one
-course. The unresolved R-vs-Python Pass-1 gap (item 4) is a genuine open question about
-cross-language geometric non-determinism that Phase 2's `X-02`/`P2-02` discussion of
+course. The R-vs-Python Pass-1 gap (item 4) is recorded, not chased further, as the kind of
+cross-language geometric non-determinism Phase 2's `X-02`/`P2-02` discussion of
 `MAX_NEAREST_M = 500` being "a defensible-but-arbitrary threshold" (`Project roadmap.md` §2.2)
-already anticipated as a defense-relevant weak point; this entry is concrete evidence for that
-concern rather than a new one.
+already anticipated as a defense-relevant characteristic of the two-pass design; this entry is
+concrete evidence for that already-documented characteristic, not a new open investigation.
+
+### P2-07 — `Phase_2.jl` reprojects course points with a hand-written PROJ4 string instead of the authoritative `EPSG:5070` lookup R and Python both use
+**Severity:** Minor (plausible contributor to a handful of near-boundary Pass-1/Pass-2 flips;
+national-aggregate impact not separately quantified, bounded by `P2-06`'s scale) · **Status:**
+Open, actionable — split out of `P2-06` item 4 · **Locus:** Code (`Phase_2.jl`, ~line 163) ·
+**Relates to:** **P2-06**
+
+`Phase_2.jl`'s `match_osm_to_courses` builds its target CRS for point reprojection from a manually
+specified PROJ4 string: `+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0
++ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs` — an Albers Equal Area definition with an
+explicit **null (zero-shift) WGS84→NAD83 datum transformation**. `Phase_2.R` (`sf::st_transform`)
+and `Phase_2.py` (`geopandas.to_crs(epsg=5070)`) both instead resolve `EPSG:5070` by its
+authoritative EPSG code, which routes through PROJ's real NAD83 transformation rather than
+assuming WGS84 and NAD83 are coincident. They are not — the two datums differ by roughly 1–2 m
+across the CONUS extent, in a spatially-varying way a null shift cannot reproduce. This is not
+equivalent to the authoritative lookup; it is an approximation with unmodeled, direction-dependent
+error, small in absolute terms but structurally capable of flipping any point sitting within that
+margin of a polygon boundary — exactly the mechanism `P2-06` traces for `MAX_NEAREST_M`, and
+plausibly a contributor to Julia's Pass-1 count being the lowest of the three languages
+(`P2-06` item 4).
+
+**Recommended fix:** replace the manual PROJ4 string with an EPSG-code-based transform, matching
+R and Python's approach — e.g. construct the target CRS via `EPSG:5070` directly (`ArchGDAL`
+supports importing by EPSG code the same way `importPROJ4` is used here) rather than hand-writing
+the projection parameters. **Diagnostic only, not applied here** — no code changed, per the
+author's instruction that this investigation stay read-only; logged as an actionable item for
+whoever next touches `Phase_2.jl`, not fixed in this pass.
 
 ---
 
