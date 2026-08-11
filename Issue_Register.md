@@ -109,6 +109,16 @@ N/A/Confirmatory), the empirical backing for Appendix A.5. R's frozen and Julia'
 pair independently verified; Python's frozen figure backed out from the author's stated delta,
 not independently located in this repo — flagged, not treated as confirmed.)*
 
+*(2026-08-10, same day: Python's P3-10 frozen figure corrected from a back-solved $941.101B to
+the author-sourced $941.096B (`repool.py` corrected run, same run that produced R's and Julia's
+frozen totals) — still flagged, not independently locatable in this repo, entry text only.)*
+
+*(2026-08-10, same day: **+0 net — new P6-10** (Decision 8: fresh `strix` figures adopted as
+manuscript-canonical throughout, N/A/author decision, excluded from the tally below per the
+**P6-05**/**P6-07** convention). Extends the R-canonical pivot to every remaining Phase 3/4/5
+manuscript figure not already covered by **P3-10**; national headline updated $936B → $935.036B
+in wording/rounding only, not a new number.)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -4006,6 +4016,51 @@ Recorded so the register isn't read as a list of everything that was looked at.
 - **M = 100 justification.** The Phase 3 Summary's argument for M=100 over M=5 — Monte Carlo
   error scaling as 1/√M, and the M vs. chain-iteration distinction — is correct and unusually
   well written. It just doesn't describe the run that got published.
+
+### P6-10 — Decision 8: fresh `strix` figures adopted as canonical throughout; manuscript's $936B national headline becomes $935B
+**Severity:** N/A (author decision, not a defect) · **Status:** Decided 2026-08-10 · **Locus:** Docs (manuscript sync)
+
+**Decided (author decision, Decision 8, 2026-08-10):** every manuscript-cited number is
+resynced to this migration's fresh `strix` M=100 cascade output, not the pre-migration
+Windows-frozen run. This extends the R-canonical pivot (**P3-10**'s Table 1/Table 2/Figures
+2.141/9.141/10.141/11.141/12.141) to every remaining manuscript figure sourced from Phase 3/4/5
+output — national aggregate, urban/rural split, doubly-observed and measured-acreage counts,
+state/county rollups, and the Oahu §5 figure family (headline, consistency-check, observed-only
+floor, rural-USDA sensitivity, zoning decomposition).
+
+**Immediate consequence:** the manuscript's national gross opportunity cost changes from
+**$936B to $935.036B** (R, this run's own `R_Rubins_Rules_Summary.csv`) — a wording/rounding
+sync, not a new number; $935.036B was already the fresh-run R figure reported under **P3-10**.
+
+**Values resynced under this decision** (full detail and computation basis given in the
+author's manuscript-sync report, not restated here to avoid a second source of truth):
+national gross ($935.036B) and observed-only floor ($789.848B, 84.47%); doubly-observed count
+(10,925) and measured-acreage count (11,604), both already established under **P1-11**/**P2-06**;
+missing-county-price count (679, reverified directly against
+`R_Phase2_Acreage_Matched_v2.csv` this run, not carried over from the pre-migration figure);
+top-5 states/counties and Honolulu County's national-analysis figure, recomputed R-only (not
+the still-Grand-Mean console diagnostic Scripts 1/2 print — see caveat below); the Oahu §5
+figure family, recomputed R-only including Script 9b's Rural-USDA sensitivity figure, which
+was *not* in **P3-10**'s original 9-figure/3-table pivot scope and had not been touched until
+now.
+
+**Known caveat carried forward, not resolved by this decision:** Scripts 1 and 2's own
+console-printed "Top 10 states/counties" diagnostic (`Phase_6.R`, Script 1 Step 2 / Script 2
+Step 2) still reads `grand_means$state$GrandMean` / `grand_means$county$GrandMean` — only the
+2.141 map file's rendering loop was special-cased to R data under **P3-10**, not this
+diagnostic printout. Anyone re-deriving these numbers from a fresh `phase6_R.log` rather than
+this register will get the Grand-Mean figures, not the R-canonical ones this decision commits
+to. Not fixed here (out of scope for a decision entry); flagged so a future pass on `Phase_6.R`
+knows to either fix the diagnostic or add a comment explaining the divergence.
+
+**Also fixed under this decision, incidentally:** Table 2's footnote pointed readers to
+"Appendix A.4" for the observed-subset Holes estimate; the manuscript restructured that content
+into §4.3 (`sec:regression`) at some point after the footnote text was written. Retargeted to
+`Section~\ref{sec:regression}` in `Phase_6.R`'s `run_8_LaTeX_Tables()` and regenerated
+`8.241_Table2_Regression.tex`. (Table 1 and Table 3 were also regenerated in the same pass to
+keep all three `.tex` outputs current with the same script run; Table 1's content is unchanged
+except for a LaTeX-escaping fix to its `%` characters already in progress in the working tree
+before this entry was written — not this decision's own change, left as found.)
 
 ---
 

@@ -1577,8 +1577,8 @@ run_8_LaTeX_Tables <- function() {
         kable_styling(latex_options = c("hold_position", "scale_down")) |>
         footnote(
             general = paste0(
-                "99\\% confidence intervals reported (t-distribution, $df = M-1 = 99$, ",
-                "$t_{99} = 2.6264$); 95\\% intervals available in the replication package."
+                "99\\\\% confidence intervals reported (t-distribution, $df = M-1 = 99$, ",
+                "$t_{99} = 2.6264$); 95\\\\% intervals available in the replication package."
             ),
             general_title     = "",
             footnote_as_chunk = TRUE,
@@ -1654,7 +1654,7 @@ run_8_LaTeX_Tables <- function() {
                         format(n_obs_mean, big.mark = ","), r2_mean),
                 " Holes is also a MICE predictor for the imputed acreage/value columns ",
                 "this model's dependent variable is built from; see the observed-subset ",
-                "estimate (Appendix A.4) for the estimate free of that dependency."
+                "estimate (Section~\\\\ref{sec:regression}) for the estimate free of that dependency."
             ),
             general_title = "Note: ",
             escape = FALSE,
