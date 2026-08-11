@@ -119,6 +119,15 @@ manuscript-canonical throughout, N/A/author decision, excluded from the tally be
 manuscript figure not already covered by **P3-10**; national headline updated $936B → $935.036B
 in wording/rounding only, not a new number.)*
 
+*(2026-08-10, same day: **+1 net — new P5-21** (Table 3/4's Ewa 678→662/Urban Core 35→47 parcel-
+zone shift, Minor, Open/partially diagnosed). Retracts this session's own earlier "live cadastral
+re-pull" explanation — author-verified byte-identical SHA256 on both machines; the mtime evidence
+it was based on is worthless (`scp -r` without `-p` restamps mtimes regardless of content). Root
+cause narrowed to Step 2's spatial intersection producing a different TMK set than the manuscript's
+original run (Zone confirmed derivable from the TMK's own leading digit, ruling out a Zone-value
+change against an unchanged parcel set), not yet identified further — no historical TMK list
+exists in-repo to diff directly.)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -3785,6 +3794,62 @@ committed code and data, which is exactly the confidence check worth having in h
 pipeline re-run. Closing P5-20 with no further action. `git worktree remove` cleanup deferred per
 the author's explicit instruction not to delete anything before the re-run; nothing was written to
 the live tree in any case.)*
+
+---
+
+### P5-21 — Table 3/4's Ewa 678→662 / Urban Core 35→47 parcel-zone shift: input file ruled out, root cause narrowed to Step 2's spatial intersection, not identified
+**Severity:** Minor (§5.3's Ewa-dominance argument survives at either count) · **Status:** Open, partially diagnosed · **Locus:** Data or environment (see below), not code
+
+**This entry retracts a wrong claim from this same audit session.** The zone shift was first
+attributed to a live re-pull of `All_Parcels_-4613852522541990741.csv` from Honolulu's cadastral
+portal, reasoning from the file's today-dated mtime. **Wrong** — author-verified: SHA256
+`4b74e89acc705da03c8e091f296510b7f815922f6c27427a17e3f6bc039654ce` is identical on both the
+Windows machine and `strix`. The file came across byte-for-byte in the 111-file `scp -r`
+migration transfer; `-p` wasn't passed, so `scp` stamped every transferred file with today's
+mtime regardless of content, making mtime worthless as freshness evidence for anything moved in
+that transfer. Confirmed directly on `strix`: `sha256sum` of the live copy matches the quoted
+hash exactly.
+
+**Two follow-up checks the author asked for, both done:**
+
+1. **Is `Zone` in the cadastral CSV independent, or derivable from the TMK?** Checked directly:
+   `Zone` equals the TMK's own leading digit for all 177,392 parcel rows in the file, zero
+   exceptions. It is not a separately-maintained GIS attribute — it's redundant with the TMK
+   string itself. Consequence: for an unchanged parcel SET, the zone distribution cannot change,
+   full stop. Since the distribution did change with a byte-identical `Zone`-source file, **the
+   set of parcels reaching Step 4's join must be different**, exactly as the author reasoned.
+2. **Diff the TMK lists, old run vs. this run.** Could not be done — **no historical TMK list or
+   `Phase5_Geographic_Breakdown.csv` exists anywhere in this repo or its `Archive/`** (same
+   missing-durable-artifact problem as **P5-19**'s Table 3 assessed values). What was checked
+   instead: this run's own saved `Target_Golf_Parcels_List.csv` (1,072 TMKs, Step 2's output),
+   with zone taken as the first digit of each TMK directly — bypassing Step 4's join code
+   entirely — reproduces the committed `Phase5_Geographic_Breakdown.csv` exactly (662/171/123/47/
+   33/32/3/1). This confirms Step 4's join has no bug; the discrepancy against the manuscript's
+   678/35 figures originates entirely upstream, in Step 2's `st_intersection(oahu_golf_sf,
+   parcels_sf)` producing a different 1,072-member TMK set than whatever produced 678/35.
+
+**Not yet identified: why Step 2's intersection differs.** Two candidate mechanisms, neither
+confirmed:
+- **GEOS/GDAL/PROJ version differences between the Windows and `strix` environments**, the same
+  class of cause already attributed (unconfirmed, same caveat) to **P3-10**'s national deltas
+  and directly confirmed for **P2-06**'s Charlotte Golf Links boundary case. `st_intersection()`
+  on a cookie-cutter overlay is exactly the kind of operation sensitive to library-version
+  differences in boundary/vertex handling. This machine's versions, recorded for future
+  comparison: GEOS 3.14.1, GDAL 3.11.5, PROJ 9.6.2 (`sf::sf_extSoftVersion()`). No equivalent
+  version record exists for the original Windows run.
+- **The parcels geometry file itself** (`All_Parcels_6378200148342636690.gpkg`, distinct from
+  the byte-verified `.csv` — Step 2 intersects against the `.gpkg`'s geometry, Step 4 only joins
+  the `.csv`'s `Zone` attribute by TMK string). Also gitignored, also came across in the same
+  `scp -p`-less transfer, so its mtime is equally uninformative — but unlike the `.csv`, **its
+  hash was never checked against the original** (`e82bd565986aab800bf17add97fada81bf66ae0cd1f
+  12601569ec416a68d9d37` on `strix`, no Windows-side value to compare). Cannot rule out a
+  different `.gpkg` export reaching `strix` than the `.csv` did, even under the same transfer.
+
+**Manuscript impact:** none forced. §5.3's argument text ("Ewa plain was the primary site...")
+holds at 61.8% same as 63.2% — direction and magnitude of the claim are unchanged either way.
+Per the author's instruction, the 678/662 figure itself is not being edited while the cause is
+open. Flagged for a future pass: hashing the `.gpkg` on the Windows machine (if it's still
+reachable) would close this decisively either way.
 
 ---
 
