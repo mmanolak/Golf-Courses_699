@@ -74,6 +74,13 @@ addendum** (no count change — same entry): `renv::snapshot(type="implicit")` r
 entry's own warning on the new machine, dropping `ranger` and 51 other packages from `renv.lock`;
 reverted, and implicit-mode snapshotting is now barred outright on this project.)*
 
+*(2026-08-10: +0 net — new **P1-11** (Holes/Ownership_Type MICE-predictor-exclusion proposal,
+N/A/Question, recommend Won't fix pending one outstanding verification), excluded from the tally
+below per the **P6-05**/**P6-07** N/A convention. Two further labels relayed secondhand this session
+turned out to already be logged with evidence under their real IDs — **P1-05** (`Semi Private`
+collapse) and **P1-06** (Python dedup) — both already `Fixed`; nothing new to log, not treated as
+open.)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -1419,6 +1426,70 @@ need to match, not just the patterns before it" question, and per **P1-01**'s ow
 changing Python/Julia's final fallback to `None`/`missing` rather than harmonizing on `18`. Flagging
 for the author rather than deciding unilaterally, since it's a small but real behavioral change,
 not a mechanical parity gap like **P5-07**.
+
+### P1-11 — Proposal: exclude `Holes`/`Ownership_Type` from Phase 3's MICE predictor matrix to remove circularity with Phase 4's Holes coefficient
+**Severity:** N/A (methodology proposal, not a defect in current code — excluded from the running
+tally below, same convention as **P6-05**/**P6-07**) · **Status:** Question — author's prior and
+this entry's recommendation both lean **Won't fix**, pending one outstanding verification (see
+below) · **Locus:** Both (Code: `Phase_3.R:126` predictor list; Docs: Appendix A.4) · **Relates
+to:** **X-10**, **P0-01**
+
+**Proposal being evaluated:** drop `Holes` and `Ownership_Type`/`Course_Type` from Phase 3's MICE
+predictor list to eliminate a dependency with Phase 4's Holes coefficient. Raised by the author,
+originally mislabeled `P1-01` by a prior session relaying it secondhand — reassigned here since
+`P1-01` (`extract_holes()`'s `18` default) is a different, already-`Fixed` issue and the register's
+own rule is IDs are never reused.
+
+**Evidence the dependency exists, `VERIFIED` against current code, not assumed:** `Phase_3.R:126` —
+`predictors <- c("Holes", course_col, "county_type", "Longitude", "Latitude")` — is the MICE
+predictor list for imputing `final_acreage`/`osm_acreage` and `Baseline_Value_Per_Acre`
+(`Phase_3.R:67`). `Phase_4.R:50` — `FORMULA_STR <- "Log_Opportunity_Cost ~ Holes +
+factor(county_type)"` — regresses on the same `Holes` column, and `Log_Opportunity_Cost` is
+constructed from the two columns Phase 3 just imputed. For the 28.8% of courses needing acreage
+imputation (and a further subset needing value imputation), the random-forest imputer uses `Holes`
+to help construct part of the value Phase 4 then regresses on `Holes` — the fitted Holes
+coefficient for those rows is partly determined by the imputer's own use of `Holes`, not by an
+independent association in the data. This is real, but narrow: it affects Phase 4's Holes
+coefficient specifically. It does **not** touch Phase 3's pooled national aggregate ($941B), which
+never runs Phase 4's regression.
+
+**Predicted effect on imputed acreage:** removing `Holes`/`Ownership_Type` drops two informative
+covariates (course size and ownership type both plausibly correlate with acreage and land value)
+from the imputation model. Expected direction: reduced imputation accuracy (higher FMI, noisier
+imputed values) for the affected ~28.8%/~6.7% of courses. Magnitude not quantifiable without
+running it — this is a real cost, not a free fix.
+
+**Predicted effect on the national aggregate:** small and unsigned without running it. The
+aggregate sums over ~16,292 courses; predictor removal degrades imputation precision on the
+affected subset, with no obvious directional bias on the total. Not expected to move the $941B
+figure by much, but not zero either — "small" is a prediction here, not a measurement.
+
+**Methodology impact:** would contradict Appendix A.4 as currently written (author's account) and
+change the MICE predictor specification in production code — a substantive methodology change, not
+a bug fix.
+
+**Recommendation — reject the predictor-matrix exclusion, argued rather than relayed.** The
+circularity is real for the full-sample Phase 4 Holes coefficient, but the manuscript already
+reports the observed-acreage/value subset (N = 10,926) as the substantive Holes finding, which
+sidesteps the mechanism entirely — imputation never touches those rows, so nothing about them is
+circular. Removing predictors from Phase 3 would degrade imputation quality pipeline-wide to fix a
+problem already solved one layer up, at the reporting level. Applied instead of the code change: an
+explicit circularity caveat added to the full-sample Holes coefficient everywhere it's presented as
+a finding — Table 2's LaTeX footnote (`8_LaTeX_Tables.R`), `00 - Phase4_Summary.md`,
+`01 - Phase4_Documentation.md`, `Phase7_Summary.md`, `Phase7_Documentation.md` — pointing to
+Appendix A.4 for the estimate free of this dependency.
+
+**Outstanding verification, not yet closed — this entry's recommendation depends on it.** The N =
+10,926 observed-subset regression's source (reported to live in `secret/Preview_R_Canonical/` on
+the prior Windows machine) is not present anywhere in this repo — checked directly on `strix`, not
+assumed. `11,605` (Phase 2's observed-`osm_acreage` count) `− 679 = 10,926` is consistent with a
+filter excluding rows with *either* imputed acreage *or* imputed value, matching the author's
+expectation. But this repo's own existing "observed-only" convention
+(`01 - Phase6_Documentation.md` §7.2, `acreage_source != "MICE_Target"`) filters on acreage alone
+and would produce N = 11,605, not 10,926 — so whatever script produced 10,926 filters on something
+this codebase doesn't implement anywhere visible yet. **Confirm the actual filter excludes both
+imputed columns, from the code, before citing β = 0.038 as clean of the circularity** — if it
+migrates from the Windows machine, or the author confirms the filter directly.
 
 ### Phase 1 — noted, no issue raised
 

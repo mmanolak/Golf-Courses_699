@@ -183,7 +183,13 @@ tbl2 <- kable(
         general = paste0(
             "Sig.\\ codes: *** $p < 0.001$. ",
             "FMI = Fraction of Missing Information from MICE imputation. ",
-            "Covariance terms omitted from delta-method prediction CIs."
+            "Covariance terms omitted from delta-method prediction CIs. ",
+            "Holes is also a MICE predictor for the imputed acreage/value columns ",
+            "that this model's dependent variable is built from (28.8\\% of courses ",
+            "imputed for acreage, a further subset for value); the Holes coefficient ",
+            "above is estimated on the full sample and is not free of that dependency ",
+            "for the imputed rows. See Appendix A.4 for the estimate restricted to ",
+            "courses with fully observed (non-imputed) acreage and value."
         ),
         general_title  = "Note: ",
         escape         = FALSE,
