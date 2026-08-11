@@ -1,0 +1,118 @@
+Metric,Value
+Pooled Aggregate National Value ($),"935,036,341,214"
+Pooled Aggregate National Value ($B),935.036
+Within-Imputation Variance (v_w),0.0000e+00
+Between-Imputation Variance (v_b),6.0265e+18
+Total Variance (v_t),6.0868e+18
+Standard Error ($),"2,467,134,844"
+Degrees of Freedom,99
+99% CI Lower ($B),928.557
+99% CI Upper ($B),941.516
+95% CI Lower ($B),930.141
+95% CI Upper ($B),939.932
+[superseded] Within-Imputation Variance (v_w),2.1210e+16
+"[superseded] Standard Error ($, z-based)","2,471,429,606"
+"[superseded] 99% CI Lower ($B, z-based)",928.670
+"[superseded] 99% CI Upper ($B, z-based)",941.403
+"[superseded] 95% CI Lower ($B, z-based)",930.192
+"[superseded] 95% CI Upper ($B, z-based)",939.880
+Dataset 1 Aggregate ($B),932.368
+Dataset 2 Aggregate ($B),935.557
+Dataset 3 Aggregate ($B),930.514
+Dataset 4 Aggregate ($B),934.759
+Dataset 5 Aggregate ($B),931.428
+Dataset 6 Aggregate ($B),938.982
+Dataset 7 Aggregate ($B),930.540
+Dataset 8 Aggregate ($B),937.466
+Dataset 9 Aggregate ($B),934.474
+Dataset 10 Aggregate ($B),936.790
+Dataset 11 Aggregate ($B),935.654
+Dataset 12 Aggregate ($B),940.374
+Dataset 13 Aggregate ($B),933.695
+Dataset 14 Aggregate ($B),933.912
+Dataset 15 Aggregate ($B),936.963
+Dataset 16 Aggregate ($B),938.402
+Dataset 17 Aggregate ($B),934.167
+Dataset 18 Aggregate ($B),933.930
+Dataset 19 Aggregate ($B),937.703
+Dataset 20 Aggregate ($B),937.758
+Dataset 21 Aggregate ($B),938.041
+Dataset 22 Aggregate ($B),938.473
+Dataset 23 Aggregate ($B),941.266
+Dataset 24 Aggregate ($B),933.351
+Dataset 25 Aggregate ($B),936.487
+Dataset 26 Aggregate ($B),934.784
+Dataset 27 Aggregate ($B),936.270
+Dataset 28 Aggregate ($B),935.173
+Dataset 29 Aggregate ($B),930.642
+Dataset 30 Aggregate ($B),933.171
+Dataset 31 Aggregate ($B),932.153
+Dataset 32 Aggregate ($B),934.852
+Dataset 33 Aggregate ($B),933.584
+Dataset 34 Aggregate ($B),933.988
+Dataset 35 Aggregate ($B),932.412
+Dataset 36 Aggregate ($B),933.351
+Dataset 37 Aggregate ($B),935.526
+Dataset 38 Aggregate ($B),939.040
+Dataset 39 Aggregate ($B),933.206
+Dataset 40 Aggregate ($B),934.946
+Dataset 41 Aggregate ($B),930.897
+Dataset 42 Aggregate ($B),935.872
+Dataset 43 Aggregate ($B),938.919
+Dataset 44 Aggregate ($B),934.828
+Dataset 45 Aggregate ($B),934.158
+Dataset 46 Aggregate ($B),939.465
+Dataset 47 Aggregate ($B),934.219
+Dataset 48 Aggregate ($B),933.391
+Dataset 49 Aggregate ($B),938.310
+Dataset 50 Aggregate ($B),934.866
+Dataset 51 Aggregate ($B),934.801
+Dataset 52 Aggregate ($B),934.392
+Dataset 53 Aggregate ($B),932.240
+Dataset 54 Aggregate ($B),936.664
+Dataset 55 Aggregate ($B),934.558
+Dataset 56 Aggregate ($B),933.437
+Dataset 57 Aggregate ($B),931.516
+Dataset 58 Aggregate ($B),938.292
+Dataset 59 Aggregate ($B),935.603
+Dataset 60 Aggregate ($B),936.266
+Dataset 61 Aggregate ($B),933.454
+Dataset 62 Aggregate ($B),936.099
+Dataset 63 Aggregate ($B),936.118
+Dataset 64 Aggregate ($B),934.988
+Dataset 65 Aggregate ($B),936.424
+Dataset 66 Aggregate ($B),930.107
+Dataset 67 Aggregate ($B),932.830
+Dataset 68 Aggregate ($B),933.390
+Dataset 69 Aggregate ($B),934.761
+Dataset 70 Aggregate ($B),934.550
+Dataset 71 Aggregate ($B),932.261
+Dataset 72 Aggregate ($B),933.429
+Dataset 73 Aggregate ($B),938.733
+Dataset 74 Aggregate ($B),937.044
+Dataset 75 Aggregate ($B),933.725
+Dataset 76 Aggregate ($B),939.144
+Dataset 77 Aggregate ($B),936.207
+Dataset 78 Aggregate ($B),932.771
+Dataset 79 Aggregate ($B),935.363
+Dataset 80 Aggregate ($B),935.850
+Dataset 81 Aggregate ($B),936.834
+Dataset 82 Aggregate ($B),935.540
+Dataset 83 Aggregate ($B),934.870
+Dataset 84 Aggregate ($B),929.161
+Dataset 85 Aggregate ($B),933.137
+Dataset 86 Aggregate ($B),938.845
+Dataset 87 Aggregate ($B),932.163
+Dataset 88 Aggregate ($B),933.203
+Dataset 89 Aggregate ($B),939.006
+Dataset 90 Aggregate ($B),936.258
+Dataset 91 Aggregate ($B),934.081
+Dataset 92 Aggregate ($B),935.598
+Dataset 93 Aggregate ($B),937.269
+Dataset 94 Aggregate ($B),934.663
+Dataset 95 Aggregate ($B),932.869
+Dataset 96 Aggregate ($B),936.124
+Dataset 97 Aggregate ($B),931.502
+Dataset 98 Aggregate ($B),933.139
+Dataset 99 Aggregate ($B),936.619
+Dataset 100 Aggregate ($B),936.660

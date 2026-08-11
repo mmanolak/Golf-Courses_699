@@ -1,0 +1,16 @@
+Metric,Value
+"Total Golf Courses (Oahu, OSM polygons, Ko'olau duplicate excluded)",38
+Total Unique TMKs (Step 2),1072
+"HEADLINE: OSM-Derived Legal Footprint (acres, Step 2, P5-13/P5-15-corrected)","5,810.08"
+"HEADLINE: Oahu Opportunity Cost (Step 2 measured acreage x flat FHFA rate, $B)",28.775
+"Consistency Check: Unique Oahu Courses (Step 3, crosswalk-identified)",36
+"Consistency Check: Mean Acreage (Step 3, national-imputed, ac)","6,159.76"
+Consistency Check: Pooled Oahu Opportunity Cost - q_bar ($B),30.507
+Consistency Check: Standard Error ($B),0.944
+Consistency Check: 99% CI Lower ($B),28.026
+Consistency Check: 99% CI Upper ($B),32.987
+Headline vs. Consistency-Check Acreage Agreement (%),6.02%
+[superseded] Within-Imputation Variance (v_w),1.8920e+17
+"[superseded] Standard Error ($B, z-based)",1.040
+"[superseded] 99% CI Lower ($B, z-based)",27.828
+"[superseded] 99% CI Upper ($B, z-based)",33.185
