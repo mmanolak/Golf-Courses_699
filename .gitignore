@@ -138,6 +138,7 @@ venv/
 !**/*_Rubins_Rules_Summary*.csv
 !**/*_National_Acreage_Summary*.csv
 !**/Phase5_Oahu_Comparison*.csv
+!**/R_Assessment_By_Class.csv
 
 # --- provenance and hand-verified crosswalks ---
 !**/Run_Provenance_*.csvg

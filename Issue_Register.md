@@ -38,9 +38,9 @@ still a wrong published number.
 | Phase 2 | 0 | 1 | 6 | 0 | 7 |
 | Phase 3 | 2 | 2 | 4 | 0 | 8 |
 | Phase 4 | 0 | 2 | 1 | 1 | 4 |
-| Phase 5 | 0 | 3 | 6 | 1 | 10 |
+| Phase 5 | 0 | 4 | 6 | 1 | 11 |
 | Phase 6 | 0 | 2 | 1 | 2 | 5 |
-| **Total** | **5** | **19** | **25** | **6** | **55** |
+| **Total** | **5** | **20** | **25** | **6** | **56** |
 
 *(2026-07-27: +2 net — new **X-09** (vendoring policy, Major, Fixed) and **P1-10** (`extract_holes`
 fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as N/A/verified-sound,
@@ -127,6 +127,26 @@ cause narrowed to Step 2's spatial intersection producing a different TMK set th
 original run (Zone confirmed derivable from the TMK's own leading digit, ruling out a Zone-value
 change against an unchanged parcel set), not yet identified further — no historical TMK list
 exists in-repo to diff directly.)*
+
+*(2026-08-10, same day: **P5-21 closed, attributed** (status change, not a new entry). All four
+Honolulu GeoPackages hash-verified identical across machines (author-confirmed), matching the
+`.csv` already verified. By elimination — every Step 2 input confirmed unchanged, Zone proven
+derivable from the TMK, Step 4's join independently exonerated — the cause is attributed to
+`st_intersection()` running under a different GEOS 3.14.1/GDAL 3.11.5/PROJ 9.6.2 stack on `strix`
+than whatever the original Windows run used (unrecorded, not independently confirmable). Second
+documented instance of this failure class in the project (first: **P2-06**); flagged as a
+manuscript limitations-section item, not just a per-figure footnote.)*
+
+*(2026-08-10, same day: **+1 net — new P5-22** (§5.1's per-class assessed-value/exemption
+figures — $26,079/$630,049/$962,922 per acre, 105 Preservation parcels, 27.5%/47.2% exemption
+rates — Major/provenance, `VERIFIED` absent). New committed script `Phase_5_Assessment_By_Class.R`
+cleanly joins the 1,072-TMK golf footprint to the Honolulu tax roll (100% match) but finds no
+assessed-value, tax-classification, or exemption field anywhere in that source — confirmed
+identical schema across the `.csv`, the equivalent `.gpkg`, and the source `.zip`'s raw `.dbf`.
+A qPublic/RPAD bookmark already in the repo is the likely origin of the manuscript's figures,
+pointing to a hand lookup rather than a committed bulk source. Also reproduces the golf-footprint
+parcels' total *cadastral* (unclipped) acreage — 70,816 ac, ~12× the golf-clipped footprint —
+which quantifies the mixed-use-parcel denominator concern raised alongside this request.)*
 
 ---
 
@@ -3797,8 +3817,8 @@ the live tree in any case.)*
 
 ---
 
-### P5-21 — Table 3/4's Ewa 678→662 / Urban Core 35→47 parcel-zone shift: input file ruled out, root cause narrowed to Step 2's spatial intersection, not identified
-**Severity:** Minor (§5.3's Ewa-dominance argument survives at either count) · **Status:** Open, partially diagnosed · **Locus:** Data or environment (see below), not code
+### P5-21 — Table 3/4's Ewa 678→662 / Urban Core 35→47 parcel-zone shift: attributed to GEOS/GDAL/PROJ version differences in `st_intersection()`
+**Severity:** Minor (§5.3's Ewa-dominance argument survives at either count) · **Status:** Closed, attributed (2026-08-10) · **Locus:** Environment (geospatial library versions), not code, not data
 
 **This entry retracts a wrong claim from this same audit session.** The zone shift was first
 attributed to a live re-pull of `All_Parcels_-4613852522541990741.csv` from Honolulu's cadastral
@@ -3847,9 +3867,92 @@ confirmed:
 
 **Manuscript impact:** none forced. §5.3's argument text ("Ewa plain was the primary site...")
 holds at 61.8% same as 63.2% — direction and magnitude of the claim are unchanged either way.
-Per the author's instruction, the 678/662 figure itself is not being edited while the cause is
-open. Flagged for a future pass: hashing the `.gpkg` on the Windows machine (if it's still
-reachable) would close this decisively either way.
+Per the author's instruction, the 678/662 figure itself is not being edited.
+
+**Closed 2026-08-10 (author-attributed).** All four Honolulu GeoPackages — not just
+`All_Parcels_*.gpkg` — are now hash-verified identical across both machines, matching the `.csv`
+already confirmed above. `strix` hashes, recorded for the permanent record (no Windows-side
+values exist to compare against, since that machine's copies are not independently hashed
+anywhere in this repo — noted as a gap, not a contradiction):
+
+| File | SHA256 (`strix`) |
+|---|---|
+| `All_Parcels_6378200148342636690.gpkg` | `e82bd565986aab800bf17add97fada81bf66ae0cd1f12601569ec416a68d9d37` |
+| `Cadastral_2020_5470883750353204758.gpkg` | `6649a0f66ff5a75d7c71c74cee996119ee37484118d18e7f28eae8f93059049a` |
+| `Tax_Plats_-3186502852247693311.gpkg` | `b4b0eb8f8f7b875280817220eae2bf470844d7cdc6262484d20b3397a2bc3657` |
+| `Zoning_-2205419429161838665.gpkg` | `c3d5facbd9164eec225163c3952a67461db0ef4365a1be48578266233babaad1` |
+
+With every Step 2 input now confirmed byte-identical across machines, `Zone` proven derivable
+from the TMK (ruling out a data-level explanation), and Step 4's join independently exonerated
+(this entry's earlier TMK-first-digit cross-check), elimination leaves exactly one candidate:
+**`st_intersection(oahu_golf_sf, parcels_sf)` itself, run under a different GEOS/GDAL/PROJ
+stack on the two machines.** `strix`'s versions, for the permanent record: GEOS 3.14.1, GDAL
+3.11.5, PROJ 9.6.2 (`sf::sf_extSoftVersion()`). No equivalent record exists for the original
+Windows run, so this cannot be confirmed by direct version comparison — it is accepted by
+elimination, not by reproducing the discrepancy under a known Windows-side version stack.
+
+**This is the second documented instance in this project of a geospatial library version
+difference altering parcel-level output between the two machines** (the first: **P2-06**'s
+Charlotte Golf Links boundary case, R's Pass-2 nearest-neighbor match flipping on a 0.55 m
+margin past the 500 m cutoff). Two independent instances across two different spatial
+operations (`st_nearest_feature()` distance computation, `st_intersection()` boundary overlay)
+is enough of a pattern that it belongs in the manuscript's limitations section as a named,
+general caveat — not just as two isolated footnotes on the specific figures affected — flagged
+for the author's text pass, not written here.
+
+### P5-22 — §5.1's per-class assessed-value figures (Preservation/Residential/Hotel-Resort $/acre, 105-parcel count, exemption rates) cannot be derived from any data in this repository
+**Severity:** Major (provenance) · **Status:** `VERIFIED` — confirmed absent, 2026-08-10 · **Locus:** Missing artifact (not code, not a bug in existing code)
+
+Committed script: `Phase_5_Assessment_By_Class.R` (new), joins Phase 5 Step 2's 1,072-TMK golf
+footprint (`Target_Golf_Parcels_List.csv`) against the Honolulu tax roll
+(`All_Parcels_-4613852522541990741.csv`, the same file Step 4 already joins on TMK for `Zone`)
+and searches for assessed-value, tax-classification, and exemption fields to reproduce:
+
+- Preservation-class mean assessed land value ($26,079/acre)
+- Residential-class mean assessed land value ($630,049/acre)
+- Hotel/Resort-class mean assessed land value ($962,922/acre)
+- 105 Preservation-classified parcels in the golf footprint
+- Exemption rate, Preservation class (27.5%) vs. the matched set overall (47.2%)
+
+**Result: none of the six reproduce, because the required fields do not exist anywhere in this
+repository.** The join itself is clean — all 1,072 footprint TMKs matched a tax-roll row (100%,
+no subset filtering needed). But the tax roll's 39 columns are exclusively parcel-fabric/geometry
+metadata (TMK, `Zone` — confirmed elsewhere in this register to be the TMK's own leading digit,
+`Recorded Area Acres`, `CCH Parcel Type` [a 1/2/3 fabric code, not a land-use class], subdivision/
+plat/GUID bookkeeping). No column matches `/valu|assess/i`, `/class|use/i`, or `/exempt/i`.
+Checked in three independent representations of the same underlying dataset, not just the one
+CSV: the `.csv` export, the equivalent `.gpkg` layer (`sf`-read field list), and the source
+`.zip`'s raw shapefile `.dbf` schema (`ogrinfo`) — identical field set in all three, confirming
+this is a genuine absence in the source data, not an artifact of one export format dropping
+columns.
+
+**A concrete, non-speculative lead on where the manuscript's figures came from:** a browser
+bookmark already sits in this repo at `00 - Data Sources/Data Sources - Via HTML/qPublic - City
+and County of Honolulu, HI - GIS Map (1,000 max results).url`, pointing to
+`qpublic.schneidercorp.com` — Honolulu's public RPAD parcel-lookup interface, which does carry
+assessed value, land-use classification, and exemption data per parcel, but only as an
+interactive web lookup, not a bulk download. The "1,000 max results" in the bookmark's own title
+is consistent with a filtered, capped manual query rather than a scripted bulk pull. This is the
+most likely source of the six figures, though it cannot be verified without either the author's
+own qPublic session/export or a fresh manual re-query.
+
+**What the script does reproduce, for the record:** the golf-footprint parcel count (1,072,
+100% tax-roll-matched) and total *cadastral* (unclipped) acreage of those parcels — **70,816.49
+ac**, roughly 12× Step 2's golf-clipped footprint (5,810–5,845 ac depending on which of **P5-18**'s
+two figures is used). This large a gap is itself informative, not just a sanity-check number:
+it confirms the mixed-use-parcel concern raised alongside this request — most of the matched
+parcels' *recorded* area is not golf course at all, so any per-acre dollar figure computed
+against full recorded acreage (rather than golf-clipped acreage) would be systematically
+diluted or inflated relative to one computed against the golf footprint alone. This is exactly
+the kind of denominator mismatch that would need to be resolved before these figures could be
+computed from this tax roll even if the missing assessed-value field were found some other way.
+
+**Manuscript impact:** these five figures (all but possibly the parcel count, which needs its
+own class definition to even attempt) should be disclosed as hand-derived from an external
+source (most plausibly qPublic/RPAD), not as reproducible from the committed pipeline, unless
+the author locates and commits the actual source data. Output: `Data/R/R_Assessment_By_Class.csv`
+— one row, `Data_Available = FALSE`, with the search results and reasoning in a `Reason` column
+so a future reader doesn't have to re-run the search to see why.
 
 ---
 
