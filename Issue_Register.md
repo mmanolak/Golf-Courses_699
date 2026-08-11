@@ -169,6 +169,13 @@ this retrieval, not reconciled toward** — the $26,079 figure traces to a three
 per the author, consistent with this entry's standing finding that it isn't derivable from
 anything committed to this repo.)*
 
+*(2026-08-10, same day: **+1 net — new P5-23** (golf's island-wide P-1/P-2 zoning penetration,
+N/A/`VERIFIED`, excluded from the tally below per the **P6-05**/**P6-07** convention). Cited
+18.6% (P-2) confirmed exactly (18.5762%) against `Phase_5.R` Step 6's own output; P-1 (0.3326%)
+and combined P-1+P-2 (2.1351%) produced alongside. Two previously-uncommitted intermediate CSVs
+(`Phase5_Step6_Zoning_Percentages.csv`, `Phase5_Step6_Zone_Golf_Penetration.csv`) added to the
+commit allowlist and committed, since they now back a manuscript figure directly.)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -4049,6 +4056,36 @@ them, not to account for them:**
   isn't derivable from anything in the tree) against this retrieval's full 142/164-parcel census.
   Once the author's qPublic retrieval is complete, the resulting figure supersedes $26,079
   rather than reconciling with it.
+
+---
+
+### P5-23 — Golf's island-wide P-1/P-2 zoning penetration, verified: cited 18.6% (P-2) confirmed; P-1 and combined figures produced
+**Severity:** N/A (verification + new figures, not a defect) · **Status:** `VERIFIED`, 2026-08-10 · **Locus:** N/A
+
+From `Phase5_Step6_Zone_Golf_Penetration.csv` (`Phase_5.R` Step 6 — golf polygons ∩ Development
+Plan zoning, county-wide zone totals from the same zoning layer independent of the golf
+intersection; this run's own output, not re-derived by hand):
+
+| Class | Golf acres | Island-wide class acres | Golf share |
+|---|---:|---:|---:|
+| P-2 | 3,206.20 | 17,259.71 | **18.5762%** |
+| P-1 | 523.67 | 157,430.09 | **0.3326%** |
+| P-1 + P-2 combined | 3,729.87 | 174,689.80 | **2.1351%** |
+
+**The cited 18.6% figure is confirmed** — 18.5762% rounds to 18.6%, matches exactly. P-1's own
+share is two orders of magnitude smaller (0.33%): P-2 is by far the more zoning-penetrated class,
+P-1 covers roughly 9x P-2's total acreage island-wide with barely a sixth of the golf presence.
+The combined figure (2.14%) sits far closer to P-1's than to P-2's, since P-1's much larger
+county-total denominator dominates the combined ratio — leading with the combined figure would
+understate how concentrated golf's P-2 presence specifically is, while leading with P-2 alone
+overstates Preservation-class penetration generally. Reported for the author's own framing
+choice, not a recommendation made here.
+
+Golf acreage in this table is R-canonical (Step 6 intersects R's Phase 2 golf polygons; not a
+tri-language pooled figure — consistent with Decision 8, **P6-10**). Both underlying CSVs
+(`Phase5_Step6_Zoning_Percentages.csv`, `Phase5_Step6_Zone_Golf_Penetration.csv`) newly committed
+this entry — previously gitignored, uncommitted intermediate output; added to the allowlist since
+they now back a manuscript figure directly.
 
 ---
 
