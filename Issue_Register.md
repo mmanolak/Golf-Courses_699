@@ -95,6 +95,14 @@ cross-language implementation difference (author decision) rather than left open
 string vs. the authoritative `EPSG:5070` lookup R/Python use, Minor, Open/actionable), split out of
 `P2-06` item 4 as the one part of that investigation with a concrete code fix candidate.)*
 
+*(2026-08-10, same day: **P2-05 re-verified on `strix`, +0 net** (addendum, not a new entry).
+Pass-1/Pass-2 population stable vs. the original (5,463/6,141 fresh vs. 5,458/6,147 original) —
+closed conclusion holds. The exact 572/9.3% confirmed-wrong figure could not be independently
+reproduced (original script never committed); this addendum's own reimplementation gets 153/2.5%,
+flagged as a tokenization-method gap, not a data-driven revision — 572/9.3% remains the citable
+figure. Charlotte Golf Links added as a concrete example, via Python/Julia (R doesn't match it at
+all, per `P2-06`).)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -1764,7 +1772,8 @@ having demonstrably suppressed rather than caused it.
 **Severity:** Major, confirmed three-language (course-level evidence: individual courses like
 Kahuku carry a confidently-wrong measurement) / Minor, converging on negligible (aggregate $
 impact — three independent tests found no detectable systematic bias; see item 4/5/7) ·
-**Status:** Closed (2026-07-28) — quantified, accepted limitation, not pursued as a fix ·
+**Status:** Closed (2026-07-28) — quantified, accepted limitation, not pursued as a fix;
+**re-verified 2026-08-10 on `strix`, closed conclusion holds** (see addendum below) ·
 **Locus:** Code, all three languages (`Phase_2.R:321-338`, `Phase_2.py:178-196`,
 `Phase_2.jl:211-231` — see item 0 below) · **Relates to:** **P5-12**, **P5-14**
 
@@ -1942,6 +1951,52 @@ below this project's own 1.65% cross-language spread — undetectable in the res
 not just individually small. **Not fixed. Freeze holds.** No candidate remediation designed —
 whether/how to correct the 572 (or the smaller `named-polygon` core) remains an author call if
 ever revisited, but this entry does not carry it forward as open defect-hunting work.
+
+**Addendum (2026-08-10) — re-verified on `strix` after the Charlotte Golf Links / Providence
+Country Club case surfaced while diagnosing `P2-06`, `VERIFIED` where stated, method gap flagged
+honestly where not.** New script, `Phase_2_Pass2_Name_Diagnostic.R`, read-only, reproduces
+`Phase_2.R`'s Pass 1/Pass 2 logic exactly (validated: its total, 11,604, matches production's
+`acreage_source == "OSM"` count exactly) and additionally retains the matched polygon's `name` and
+which pass matched — information the production pipeline computes internally but never persists.
+
+- **Population stability, `VERIFIED` and directly comparable — the strongest part of this
+  addendum.** Pass 1: 5,463 (fresh) vs. 5,458 (original P2-05 reproduction). Pass 2: 6,141 (fresh)
+  vs. 6,147 (original). Both within single digits. **The population this entry's finding is about
+  has not materially changed since migration** — P2-05's original conclusion rests on essentially
+  the same set of courses this addendum re-examined.
+- **The 572/9.3% confirmed-wrong point estimate could not be independently reproduced, and this
+  addendum's own number should not be read as replacing it.** The original tokenize-and-Jaccard
+  script was a one-off diagnostic, never committed to this repo — only its output numbers survive
+  in this file. This addendum's independent reimplementation (documented inline in the new script:
+  lowercase, punctuation-stripped, whitespace-tokenized, generic words like "golf"/"club" *not*
+  stripped) gets a **materially different point estimate: 153 confirmed-wrong (2.5% of Pass 2,
+  0.94% of the 16,292-course baseline)**, against a much larger "weak partial overlap" bucket
+  (958, 15.6%) than the original reported (275, 4.5%). That pattern — more partial-overlap noise,
+  fewer clean zero-overlap cases — is consistent with this reimplementation's tokenization being
+  more lenient than whatever the original script did, not with the underlying mismatch rate having
+  actually dropped 3.7×. **153 and 572 are not apples-to-apples; treat this addendum as unable to
+  independently confirm the exact original figure, not as revising it downward.**
+- **Dollar figure computed here measures something different from P2-05's original impact
+  estimate — flagged explicitly to avoid the same mistake this entry's own item 4 already caught
+  once.** Summed `matched_acres × Baseline_Value_Per_Acre` for the 153 confirmed-wrong courses
+  against the observed-only total ($789.848B): **$9.699B, 1.228%.** This is raw dollar *exposure*
+  sitting on confirmed-wrong-polygon courses, not the corrected *error* P2-05's original ≤0.22%
+  figure measured (the delta between assigned and true acreage, via reference distributions and a
+  placebo-tested correction) — a mis-assigned course still gets some real polygon's acreage, so
+  exposure overstates impact the same way the original entry's retracted $2.084B figure did.
+  **Not a re-estimate of P2-05's impact number; do not cite 1.228% as comparable to 0.22%.**
+- **Charlotte Golf Links, added as a concrete individual example (`P2-06`'s finding, cross-
+  referenced here since it's this entry's defect class):** in R specifically it isn't a Pass-2
+  mismatch — R doesn't match it at all (0.55 m past the 500 m cap, per `P2-06`). It *is* a Pass-2
+  mismatch in Python and Julia, both of which assign it "Providence Country Club"'s polygon, a
+  real, differently-named, real-world-adjacent course — the same mechanism as Kahuku/Hoakalei/Ted
+  Makalena, found this time via cross-language comparison rather than this entry's own diagnostic.
+- **Net conclusion: the closed disposition holds, on the strongest available evidence.** The
+  Pass-2 population itself is stable across the migration (bullet 1), so there is no data-driven
+  reason to think P2-05's original materiality conclusion (below the project's own 1.65%
+  cross-language spread) no longer applies. The exact 572/9.3% and ≤0.22% figures remain the
+  citable ones from the original 2026-07-28 measurement; this addendum corroborates the population
+  they were computed on rather than superseding their values with a differently-tokenized rerun.
 
 ### P2-06 — `strix` re-run: R matches 1 fewer course than Python/Julia (11,604 vs 11,605); Pass-1 direct-intersect counts diverge across all three (R 5,463 / Python 5,501 / Julia 5,458)
 **Severity:** Minor (0.006% of the course list; national-aggregate impact not separately
