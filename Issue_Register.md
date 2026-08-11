@@ -1429,10 +1429,12 @@ not a mechanical parity gap like **P5-07**.
 
 ### P1-11 — Proposal: exclude `Holes`/`Ownership_Type` from Phase 3's MICE predictor matrix to remove circularity with Phase 4's Holes coefficient
 **Severity:** N/A (methodology proposal, not a defect in current code — excluded from the running
-tally below, same convention as **P6-05**/**P6-07**) · **Status:** Question — author's prior and
-this entry's recommendation both lean **Won't fix**, pending one outstanding verification (see
-below) · **Locus:** Both (Code: `Phase_3.R:126` predictor list; Docs: Appendix A.4) · **Relates
-to:** **X-10**, **P0-01**
+tally below, same convention as **P6-05**/**P6-07**) · **Status:** **Won't fix (closed 2026-08-10,
+author decision).** Predictor matrix unchanged; circularity handled by the observed-subset estimate
+plus the Table 2 caveat added below, not by removing predictors. The outstanding filter
+verification below is being closed separately by reproducing the observed-subset regression
+in-repo, not left open against this entry. · **Locus:** Both (Code: `Phase_3.R:126` predictor
+list; Docs: Appendix A.4) · **Relates to:** **X-10**, **P0-01**
 
 **Proposal being evaluated:** drop `Holes` and `Ownership_Type`/`Course_Type` from Phase 3's MICE
 predictor list to eliminate a dependency with Phase 4's Holes coefficient. Raised by the author,
@@ -1479,17 +1481,23 @@ a finding — Table 2's LaTeX footnote (`8_LaTeX_Tables.R`), `00 - Phase4_Summar
 `01 - Phase4_Documentation.md`, `Phase7_Summary.md`, `Phase7_Documentation.md` — pointing to
 Appendix A.4 for the estimate free of this dependency.
 
-**Outstanding verification, not yet closed — this entry's recommendation depends on it.** The N =
-10,926 observed-subset regression's source (reported to live in `secret/Preview_R_Canonical/` on
-the prior Windows machine) is not present anywhere in this repo — checked directly on `strix`, not
-assumed. `11,605` (Phase 2's observed-`osm_acreage` count) `− 679 = 10,926` is consistent with a
-filter excluding rows with *either* imputed acreage *or* imputed value, matching the author's
-expectation. But this repo's own existing "observed-only" convention
-(`01 - Phase6_Documentation.md` §7.2, `acreage_source != "MICE_Target"`) filters on acreage alone
-and would produce N = 11,605, not 10,926 — so whatever script produced 10,926 filters on something
-this codebase doesn't implement anywhere visible yet. **Confirm the actual filter excludes both
-imputed columns, from the code, before citing β = 0.038 as clean of the circularity** — if it
-migrates from the Windows machine, or the author confirms the filter directly.
+**Outstanding verification — closed 2026-08-10, reproduced in-repo.** The Windows-side
+`secret/Preview_R_Canonical/` script never migrated to `strix` and still isn't present in this
+repo, so the manuscript's cited N = 10,926 / β = 0.038 was not independently checkable from code
+until now. Reproduced instead with a fresh, documented script —
+`Phase 4 Econometric Modeling/Phase_4_Observed_Subset_Regression.R` — that filters Phase 3's own
+pre-imputation input (`R_Phase2_Acreage_Matched_v2.csv`) on `acreage_source == "OSM" &
+!is.na(Baseline_Value_Per_Acre)` (excludes rows with *either* imputed acreage *or* imputed value,
+read directly off columns Phase 3 hasn't touched yet — not the `acreage_source`-only convention
+`01 - Phase6_Documentation.md` §7.2 uses for its bivariate maps), then fits the identical
+`Log_Opportunity_Cost ~ Holes + factor(county_type)` formula and DV construction
+(`log1p(final_acreage × Baseline_Value_Per_Acre)`) `Phase_4.R` uses. **Result: N = 10,925, β_Holes
+= 0.0384 (HC1 SE 0.0025).** β matches the cited 0.038 to the precision reported. N is off by
+exactly 1 from the cited 10,926 — traced to Phase 2's `acreage_source` split itself shifting by one
+row on this run (11,604 `OSM` / 4,688 `MICE_Target` today vs. the 11,605/4,687 documented in
+`00 - Phase2_Summary.md`), not to any difference in the observed-subset filter or regression logic;
+not chased further, single-row/0.01% and doesn't move β at the reported precision. Output saved to
+`Phase 4 Econometric Modeling/Data/R/R_Observed_Subset_Regression.csv`.
 
 ### Phase 1 — noted, no issue raised
 
