@@ -79,6 +79,11 @@ Versions installed on the canonical machine at time of writing:
 against this toolchain; log of a clean run is kept at `~/logs/renv_restore.log`
 (outside the repo — local machine only).
 
+**Known pitfall:** do not run `renv::snapshot(type = "implicit")` on this
+project — it silently drops dispatch-loaded packages (`ranger`, `mice`'s real
+random-forest backend, plus `VIM`/`ggmice`/`patchwork`) that no static
+analysis of the scripts can see. See `Issue_Register.md`, P0-01 addendum.
+
 ## Language package managers
 
 - **R** — `2 - Work/renv.lock` (`renv::restore()`)

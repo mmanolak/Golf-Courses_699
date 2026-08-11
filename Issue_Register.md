@@ -32,7 +32,7 @@ still a wrong published number.
 
 | Phase | Critical | Major | Minor | Cosmetic | Total |
 |---|---|---|---|---|---|
-| Phase 0 | 0 | 1 | 0 | 0 | 1 |
+| Phase 0 | 0 | 2 | 0 | 0 | 2 |
 | Cross-cutting | 3 | 5 | 1 | 0 | 9 |
 | Phase 1 | 0 | 2 | 6 | 2 | 10 |
 | Phase 2 | 0 | 1 | 4 | 0 | 5 |
@@ -40,7 +40,7 @@ still a wrong published number.
 | Phase 4 | 0 | 2 | 1 | 1 | 4 |
 | Phase 5 | 0 | 3 | 6 | 1 | 10 |
 | Phase 6 | 0 | 2 | 1 | 2 | 5 |
-| **Total** | **5** | **18** | **23** | **6** | **52** |
+| **Total** | **5** | **19** | **23** | **6** | **53** |
 
 *(2026-07-27: +2 net — new **X-09** (vendoring policy, Major, Fixed) and **P1-10** (`extract_holes`
 fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as N/A/verified-sound,
@@ -67,6 +67,12 @@ description); (2) all three `install_packages.{R,py,jl}` rewritten to restore fr
 verified by execution on this machine. 19 installed-but-unused packages and the Phase-0-provenance-
 row question logged as deferred/accepted, not implemented. Phase 0 infrastructure work stops here
 per explicit instruction. Severity/count in the table above unchanged — same entry, status only.)*
+
+*(2026-08-10: +1 net — new **P0-02**, canonical environment migrated Windows → Fedora 43 (`strix`),
+first successful `renv::restore()` in the project's history (Major/N/A, Resolved). Same-day **P0-01
+addendum** (no count change — same entry): `renv::snapshot(type="implicit")` reproduced this
+entry's own warning on the new machine, dropping `ranger` and 51 other packages from `renv.lock`;
+reverted, and implicit-mode snapshotting is now barred outright on this project.)*
 
 ---
 
@@ -321,6 +327,52 @@ now the mechanism that enforces reproducibility (restores from the exact pinned 
 than a route around it, and the drift this entire entry documents can no longer recur silently for
 any dependency already captured in a lockfile — including ones no static package list would ever
 catch by inspection, like `ranger` and `BetaML`.
+
+**Addendum (2026-08-10) — the exact failure mode this entry warned about, reproduced on the newly-
+migrated machine.** `renv::snapshot(type = "implicit")` was run once on `strix` (see **P0-02**) and
+dropped 52 packages from `renv.lock`, including `ranger` — confirmed above as `mice`'s actual,
+dispatch-only RF backend, never `library()`'d anywhere in `Phase_3.R` — plus `VIM`, `ggmice`, and
+`patchwork`, all explicitly present in `install_packages.R`'s own list. Root cause: `renv`'s
+implicit/static-analysis snapshot mode walks `library()`/`::` calls in the project's own scripts; it
+structurally cannot see a package pulled in only through another package's internal
+`requireNamespace()` dispatch — exactly the blind spot Fix 1's `.EXTRA_KEY_PACKAGES` mechanism was
+written to compensate for in *provenance capture*. This confirms the same blind spot also corrupts
+the *lockfile itself* when `snapshot()` is run in implicit mode, not just the provenance record.
+Lockfile reverted to the known-good `renv.lock`; no frozen number touched (Phase 0 produces no
+data). **Do not run `renv::snapshot(type = "implicit")` on this project.** If the lockfile ever
+needs regenerating, do it explicitly (`type = "explicit"`) or hand-verify every package `renv`
+proposes dropping against `install_packages.R` first — never accept an implicit re-derivation.
+
+### P0-02 — Canonical execution environment migrated Windows → Fedora 43 (`strix`); first
+successful `renv::restore()` in the project's history
+**Severity:** Major (reproducibility-blocking under the prior environment, now resolved) / N/A (no
+numeric impact — environment record, no code or frozen number touched) · **Status:** Resolved
+(2026-08-10) · **Locus:** Environment · **Relates to:** **P0-01**, **X-08**, **X-10**
+
+Execution moved from Windows to a Fedora 43 Server machine (`strix`, 32 cores / 124 GiB RAM).
+`renv::restore()` against `2 - Work/renv.lock` had never once completed successfully on Windows —
+`Rcpp`, `s2`, `units`, and `sf` would not compile there, which blocked the geospatial stack this
+entire pipeline depends on. On `strix`: 195 packages restored cleanly (log: `~/logs/renv_restore.log`,
+outside the repo), confirmed by direct inspection, not the migration report alone.
+
+Verified directly on this machine, not assumed from the handoff note: R 4.5.3 · GDAL 3.11.5 · GEOS
+3.14.1 · PROJ 9.6.2 · `sf_use_s2()` returns `TRUE`. The native system-library chain Windows had no
+equivalent path for (`gdal-devel`, `geos-devel`, `proj-devel`, `abseil-cpp-devel`, and 18 others —
+full list with installed versions) is now recorded in `DATA_PROVENANCE.md` rather than living only
+as tribal knowledge on one machine, per **P0-01**'s own point that `renv.lock` pins R packages but
+never the system libraries they compile against.
+
+**Verification — X-10 fix survived the migration, checked directly:** `julia --project=. -e 'using
+Pkg; Pkg.status("Mice")'` on `strix` reports `Mice v0.4.1` — the first version not covered by
+`Mice.jl`'s own "prior to v0.4.1 may produce incorrect results" warning (see **X-10**), i.e. the
+post-fix version, not a regression to an earlier pinned copy. Consistent with the author's separate
+June re-run note that the RF-backed fix moved the Julia pooled total from $944B to $941B. Migrating
+machines did not silently revert this fix.
+
+This entry documents infrastructure/machine state rather than a code or numeric finding — logged
+per the pattern **X-09** and **P0-01**'s Fix 2 already established, of recording
+environment-affecting decisions here even when no frozen number moves.
+
 ### X-01 — Published Phase 3 results were produced at M = 5, not M = 100
 **Severity:** Critical · **Status:** Confirmed · **Locus:** Docs (code is correct)
 
