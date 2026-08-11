@@ -615,7 +615,17 @@ run_2_County_Map <- function() {
 
     for (model_name in names(grand_means$county)) {
         cat(sprintf("  -> Rendering %s map...\n", model_name))
-        pooled_county <- grand_means$county[[model_name]]
+        # [R-CANONICAL PIVOT] Figure 2.141 (Final_Thesis_Figures, filename retained
+        # for manuscript \includegraphics compatibility) now renders R's own pooled
+        # data, not the tri-language Grand Mean -- per author decision, all
+        # manuscript-cited figures are R-sourced. QA_Verification outputs for
+        # Python/R/Julia below are unaffected; this substitution is local to the
+        # "GrandMean"-named output only, not to the shared grand_means object.
+        pooled_county <- if (model_name == "GrandMean") {
+            grand_means$county[["R"]]
+        } else {
+            grand_means$county[[model_name]]
+        }
 
         counties_mice <- counties_sf |>
             left_join(pooled_county, by = c("GEOID" = "FIPS"))
@@ -623,14 +633,14 @@ run_2_County_Map <- function() {
         map1 <- build_county_map(
             counties_mice,
             subtitle = paste0(
-                model_name, " Pooled Estimate  -  ",
+                if (model_name == "GrandMean") "R" else model_name, " Pooled Estimate  -  ",
                 "Opportunity Cost = OSM Acreage × Baseline Land Value per Acre  -  ",
                 "Log₁₀ scale"
             ),
             caption_text = if (model_name == "GrandMean") {
                 paste0(
-                    "Pooled across 300 MICE imputations (100 Python, 100 R, 100 Julia). ",
-                    "Grand Mean = arithmetic mean of three independently Rubin-pooled estimates.\n",
+                    "Pooled across 100 R MICE imputations (Rubin's Rules q_bar). ",
+                    "R-canonical estimate.\n",
                     "Sources: OpenStreetMap golf course polygons; FHFA residential land price index ",
                     "(urban counties, RUCC 1-3); USDA agricultural land values (rural counties, ",
                     "RUCC 4-9). CRS: NAD83 / Conus Albers (EPSG 5070). Alaska and Hawaii shown as insets."
@@ -1521,6 +1531,24 @@ run_8_LaTeX_Tables <- function() {
     acreage_raw <- read_csv(ACREAGE_CSV, show_col_types = FALSE)
     cat(sprintf("  %d rows loaded.\n", nrow(acreage_raw)))
 
+    # [R-CANONICAL PIVOT / P3-09 consistency] R_National_Acreage_Summary.csv's own
+    # CI_99_*_Acres columns were built by Phase_3.R's pool_acreage(), which already
+    # has v_w = 0 (correct for a census total) but still uses z99 = 2.576 rather
+    # than t(M-1). Recomputed here from SD_Between (= sqrt(v_b)) rather than
+    # re-running Phase 3, since se = SD_Between * sqrt(1 + 1/M) and
+    # CI99 = Pooled_Acres +/- t99(df = M-1) * se reproduce pool_acreage()'s own
+    # formula exactly -- same fix P3-09 already applied at its six call sites,
+    # applied here at the one pool_acreage() site P3-09 didn't touch (acreage
+    # summary, not the dollar aggregate).
+    M_ACREAGE <- 100
+    T99_ACREAGE <- qt(0.995, M_ACREAGE - 1)
+    acreage_raw <- acreage_raw |>
+        mutate(
+            SE_Between = SD_Between * sqrt(1 + 1 / M_ACREAGE),
+            CI_99_Lower_Acres = Pooled_Acres - T99_ACREAGE * SE_Between,
+            CI_99_Upper_Acres = Pooled_Acres + T99_ACREAGE * SE_Between
+        )
+
     acreage_tbl <- acreage_raw |>
         select(Category, County_Type, Pooled_Acres, SD_Between,
                CI_99_Lower_Acres, CI_99_Upper_Acres) |>
@@ -1549,8 +1577,8 @@ run_8_LaTeX_Tables <- function() {
         kable_styling(latex_options = c("hold_position")) |>
         footnote(
             general = paste0(
-                "99\\% confidence intervals reported; ",
-                "95\\% intervals available in the replication package."
+                "99\\% confidence intervals reported (t-distribution, $df = M-1 = 99$, ",
+                "$t_{99} = 2.6264$); 95\\% intervals available in the replication package."
             ),
             general_title     = "",
             footnote_as_chunk = TRUE,
@@ -1561,78 +1589,72 @@ run_8_LaTeX_Tables <- function() {
     cat(sprintf("  Saved: %s\n\n", basename(OUT_TEX1)))
 
 
-    #  4.2  Table 2: Rubin's Rules Regression Results (Tri-Language)
+    #  4.2  Table 2: Rubin's Rules Regression Results (R-canonical)
 
-    cat("[Table 2] Formatting tri-language regression results (Py / R / Jl)...\n")
+    cat("[Table 2] Formatting R-canonical regression results...\n")
 
-    prep_reg <- function(path) {
-        read_csv(path, show_col_types = FALSE) |>
-            mutate(
-                Parameter = case_when(
-                    Parameter == "(Intercept)" ~ "Intercept",
-                    Parameter == "Holes" ~ "Holes",
-                    Parameter == "factor(county_type)Urban"  ~ "Urban County",
-                    Parameter == "C(county_type)[T.Urban]"  ~ "Urban County",
-                    Parameter == "county_type: Urban"       ~ "Urban County",
-                    TRUE ~ latex_escape(Parameter)
-                ),
-                Coef = sprintf("%.3f", Coef),
-                SE = sprintf("%.3f", Std_Error),
-                p = fmt_pval(p_value)
-            ) |>
-            select(Parameter, Coef, SE, p, Sig)
+    # [R-CANONICAL PIVOT] Table 2 was previously tri-language (Python/R/Julia side
+    # by side); per author decision it now reports R alone, with N and R^2 added
+    # (neither was in R_Regression_Results.csv -- pulled from R_model_results.rds,
+    # which Phase_4.R already saves per-imputation but never wrote out as a CSV).
+    MODEL_RDS <- file.path(
+        WORK_DIR, "Phase 4 Econometric Modeling", "Data", "R", "R_model_results.rds"
+    )
+    if (!file.exists(MODEL_RDS)) stop(sprintf("[FATAL] Input not found:\n  %s", MODEL_RDS))
+    model_results <- readRDS(MODEL_RDS)
+    n_obs_vals <- vapply(model_results, function(m) m$nobs, numeric(1))
+    r2_vals    <- vapply(model_results, function(m) m$rsquared, numeric(1))
+    if (length(unique(n_obs_vals)) != 1) {
+        cat("  [Warning] N varies across imputations -- reporting the mean.\n")
     }
+    n_obs_mean <- round(mean(n_obs_vals))
+    r2_mean    <- mean(r2_vals)
+    cat(sprintf("  N = %d (across %d imputations), mean R^2 = %.4f\n",
+                n_obs_mean, length(model_results), r2_mean))
 
-    reg_py <- prep_reg(REGRESSION_PY_CSV)
-    reg_r <- prep_reg(REGRESSION_R_CSV)
-    reg_jl <- prep_reg(REGRESSION_JL_CSV)
-    cat(sprintf(
-        "  Parameters loaded - Py: %d  R: %d  Jl: %d\n",
-        nrow(reg_py), nrow(reg_r), nrow(reg_jl)
-    ))
-
-    reg_tri <- reg_py |>
-        rename(Coef_Py = Coef, SE_Py = SE, p_Py = p, Sig_Py = Sig) |>
-        inner_join(
-            reg_r |> rename(Coef_R = Coef, SE_R = SE, p_R = p, Sig_R = Sig),
-            by = "Parameter"
+    reg_r <- read_csv(REGRESSION_R_CSV, show_col_types = FALSE) |>
+        mutate(
+            Parameter = case_when(
+                Parameter == "(Intercept)" ~ "Intercept",
+                Parameter == "Holes" ~ "Holes",
+                Parameter == "factor(county_type)Urban"  ~ "Urban County",
+                Parameter == "C(county_type)[T.Urban]"  ~ "Urban County",
+                Parameter == "county_type: Urban"       ~ "Urban County",
+                TRUE ~ latex_escape(Parameter)
+            ),
+            Coef = sprintf("%.3f", Coef),
+            SE = sprintf("%.3f", Std_Error),
+            p = fmt_pval(p_value)
         ) |>
-        inner_join(
-            reg_jl |> rename(Coef_Jl = Coef, SE_Jl = SE, p_Jl = p, Sig_Jl = Sig),
-            by = "Parameter"
-        )
+        select(Parameter, Coef, SE, p, Sig)
+    cat(sprintf("  Parameters loaded: %d\n", nrow(reg_r)))
 
     cat("  Parameter labels:\n")
-    for (p in reg_tri$Parameter) cat(sprintf("    %s\n", p))
+    for (p in reg_r$Parameter) cat(sprintf("    %s\n", p))
 
     tbl2 <- kable(
-        reg_tri,
+        reg_r,
         format = "latex",
         booktabs = TRUE,
         escape = FALSE,
         caption = paste0(
-            "MICE-Pooled OLS Regression Results (Rubin's Rules, $M = 300$: ",
-            "100 Python, 100 R, 100 Julia). ",
-            "Dep.\\ var.: $\\log(\\text{Opportunity\\_Cost})$."
+            "R-Canonical MICE-Pooled OLS Regression Results (Rubin's Rules, $M = 100$). ",
+            "Dep.\\ var.: $\\log(\\text{Opportunity\\_Cost})$. ",
+            sprintf("$N = %s$, $R^2 = %.3f$.", format(n_obs_mean, big.mark = ","), r2_mean)
         ),
         label = "regression_results",
-        col.names = c(
-            "Parameter",
-            "Coef.", "SE", "$p$", "Sig.",
-            "Coef.", "SE", "$p$", "Sig.",
-            "Coef.", "SE", "$p$", "Sig."
-        )
+        col.names = c("Parameter", "Coef.", "SE", "$p$", "Sig.")
     ) |>
-        kable_styling(
-            latex_options = c("hold_position", "scale_down"),
-            font_size     = 9
-        ) |>
-        add_header_above(c(" " = 1, "Python" = 4, "R" = 4, "Julia" = 4)) |>
+        kable_styling(latex_options = c("hold_position"), font_size = 10) |>
         footnote(
             general = paste0(
                 "Sig.\\ codes: *** $p < 0.001$. ",
-                "Rubin's Rules applied independently per language group ($M = 100$ each). ",
-                "Grand Mean = arithmetic mean of three independently pooled estimates."
+                "Rubin's Rules pooling ($M = 100$). ",
+                sprintf("$N = %s$ per imputation; mean $R^2 = %.4f$ across imputations.",
+                        format(n_obs_mean, big.mark = ","), r2_mean),
+                " Holes is also a MICE predictor for the imputed acreage/value columns ",
+                "this model's dependent variable is built from; see the observed-subset ",
+                "estimate (Appendix A.4) for the estimate free of that dependency."
             ),
             general_title = "Note: ",
             escape = FALSE,
@@ -1946,29 +1968,16 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
     pooled_py <- pool_oahu_oc(PY_IMPUTED_PATHS, "Py", keep_list_py)
     pooled_jl <- pool_oahu_oc(JL_IMPUTED_PATHS, "Jl", keep_list_jl)
 
-    # [METHODOLOGY] Grand Mean = arithmetic mean of three independently Rubin-pooled
-    #               OC vectors (M=100 each). full_join on the crosswalk's group_id --
-    #               a stable string key shared identically across all three languages'
-    #               copies of the crosswalk -- replaces the P5-01-identified exact-float
-    #               (Longitude, Latitude) join, which silently dropped 2 of 39 courses to
-    #               floating-point mismatch across the R/Python/Julia CSV round-trip.
+    # [R-CANONICAL PIVOT] Figure 9.141 (filename retained for manuscript
+    # \includegraphics compatibility) now renders R's own pooled Oahu OC, not the
+    # tri-language Grand Mean -- per author decision, all manuscript-cited figures
+    # are R-sourced. pooled_py/pooled_jl remain computed above (still needed
+    # elsewhere/for QA) but no longer feed this map.
     pooled_oahu <- pooled_r |>
-        select(group_id, Poly_OSM_ID, oc_r = pooled_opp_cost) |>
-        full_join(
-            pooled_py |> select(group_id, oc_py = pooled_opp_cost),
-            by = "group_id"
-        ) |>
-        full_join(
-            pooled_jl |> select(group_id, oc_jl = pooled_opp_cost),
-            by = "group_id"
-        ) |>
-        mutate(
-            pooled_opp_cost = rowMeans(cbind(oc_r, oc_py, oc_jl), na.rm = TRUE)
-        ) |>
         select(group_id, Poly_OSM_ID, pooled_opp_cost)
 
     cat(sprintf(
-        "\n  Grand Mean Oahu total: $%.3fB across %d courses\n",
+        "\n  R-canonical Oahu total: $%.3fB across %d courses\n",
         sum(pooled_oahu$pooled_opp_cost, na.rm = TRUE) / 1e9,
         nrow(pooled_oahu)
     ))
@@ -2034,14 +2043,13 @@ run_9_Oahu_Opportunity_Cost_Map <- function() {
         n_matched = n_matched_mice,
         subtitle = sprintf(
             paste0(
-                "%d courses  │  Grand Mean of Py/R/Jl Rubin-pooled estimates",
-                " (M = 300: 100 each)  │  OSM polygon boundaries"
+                "%d courses  │  R Rubin-pooled estimate",
+                " (M = 100)  │  OSM polygon boundaries"
             ),
             n_matched_mice
         ),
         caption_text = paste0(
-            "Opportunity Cost = Grand Mean of three independently Rubin-pooled OC estimates ",
-            "(100 Python, 100 R, 100 Julia MICE imputations). ",
+            "Opportunity Cost = R's Rubin-pooled OC estimate (100 MICE imputations). ",
             "Polygon-to-course assignment via the hand-verified Oahu crosswalk (P5-12).\n",
             "Sources: OpenStreetMap; FHFA residential land price index (urban); ",
             "USDA agricultural land values (rural). CRS: WGS 84 / UTM Zone 4N (EPSG 32604)."

@@ -1,0 +1,21 @@
+\begin{table}[!h]
+\centering
+\caption{\label{tab:regression_results}R-Canonical MICE-Pooled OLS Regression Results (Rubin's Rules, $M = 100$). Dep.\ var.: $\log(\text{Opportunity\_Cost})$. $N = 16,292$, $R^2 = 0.699$.}
+\centering
+\fontsize{10}{12}\selectfont
+\begin{threeparttable}
+\begin{tabular}[t]{lllll}
+\toprule
+Parameter & Coef. & SE & $p$ & Sig.\\
+\midrule
+Intercept & 12.223 & 0.042 & $<$ 0.001 & ***\\
+Holes & 0.053 & 0.003 & $<$ 0.001 & ***\\
+Urban County & 4.005 & 0.022 & $<$ 0.001 & ***\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item \textit{Note: } 
+\item Sig. codes: *** $p < 0.001$. Rubin's Rules pooling ($M = 100$). $N = 16,292$ per imputation; mean $R^2 = 0.6987$ across imputations. Holes is also a MICE predictor for the imputed acreage/value columns this model's dependent variable is built from; see the observed-subset estimate (Appendix A.4) for the estimate free of that dependency.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}

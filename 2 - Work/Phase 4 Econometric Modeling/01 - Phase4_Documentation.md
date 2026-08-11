@@ -162,6 +162,13 @@ Significance: `*** p<.001  ** p<.01  * p<.05  . p<.1`
 | **Holes** | 0.0474 | 0.0525 | 0.0476 |
 | **Urban Premium** | 4.172 | 4.001 | 4.158 |
 | **Mean R²** | ~0.770 | 0.699 | 0.730 |
+
+> **Note — Holes coefficient circularity.** `Holes` is a MICE predictor for the
+> imputed `osm_acreage`/`Baseline_Value_Per_Acre` columns this model's dependent
+> variable is built from. The coefficient above is a full-sample estimate and, for
+> the imputed rows, partly reflects the imputer's own use of `Holes` rather than an
+> independent association. See Appendix A.4 for the estimate restricted to courses
+> with fully observed (non-imputed) acreage and value.
 | **N per model** | 16,258 | 16,258 | 16,258 |
 
 ---

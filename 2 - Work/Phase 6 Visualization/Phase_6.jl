@@ -762,7 +762,8 @@ function plot_dumbbell(
     right_jl::Vector{Float64},  right_jl_se::Vector{Float64},
     grand_mean::Vector{Float64},
     out_path::String;
-    panel_title::String = ""
+    panel_title::String = "",
+    r_only::Bool = false
 )
     n  = length(course_names)
     ys = collect(Float64, 1:n)
@@ -793,20 +794,34 @@ function plot_dumbbell(
     x_max_ax = log10(2e10)
     xlims!(ax, x_min_ax, x_max_ax)
 
+    # [R-CANONICAL PIVOT] r_only=true (10.141, the manuscript-cited panel) plots a
+    # single right-hand point (R's Rubin-pooled estimate) per course instead of
+    # three language points plus a Grand Mean marker; the connecting line runs
+    # from the observed floor straight to R's estimate. Non-manuscript panels
+    # (10.142/10.143) are unaffected -- called with r_only's default (false).
     for i in 1:n
         x_left = log10(left_vals[i])
-        x_gm   = log10(grand_mean[i])
         y      = ys[i]
 
-        lines!(ax, [x_left, x_gm], [y, y]; color = :gray80, linewidth = 1.5)
+        if r_only
+            x_ctr = log10(max(right_r[i], 1.0))
+            lines!(ax, [x_left, x_ctr], [y, y]; color = :gray80, linewidth = 1.5)
+        else
+            x_gm = log10(grand_mean[i])
+            lines!(ax, [x_left, x_gm], [y, y]; color = :gray80, linewidth = 1.5)
+        end
 
         scatter!(ax, [x_left], [y]; color = COL_OBS, marker = :diamond, markersize = 10)
 
-        for (est, se, color, dy) in [
-            (right_py[i], right_py_se[i], COL_PY, dy_py),
-            (right_r[i],  right_r_se[i],  COL_R,  dy_r),
-            (right_jl[i], right_jl_se[i], COL_JL, dy_jl),
-        ]
+        series = r_only ?
+            [(right_r[i], right_r_se[i], COL_R, dy_r)] :
+            [
+                (right_py[i], right_py_se[i], COL_PY, dy_py),
+                (right_r[i],  right_r_se[i],  COL_R,  dy_r),
+                (right_jl[i], right_jl_se[i], COL_JL, dy_jl),
+            ]
+
+        for (est, se, color, dy) in series
             # Skip languages with no valid estimate (e.g. coord-collision courses).
             isfinite(est) && est > 0 || continue
             x_ctr  = log10(max(est, 1.0))
@@ -820,19 +835,22 @@ function plot_dumbbell(
             log_hi = q_hi > 0.0 ? log10(q_hi) : x_ctr
             bar_lo = max(x_ctr - max(log_lo, x_min_ax), 0.0)
             bar_hi = max(min(log_hi, x_max_ax) - x_ctr,  0.0)
-            errorbars!(ax, [x_ctr], [y + dy], [bar_lo], [bar_hi];
+            errorbars!(ax, [x_ctr], [y + (r_only ? 0.0 : dy)], [bar_lo], [bar_hi];
                 direction    = :x,
                 color        = color,
                 linewidth    = 0.9,
                 whiskerwidth = 4
             )
-            scatter!(ax, [x_ctr], [y + dy]; color = color, markersize = 8)
+            scatter!(ax, [x_ctr], [y + (r_only ? 0.0 : dy)]; color = color, markersize = 8)
         end
 
-        scatter!(ax, [x_gm], [y];
-            color = :white, markersize = 12,
-            strokecolor = :black, strokewidth = 1.5
-        )
+        if !r_only
+            x_gm = log10(grand_mean[i])
+            scatter!(ax, [x_gm], [y];
+                color = :white, markersize = 12,
+                strokecolor = :black, strokewidth = 1.5
+            )
+        end
     end
 
 
@@ -1020,10 +1038,12 @@ function main()
         grand[i] = isempty(valid_ests) ? NaN : mean(valid_ests)
     end
 
-    # Keep any course with a finite Julia estimate and a positive agricultural
+    # Keep any course with a finite Julia OR R estimate and a positive agricultural
     # floor. Py/R may be NaN for coord-collision courses; those bars are omitted.
+    # Broadened from Julia-only so the R-canonical left panel (10.141) doesn't drop
+    # a course solely because its Julia estimate is unavailable.
     valid = [i for i in 1:n_courses if
-        left_vals[i] > 0 && isfinite(right_jl[i]) && isfinite(grand[i])]
+        left_vals[i] > 0 && (isfinite(right_jl[i]) || isfinite(right_r[i])) && isfinite(grand[i])]
     @printf("    Courses plotted: %d / %d\n", length(valid), n_courses)
 
     ord = valid[sortperm(grand[valid])]   # ascending → largest at top of chart
@@ -1044,7 +1064,8 @@ function main()
         right_jl[ord_left],   right_jl_se[ord_left],
         grand[ord_left],
         OUT_DUMBBELL_LEFT;
-        panel_title = "Lower-value courses"
+        panel_title = "Lower-value courses",
+        r_only = true
     )
 
     println("--- [6/7] Building dumbbell panel 2 (higher-value courses)")
@@ -1210,12 +1231,14 @@ function lorenz_ci(
 end
 
 
+# [R-CANONICAL PIVOT] Single R series (filename retained for manuscript
+# \includegraphics compatibility). Python/Julia/Grand Mean arguments dropped
+# from the signature entirely, rather than computed-then-discarded, since this
+# figure has no non-manuscript sibling panel that still needs them (contrast
+# Module 10, where 10.142/10.143 keep the tri-language path).
 function plot_lorenz(
     grid::Vector{Float64},
-    mean_py::Vector{Float64}, lo_py::Vector{Float64}, hi_py::Vector{Float64},
     mean_r::Vector{Float64},  lo_r::Vector{Float64},  hi_r::Vector{Float64},
-    mean_jl::Vector{Float64}, lo_jl::Vector{Float64}, hi_jl::Vector{Float64},
-    mean_gm::Vector{Float64},
     out_path::String
 )
     fig = Figure(size = (880, 880), backgroundcolor = :white)
@@ -1223,7 +1246,7 @@ function plot_lorenz(
         xlabel        = "Cumulative Share of Golf Courses (Sorted by Opportunity Cost, Ascending)",
         ylabel        = "Cumulative Share of Total Opportunity Cost",
         title         = "Lorenz Curve of Spatial Misallocation - Opportunity Cost of Golf Courses",
-        subtitle      = "Rubin-pooled estimates (M=100 per language) with 95% CI ribbons  │  Grand Mean = black dashed",
+        subtitle      = "R Rubin-pooled estimate (M=100) with 95% CI ribbon",
         titlesize     = 14,
         subtitlesize  = 12,
         subtitlecolor = "#024731",
@@ -1245,30 +1268,16 @@ function plot_lorenz(
         label     = "Line of Equality"
     )
 
-    # 95% CI ribbons (semi-transparent) then mean lines on top
-    band!(ax, grid, lo_py, hi_py; color = (COL_PY, 0.15))
+    # 95% CI ribbon (semi-transparent) then mean line on top
     band!(ax, grid, lo_r,  hi_r;  color = (COL_R,  0.15))
-    band!(ax, grid, lo_jl, hi_jl; color = (COL_JL, 0.15))
-
-    lines!(ax, grid, mean_py; color = COL_PY, linewidth = 2.0, label = "Python (M=100, 95% CI)")
     lines!(ax, grid, mean_r;  color = COL_R,  linewidth = 2.0, label = "R (M=100, 95% CI)")
-    lines!(ax, grid, mean_jl; color = COL_JL, linewidth = 2.0, label = "Julia (M=100, 95% CI)")
-
-    # Grand Mean Lorenz curve - black dashed, no ribbon
-    lines!(ax, grid, mean_gm;
-        color     = :black,
-        linestyle = :dash,
-        linewidth = 2.5,
-        label     = "Grand Mean"
-    )
 
     axislegend(ax; position = :lt, framevisible = true, labelsize = 11)
 
     Label(fig[2, 1],
         "OC per course = imputed acreage × FHFA residential value per acre (HBU estimate). " *
-        "Rubin's Rules applied independently per language (M=100 each). " *
-        "95% CI ribbons = pointwise 2.5th–97.5th percentile across M imputation-specific Lorenz curves. " *
-        "Grand Mean = arithmetic mean of three Rubin-pooled per-course OC estimates.";
+        "Rubin's Rules applied to R's MICE imputations (M=100). " *
+        "95% CI ribbon = pointwise 2.5th–97.5th percentile across the 100 imputation-specific Lorenz curves.";
         fontsize = 10, color = "#024731", halign = :left, tellwidth = false, word_wrap = true
     )
     rowsize!(fig.layout, 2, Fixed(36))
@@ -1317,40 +1326,21 @@ function main()
 
     grid = collect(range(0.0, 1.0; length = GRID_N))
 
-    println("--- [2/5] Julia imputations (M=$(M)) - building per-imputation Lorenz curves")
-    mean_jl, lo_jl, hi_jl = lorenz_ci(
-        "Jl", PHASE3_DIR_JL, :osm_acreage, true,
-        id_to_idx, coord_to_idx, fhfa, n_courses, grid
-    )
-
-    println("--- [3/5] Python imputations (M=$(M)) - building per-imputation Lorenz curves")
-    mean_py, lo_py, hi_py = lorenz_ci(
-        "Py", PHASE3_DIR_PY, :osm_acreage, false,
-        id_to_idx, coord_to_idx, fhfa, n_courses, grid
-    )
-
-    println("--- [4/5] R imputations (M=$(M)) - building per-imputation Lorenz curves")
+    # [R-CANONICAL PIVOT] Python/Julia Lorenz curves no longer computed for this
+    # figure -- 11.141 is R-only (filename retained for manuscript
+    # \includegraphics compatibility). Previously this step also built Py/Jl
+    # curves solely to average them into the Grand Mean line.
+    println("--- [2/3] R imputations (M=$(M)) - building per-imputation Lorenz curves")
     mean_r, lo_r, hi_r = lorenz_ci(
         "R", PHASE3_DIR_R, :final_acreage, false,
         id_to_idx, coord_to_idx, fhfa, n_courses, grid
     )
 
-    # [METHODOLOGY] Grand Mean = arithmetic mean of three Rubin-pooled per-course OC
-    # Lorenz curves. Computed pointwise on the common grid.
-    mean_gm = (mean_py .+ mean_r .+ mean_jl) ./ 3.0
+    n_valid = count(isfinite, mean_r)
+    @printf("    R grid points with valid data: %d / %d\n", n_valid, GRID_N)
 
-    n_valid = count(isfinite, mean_gm)
-    @printf("    Grand Mean grid points with valid data: %d / %d\n", n_valid, GRID_N)
-
-    println("--- [5/5] Rendering Lorenz Curve plot")
-    plot_lorenz(
-        grid,
-        mean_py, lo_py, hi_py,
-        mean_r,  lo_r,  hi_r,
-        mean_jl, lo_jl, hi_jl,
-        mean_gm,
-        OUT_LORENZ
-    )
+    println("--- [3/3] Rendering Lorenz Curve plot")
+    plot_lorenz(grid, mean_r, lo_r, hi_r, OUT_LORENZ)
 
     println()
     println("=== Mod_11 Lorenz Curve complete ===")
@@ -1525,7 +1515,7 @@ function plot_waffle(
     fig = Figure(size = (1100, 820), backgroundcolor = :white)
     ax  = Axis(fig[1, 1];
         title         = "The Preservation Paradox - Zoning of Oahu Golf Land",
-        subtitle      = "Grand Mean of Py / R / Jl Rubin-pooled estimates  │  M=100 per language",
+        subtitle      = "R Rubin-pooled estimate  │  M=100",
         titlesize     = 16,
         subtitlesize  = 12,
         subtitlecolor = "#024731",
@@ -1560,7 +1550,7 @@ function plot_waffle(
 
     Label(fig[2, 1],
         @sprintf(
-            "Grand Mean total Oahu OC: \$%.2fB  (Phase 5b TMK-parcel-intersected Rubin-pooled estimates, M=100 per language; arithmetic mean of Jl, Py, R). Tile proportions = land-area share by zoning category from Phase 5 parcel data.",
+            "R total Oahu OC: \$%.2fB  (Phase 5b TMK-parcel-intersected Rubin-pooled estimate, M=100). Tile proportions = land-area share by zoning category from Phase 5 parcel data.",
             oc_B
         );
         fontsize = 10, color = "#024731", halign = :left, tellwidth = false, word_wrap = true
@@ -1592,8 +1582,11 @@ function main()
     oc_r  = read_qbar(PHASE5B_R_CSV)
     @printf("    Phase 5b Oahu OC - Jl: \$%.3fB  Py: \$%.3fB  R: \$%.3fB\n",
         oc_jl / 1e9, oc_py / 1e9, oc_r / 1e9)
-    grand_mean_oc = (oc_jl + oc_py + oc_r) / 3.0
-    @printf("    Grand Mean total Oahu OC: \$%.3fB\n", grand_mean_oc / 1e9)
+    # [R-CANONICAL PIVOT] Caption-only change -- tile proportions come from
+    # zoning land-area shares (group_zones() below), never from the OC dollar
+    # figure, so this figure is bit-identical regardless of which estimate the
+    # caption quotes. Grand Mean text/computation replaced with R alone.
+    @printf("    R total Oahu OC: \$%.3fB\n", oc_r / 1e9)
 
     println("--- [2/3] Loading zoning percentages")
     zdf              = CSV.read(ZONING_CSV, DataFrame)
@@ -1603,7 +1596,7 @@ function main()
         tiles[1], tiles[2], tiles[3], total_acres)
 
     println("--- [3/3] Rendering Zoning Waffle Chart")
-    plot_waffle(ZONE_LABELS, tiles, pcts, grand_mean_oc, OUT_WAFFLE)
+    plot_waffle(ZONE_LABELS, tiles, pcts, oc_r, OUT_WAFFLE)
 
     println()
     println("=== Mod_12 Zoning Waffle Chart complete ===")

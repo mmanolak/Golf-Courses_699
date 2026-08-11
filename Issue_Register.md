@@ -1,0 +1,4049 @@
+# Gone Golfing — Issue Register
+
+**Purpose.** A living record of defects, inconsistencies, and open questions found while
+reviewing the Phase 1–6 pipeline (summaries, documentation, and the 17 master scripts).
+Updated phase by phase as each is worked through.
+
+**Scope of review as of this revision.** All six `00_-_PhaseN_Summary.md`, all six
+`01_-_PhaseN_Documentation.md`, `Meta_Summary.qmd`, `Meta_Documentation.qmd`, and the
+master scripts `Phase_1..5.{py,R,jl}`, `Phase_6.{R,jl}`. Bulk-test sub-scripts have **not**
+been read — they are referenced in the docs but were not supplied.
+
+---
+
+## How to use this file
+
+Every issue carries a stable ID (`P3-01`, `X-02`). IDs are never reused or renumbered, so
+they can be cited in commit messages, thesis notes, and conversation.
+
+| Field | Meaning |
+|---|---|
+| **Severity** | `Critical` = affects a published number or a defence claim · `Major` = affects interpretation or reproducibility · `Minor` = internal inconsistency, low blast radius · `Cosmetic` = wording/formatting |
+| **Status** | `Open` · `Confirmed` (root cause established) · `Fixed` · `Won't fix` (accepted, documented) · `Question` (needs the author's intent before it can be classified) |
+| **Locus** | `Code` = the script is wrong · `Docs` = the script is right, the write-up is stale/wrong · `Both` |
+
+**Standing caveat.** A `Docs` issue is not automatically the lesser problem. Everything the
+committee reads is the write-up; a correct script with a stale table published beside it is
+still a wrong published number.
+
+---
+
+## Running tally
+
+| Phase | Critical | Major | Minor | Cosmetic | Total |
+|---|---|---|---|---|---|
+| Phase 0 | 0 | 2 | 0 | 0 | 2 |
+| Cross-cutting | 3 | 5 | 1 | 0 | 9 |
+| Phase 1 | 0 | 2 | 6 | 2 | 10 |
+| Phase 2 | 0 | 1 | 6 | 0 | 7 |
+| Phase 3 | 2 | 2 | 4 | 0 | 8 |
+| Phase 4 | 0 | 2 | 1 | 1 | 4 |
+| Phase 5 | 0 | 3 | 6 | 1 | 10 |
+| Phase 6 | 0 | 2 | 1 | 2 | 5 |
+| **Total** | **5** | **19** | **25** | **6** | **55** |
+
+*(2026-07-27: +2 net — new **X-09** (vendoring policy, Major, Fixed) and **P1-10** (`extract_holes`
+fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as N/A/verified-sound,
+same convention as before.)*
+
+*(2026-07-28: +1 net — new **P2-05** (Pass-2 nearest-feature national mis-assignment, Major/
+course-level, Minor-converging-on-negligible/aggregate-$; Closed same day — quantified, accepted
+limitation after three independent bias tests (name-verified subset, placebo/mechanical-bias
+test, MICE-distribution percentile test) all found no detectable systematic effect; not fixed,
+freeze holds).)*
+
+*(2026-07-28: +1 net — new **P0-01**, first-ever Phase 0 audit (`install_packages.{R,py,jl}`,
+Major, Reported/not fixed). Root cause of **X-08**'s `XLSX` crash — Phase 0's list was already
+wrong when X-08 happened and was never updated; the same `.xlsx`-reader gap (`XLSX`/`readxl`/
+`openpyxl`) found independently in all three languages, plus `BetaML` (**X-10**) and `ranger`
+(mice's real, undocumented-by-any-list RF backend — not `randomForest`, correcting the author's
+own stated premise after checking directly). No frozen number affected; freeze holds regardless.)*
+
+*(2026-07-28, same day: **P0-01 reclassified Reported → Partially fixed.** Author-authorized two
+fixes: (1) `ranger`/`BetaML` added to the provenance mechanisms, `Plots` dropped, frozen-run
+versions annotated (`ranger` 0.18.0, `BetaML` 0.12.6 — the latter correcting **X-10**'s "v0.13-line"
+description); (2) all three `install_packages.{R,py,jl}` rewritten to restore from
+`renv.lock`/`Manifest.toml`/`requirements.txt` with the prior ad hoc behaviour as fallback,
+verified by execution on this machine. 19 installed-but-unused packages and the Phase-0-provenance-
+row question logged as deferred/accepted, not implemented. Phase 0 infrastructure work stops here
+per explicit instruction. Severity/count in the table above unchanged — same entry, status only.)*
+
+*(2026-08-10: +1 net — new **P0-02**, canonical environment migrated Windows → Fedora 43 (`strix`),
+first successful `renv::restore()` in the project's history (Major/N/A, Resolved). Same-day **P0-01
+addendum** (no count change — same entry): `renv::snapshot(type="implicit")` reproduced this
+entry's own warning on the new machine, dropping `ranger` and 51 other packages from `renv.lock`;
+reverted, and implicit-mode snapshotting is now barred outright on this project.)*
+
+*(2026-08-10: +0 net — new **P1-11** (Holes/Ownership_Type MICE-predictor-exclusion proposal,
+N/A/Question, recommend Won't fix pending one outstanding verification), excluded from the tally
+below per the **P6-05**/**P6-07** N/A convention. Two further labels relayed secondhand this session
+turned out to already be logged with evidence under their real IDs — **P1-05** (`Semi Private`
+collapse) and **P1-06** (Python dedup) — both already `Fixed`; nothing new to log, not treated as
+open.)*
+
+*(2026-08-10: +1 net — new **P2-06** (`strix` re-run: R matches 11,604 vs Python/Julia's 11,605;
+Pass-1 counts diverge 5,463/5,501/5,458 across the three languages, Minor). Root cause of the N
+discrepancy fully traced (a single course, "Charlotte Golf Links," sits 500.55 m from the nearest
+polygon per R's own recomputed distance — 0.55 m past `MAX_NEAREST_M = 500`); the larger Pass-1
+divergence is only partially explained (Julia's CRS pipeline confirmed different; the R-vs-Python
+gap is not yet isolated). Manuscript impact: §4.1 footnote 2's 10,926 should read 10,925 for this
+R run, consistent with **P1-11**'s independent reproduction above.)*
+
+*(2026-08-10, same day: **P2-06 closed** — Pass-1 divergence recorded as a known, non-impacting
+cross-language implementation difference (author decision) rather than left open; count unchanged
+(reclassification, not a severity change). **+1 net — new P2-07** (Julia's hand-written PROJ4
+string vs. the authoritative `EPSG:5070` lookup R/Python use, Minor, Open/actionable), split out of
+`P2-06` item 4 as the one part of that investigation with a concrete code fix candidate.)*
+
+*(2026-08-10, same day: **P2-05 re-verified on `strix`, +0 net** (addendum, not a new entry).
+Pass-1/Pass-2 population stable vs. the original (5,463/6,141 fresh vs. 5,458/6,147 original) —
+closed conclusion holds. The exact 572/9.3% confirmed-wrong figure could not be independently
+reproduced (original script never committed); this addendum's own reimplementation gets 153/2.5%,
+flagged as a tokenization-method gap, not a data-driven revision — 572/9.3% remains the citable
+figure. Charlotte Golf Links added as a concrete example, via Python/Julia (R doesn't match it at
+all, per `P2-06`).)*
+
+*(2026-08-10, same day: **+1 net — new P3-10** (cross-platform reproduction: R/Python/Julia's
+fresh `strix` national totals reproduce the Windows-frozen figures to −0.057%/−0.016%/+0.003%,
+N/A/Confirmatory), the empirical backing for Appendix A.5. R's frozen and Julia's frozen/fresh
+pair independently verified; Python's frozen figure backed out from the author's stated delta,
+not independently located in this repo — flagged, not treated as confirmed.)*
+
+---
+
+## Phase 0 — Package Installation & Environment Bootstrap
+
+### P0-01 — `install_packages.{R,py,jl}` has never been audited; its package lists have drifted out of sync with what the pipeline actually needs. This is X-08's real root cause, and it still conflicts with the pinning that closed X-08
+**Severity:** Major (reproducibility-blocking on a fresh machine, confirmed in all three languages)
+/ N/A (no numeric impact — Phase 0 produces no data and touches no frozen number) · **Status:**
+**Partially fixed (2026-07-28)** — root cause, cross-language gap, provenance blind spot,
+pinning conflict, and stdlib entries fixed and tested; unused-package cleanup and the
+provenance-row question deferred by explicit author decision, logged below. Freeze not
+implicated either way (Phase 0 touches no frozen number). · **Locus:** Environment / Code
+(`2 - Work/Phase 0 Packages and Details/install_packages.{R,py,jl}`, `2 - Work/provenance.{R,jl}`)
+· **Relates to:** **X-08**, **X-10**
+
+Phase 0 (`2 - Work/Phase 0 Packages and Details/`) sits outside the `Phase_1..6` numbering
+CLAUDE.md's repository map and this register's own scope statement enumerate, and had never been
+read as part of this audit. Surfaced by the author: it is the actual mechanism behind **X-08**'s
+`XLSX` crash, and it was never updated when X-08 was fixed.
+
+**0. Root cause of X-08, `VERIFIED`.** `Phase_1.jl:24` — `using CSV, DataFrames, GeoDataFrames,
+ArchGDAL, XLSX, Printf, Statistics`. `install_packages.jl:9-19`'s `PACKAGES` list has no `XLSX`
+entry. A machine that runs *only* Phase 0 (the documented bootstrap path for a new contributor)
+would install every package it lists, then still crash on `Phase_1.jl` exactly as X-08 found —
+Phase 0's list was already wrong on the day X-08 happened; X-08 fixed the *symptom* (added `XLSX`
+to the pinned `Project.toml`, generated after the fact) without touching the *list that produced
+the gap*. Compounding this: `install_packages.jl` never calls `Pkg.activate()` — it runs against
+whichever Julia environment is ambient (the global default unless invoked with `--project=`),
+**not** the project-local environment X-08's fix created and every master script now activates
+explicitly. Phase 0 and the pinned environment are, right now, two disconnected dependency
+universes that happen to overlap by accident on this machine.
+
+**1. Same class, checked across all three languages, `VERIFIED` — every phase's `library()`/
+`import`/`using` statement compared against its installer's list, and against each language's
+own authoritative pinned-dependency record** (Julia: `Project.toml`'s `[deps]`, built by X-08
+from what's genuinely used; R/Python: no equivalent single-source list exists, so compared
+against a full grep of all `Phase_1..6` master scripts directly):
+
+| Language | Required, not installed by Phase 0 | Installed by Phase 0, never used by any phase |
+|---|---|---|
+| Julia | `XLSX` (X-08's crash) · `BetaML` (**X-10**'s RF backend — `Phase_3.jl:31`, added to `Project.toml` but never added to `install_packages.jl`) | `LibGEOS`, `CovarianceMatrices`, `Latexify`, `GeoInterfaceMakie`, `StatsBase`, `ZipFile`, `Plots` |
+| R | `readxl` (`Phase_1.R:37`, reads the same `.xlsx` file XLSX.jl reads) · `ranger` (see correction below) | `VIM`, `patchwork`, `ggmice`, `fixest`, `estimatr`, `plm`, `marginaleffects`, `modelsummary`, `xtable`, `ggdist` |
+| Python | `openpyxl` (`Phase_1.py:183`, `pd.read_excel` — pandas has no bundled `.xlsx` engine) | `matplotlib`, `seaborn` |
+
+**The `.xlsx`-reading dependency is missing from Phase 0's list in all three languages
+independently — `XLSX`/`readxl`/`openpyxl` — the same class of gap, three times, not a
+Julia-specific oversight.** This is the strongest evidence Phase 0's lists were hand-written once
+and never re-derived from the actual code: the one non-CSV/non-GIS input format in the whole
+pipeline (`2024 - FHFA June 20 Land Prices.xlsx`, read once, by all three languages, in Phase 1)
+was missed by whoever wrote each of the three installers, independently.
+
+**Correction to the author's stated premise, checked directly rather than confirmed as asked —
+`VERIFIED` against `mice`'s own source, not assumed:** `Rscript -e 'deparse(mice::mice.impute.rf)'`
+shows `rfPackage = c("ranger", "randomForest", "literanger")` with `match.arg()` selecting the
+*first* value absent an explicit override — **`ranger`, not `randomForest`, is the actual default
+backend.** `Phase_3.R:156` passes `method = method_vec` with no `rfPackage` argument anywhere in
+the script (`grep`'d directly), so it runs on `ranger`. `randomForest`'s three appearances in
+`renv.lock` are all inside *other* packages' `Suggests` arrays (`e1071`, `foreach`, `mice` itself)
+— it has no top-level package entry of its own and `requireNamespace("randomForest", quietly=
+TRUE)` returns `FALSE` inside the activated project **right now**, confirming it genuinely isn't
+installed and isn't needed. **`randomForest` is a red herring; `ranger` is the real, verified gap**
+— it *is* installed and correctly pinned in `renv.lock` (has its own top-level entry, `ranger:
+{...}`), but is absent from `install_packages.R`'s list because it is never `library()`'d or
+`::`-called anywhere in `Phase_3.R` — it is invoked only inside `mice`'s internal dispatch, which
+is exactly the class of dependency a static package-name list is structurally unable to catch.
+**This is the same failure mode as `BetaML`, one level more hidden**: `BetaML` is at least a
+direct `using` statement Phase 0 could have grepped for; `ranger` isn't even that — no static
+analysis of `Phase_3.R`'s own text would ever surface it. Cross-checked against the R provenance
+ledger's `key_packages` field (`Run_Provenance_R.csv`, populated from `sessionInfo()$otherPkgs`)
+as a second, independent signal: `ranger` **does not appear there either**, for the same reason —
+`sessionInfo()$otherPkgs` only reflects *attached* packages, and `mice` loads `ranger` via
+`requireNamespace()` without attaching it. **Two independent automated checks (static grep,
+runtime provenance) both miss `ranger`; only reading `mice.impute.rf`'s source found it.**
+
+**"Installed but never used" cross-checked against real run evidence where the mechanism allows
+it, not just static grep, `VERIFIED`:** R's `key_packages` field reflects genuinely-attached
+packages per run — all 10 flagged-unused R packages (`VIM` through `ggdist`) are absent from
+`key_packages` across all 11 recorded R provenance rows, corroborating the static-grep result with
+independent runtime evidence. `readxl` **is** present there, confirming it's genuinely used.
+Julia's and Python's `key_packages` fields are whitelist-based (`_KEY_PACKAGE_WHITELIST` in each
+`provenance.{py,jl}`), reporting a package's installed version if it's on the whitelist and
+resolvable — **not** whether the current script imported it, so they can't independently confirm
+"unused" the way R's mechanism can. Two related, smaller findings surfaced by inspecting those
+whitelists directly: **`Plots` is in Julia's `_KEY_PACKAGE_WHITELIST` — the same orphaned package
+name appears in both `install_packages.jl` and `provenance.jl`, suggesting a genuine earlier
+design (Plots.jl before the switch to CairoMakie) whose references were never fully removed**;
+`Run_Provenance_Julia.csv` confirms `Plots=` never appears in any of the 12 real recorded runs, as
+expected since it isn't in the pinned `Project.toml`. Separately, **Python's whitelist references
+`scikit-learn`, which is not imported by any master script and not even present in
+`install_packages.py`'s own list** — a phantom reference nowhere else in the codebase, likely a
+leftover from before `miceforest`/LightGBM. And **`BetaML` is absent from Julia's provenance
+whitelist**, so even after X-10 wired it into `Project.toml`, the provenance ledger itself was
+never updated to know it's a key package — the identical drift pattern (a hand-maintained list,
+once written, never revisited when the code it describes changes) recurring in a third file.
+
+**2. The pinning conflict — report only, no change made.** All three installers, unconditionally:
+`install.packages(pkg, quiet = TRUE)` (R, no version argument), `pip install {name}` (Python, no
+version pin), `Pkg.add(pkg)` (Julia, no version argument) — always latest-available, regardless of
+what `renv.lock`/`requirements.txt`/`Project.toml`+`Manifest.toml` say should be installed.
+**Currently inert on this machine**: every package each installer checks for is already present
+via the pinned environments, so `find_missing()` returns empty and no install call ever fires.
+**On a genuinely fresh machine, this would silently defeat the whole point of X-08's fix** — Phase
+0 would resolve whatever's currently newest on CRAN/PyPI/the Julia General registry for any
+package it deems missing, which is very unlikely to be the exact version the frozen cascade was
+validated against, and there would be no error, no warning — just a subtly different environment
+than the one that produced the committed numbers.
+
+What restoring from the lockfiles would require, per language, with a fallback when a lockfile is
+absent (report only, nothing implemented):
+
+- **R:** `install_packages.R` would need to locate `2 - Work/renv.lock` and, if present, source
+  `renv/activate.R` (with the same explicit `RENV_PROJECT` env var X-08 found load-bearing for the
+  master scripts — omitting it risks bootstrapping a second, wrong renv project) then call
+  `renv::restore(prompt = FALSE)`. Fallback if `renv.lock` is absent: keep today's loose
+  `install.packages()` loop, so the script still works as a bare bootstrapper before renv exists.
+- **Julia:** would need `Pkg.activate(normpath(joinpath(@__DIR__, "..")))` first (mirroring the
+  master scripts' own X-08 fix), then, if `Manifest.toml` exists there, `Pkg.instantiate()`
+  instead of per-package `Pkg.add()`. Fallback if absent: today's loose `Pkg.add()` against
+  whatever's active — though *whether* that should mean staying on the global environment or
+  activating-and-populating a fresh project-local one is itself a design choice, not resolved here.
+- **Python:** would need to check for `2 - Work/requirements.txt` and, if present, run
+  `pip install -r requirements.txt` in place of the per-package loop. Fallback if absent: today's
+  per-package loose install. Simplest of the three — `sys.executable` already ties installation to
+  whichever interpreter runs the script, no separate activation step needed.
+- **A consequence worth the author weighing before this is scoped, not just a mechanical swap:**
+  lockfile-restore semantics (`renv::restore()`/`Pkg.instantiate()`/`pip install -r`) reconcile the
+  *whole* environment to match the lock — potentially **upgrading or downgrading** packages a user
+  already has installed at a different version — whereas today's logic only ever adds what's
+  missing and never touches what's already there. That's a behavior change beyond "also check the
+  lockfile," and could surprise someone who intentionally has newer versions installed for
+  unrelated work.
+
+**3. Standard-library entries listed as installable — report only, two different risk profiles,
+not one.** Python: `pathlib`, `time`, `re`, `warnings`, `multiprocessing` are all stdlib, always
+importable, so `find_missing()` will never flag them and the `pip install` fallback path for them
+is currently dead code — but if it ever fired, `pip install pathlib` installs a real, separate,
+long-deprecated PyPI backport package (pre-dating Python 3.4's built-in `pathlib`; its own PyPI
+listing warns against installing it on modern Python) that could conflict with or shadow the
+built-in module. This is a documented, known packaging trap, not a guess — flagged as `ASSUMED`
+general Python-packaging knowledge, not independently re-verified by attempting the install (which
+would itself violate this task's read-only/no-environment-change instruction). The same risk was
+not independently checked for `time`/`re`/`warnings`/`multiprocessing` individually — no evidence
+either way that PyPI carries conflicting packages under those exact names, so this is reported as
+the same *design pattern*, not five equally-confirmed risks. **Julia's case is materially lower-
+risk**: `Statistics`, `Printf`, `Random`, `Serialization`, `LinearAlgebra` are true Julia stdlibs,
+and `Pkg.add()` on a stdlib name is standard, supported Julia package-manager behavior with no
+separate-namesake-package risk the way `pip install <stdlib-name>` carries — Julia's `Pkg` and
+Python's `pip` do not behave analogously here, and treating them as the same finding would
+overstate the Julia side.
+
+**4. Whether Phase 0 should record a provenance row — discussion, not a decision.** None of
+`install_packages.{R,py,jl}` currently calls `record_provenance()`/`_record_provenance()`; Phase 0
+is invisible to `Run_Provenance_{R,Python,Julia}.csv` entirely. In favor: it would create a durable
+record of what package versions were actually resolved at bootstrap time, directly useful for
+diagnosing exactly the kind of drift this entry documents. Against, or at least complicating a
+simple "just add the call": Phase 0 produces no data and has no `phase`/`M`/`maxit`/`seed` in the
+sense the existing schema means those fields for Phase 1-6 — a Phase 0 row would answer "was the
+environment ready at time Y," not "did this run produce this frozen number," which is a different
+kind of provenance than every existing row in the ledger. Recording it would mean either extending
+the ledger's schema/semantics or accepting a `phase = "Phase 0"` row that leaves several columns
+meaningless (`M`, `maxit`, `seed` all `NA` by construction) — an author call, not implemented here.
+
+**Addendum to X-08 (2026-07-28): "Fixed" there refers to the pinned-lockfile path, not the Phase 0
+bootstrap path — stated explicitly here so the two aren't read as the same fix.** X-08's fix
+(`Project.toml`/`Manifest.toml`/`renv.lock`/`requirements.txt`, all wired into the master scripts'
+own self-activation) is real and correctly closes the reproducibility gap **for anyone who clones
+the repo and runs the master scripts directly**. It does not touch `install_packages.{R,py,jl}` at
+all — those three files are exactly as stale today as they were the day X-08 was found; a
+contributor who follows Phase 0 as documented (rather than going straight to the pinned lockfiles)
+hits the identical class of failure X-08 already fixed once, in all three languages, not only
+Julia.
+
+**Fixed (2026-07-28), author-authorized, two changes, `VERIFIED` by execution — Phase 0 work stops
+after this per explicit instruction.**
+
+**Fix 1 — provenance now records the actual imputation backends.** `key_packages` recorded `mice`
+and `Mice` but not `ranger`/`BetaML`, the packages that actually perform the imputation — a
+reproduction attempt against a different `ranger` version could produce different numbers with
+nothing in the record explaining why.
+- **Julia** (`provenance.jl`): `_KEY_PACKAGE_WHITELIST` — dropped `Plots` (never a real
+  dependency, see item 1 above), added `BetaML`.
+- **R** (`provenance.R`): R has no whitelist mechanism to extend — `key_packages` here is a
+  dynamic reflection of `sessionInfo()$otherPkgs`, which only sees *attached* packages, and
+  `ranger` is never attached (loaded internally by `mice` via `requireNamespace()`, see item 1
+  above). Added a small, explicit `.EXTRA_KEY_PACKAGES <- c("ranger")` constant checked via
+  `requireNamespace()` + `packageVersion()` and appended to the recorded string, playing the same
+  role Julia's/Python's whitelists play, adapted to R's different underlying mechanism rather than
+  forcing an identical implementation onto a language whose provenance capture works differently.
+- **`VERIFIED` by execution**, not just read: isolated test of the new R logic (without writing to
+  the real ledger) confirmed it now produces `ranger=0.18.0` even though `ranger` was never
+  attached. `provenance.R` and `provenance.jl` both re-parsed clean after the edit.
+- **A better-still enhancement (recording a lockfile hash/version-stamp alongside `key_packages`,
+  so the full environment is identifiable rather than any hand-picked subset, however corrected)
+  was proposed but *not implemented* — reported to the author as a design choice with options,
+  per instruction to report before implementing it. Remains open, not part of this fix.**
+- **One-time annotation, since this cannot retroactively fix the frozen run's already-written
+  provenance rows:** the frozen cascade's R Phase 3 run used **`ranger` 0.18.0** (confirmed
+  installed version, cross-checked against `renv.lock`'s own pinned `"ranger": {"Version":
+  "0.18.0", ...}` entry — both agree). Julia's Phase 3 run used **`BetaML` 0.12.6** (per
+  `Manifest.toml`'s `[[deps.BetaML]] version = "0.12.6"` — note this corrects **X-10**'s own
+  write-up, which described "pulling BetaML v0.13-line"; the actually-pinned and actually-used
+  version is 0.12.6, not 0.13.x — a small discrepancy worth recording accurately rather than
+  repeating). `Run_Provenance_R.csv`/`Run_Provenance_Julia.csv`'s existing rows are not edited —
+  doing so would mean hand-altering a written record of what a specific past run actually did,
+  which this register exists to avoid, not perform. This paragraph is the durable record instead.
+
+**Fix 2 — Phase 0 now restores from lockfiles instead of resolving fresh, with the old behaviour
+as fallback.** All three `install_packages.{R,py,jl}` rewritten:
+- **R:** locates its own directory the same package-free way every `Phase_1..6.R` master script's
+  bootstrap does (`commandArgs()` parsing, works before anything is installed), then: if
+  `renv.lock` + `renv/activate.R` exist, sources `renv/activate.R` (with the `RENV_PROJECT` env
+  var **X-08** found load-bearing) and calls `renv::restore(prompt = FALSE)`. Falls back to the
+  original ad hoc `install.packages()` loop when no `renv.lock` exists yet.
+- **Julia:** calls `Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)` first — the
+  exact call every master script makes and this script never did, which is X-08's actual root
+  cause (item 0 above) — then, if `Manifest.toml` exists there, `Pkg.instantiate()`. Falls back to
+  the original ad hoc `Pkg.add()` loop otherwise.
+- **Python:** if `requirements.txt` exists at the project root, `pip install -r requirements.txt`
+  in place of the per-package loop. Falls back to the original loop otherwise. Simplest of the
+  three — `sys.executable` already ties installation to whichever interpreter runs the script.
+- **Fallback lists updated per instruction, scoped narrowly:** added `readxl` (R) and `openpyxl`
+  (Python) — `XLSX` (Julia) was already present as the symptom X-08 fixed directly in that list.
+  Dropped the standard-library entries (`pathlib`/`time`/`re`/`warnings`/`multiprocessing` from
+  Python; `Statistics`/`Printf`/`Random`/`Serialization`/`LinearAlgebra` from Julia) — these were
+  never genuinely installable. **The 19 installed-but-unused packages (item 1's table above) were
+  left untouched in all three fallback lists, on explicit instruction — that cleanup is deliberately
+  not entangled with this fix.**
+- **`VERIFIED` by execution, all three, on this machine** (where every lockfile already exists and
+  matches installed state, so this is exactly the currently-inert-but-real-on-a-fresh-machine
+  scenario item 2 originally described, now closed): `Rscript install_packages.R` → "The library is
+  already synchronized with the lockfile." `julia install_packages.jl` → `Pkg.instantiate()`
+  completed with no changes. `python install_packages.py` → every pinned version already
+  satisfied. All three correctly detected their lockfile, restored from it, and no-op'd cleanly
+  since nothing had drifted — confirms the new logic is idempotent and safe to run repeatedly, not
+  just correct in principle.
+
+**Deferred / accepted, logged per explicit instruction, not pursued further:**
+- **The 19 installed-but-unused packages** (10 R, 7 Julia, 2 Python — item 1's table above):
+  left in place in both the fallback install lists and the real environments. Removing them is a
+  separate cleanup, deliberately not entangled with this fix. Still flagged here as known,
+  harmless-but-untidy cruft.
+- **Standard-library-entries finding: resolved as part of Fix 2** (dropped from the R/Julia/Python
+  fallback lists directly), not merely deferred — recorded as closed, not open.
+- **Whether Phase 0 should record its own provenance row:** accepted as an open design question,
+  not implemented. The schema-semantics complication described above (a Phase 0 row would have
+  `M`/`maxit`/`seed` all meaningless by construction) remains unresolved and is not blocking
+  anything — Phase 0's *effect* on reproducibility is now covered by Fix 2 regardless of whether
+  its own execution is separately logged.
+
+**After these two fixes, Phase 0 infrastructure work stops per explicit instruction.** Phase 0 is
+now the mechanism that enforces reproducibility (restores from the exact pinned lockfiles) rather
+than a route around it, and the drift this entire entry documents can no longer recur silently for
+any dependency already captured in a lockfile — including ones no static package list would ever
+catch by inspection, like `ranger` and `BetaML`.
+
+**Addendum (2026-08-10) — the exact failure mode this entry warned about, reproduced on the newly-
+migrated machine.** `renv::snapshot(type = "implicit")` was run once on `strix` (see **P0-02**) and
+dropped 52 packages from `renv.lock`, including `ranger` — confirmed above as `mice`'s actual,
+dispatch-only RF backend, never `library()`'d anywhere in `Phase_3.R` — plus `VIM`, `ggmice`, and
+`patchwork`, all explicitly present in `install_packages.R`'s own list. Root cause: `renv`'s
+implicit/static-analysis snapshot mode walks `library()`/`::` calls in the project's own scripts; it
+structurally cannot see a package pulled in only through another package's internal
+`requireNamespace()` dispatch — exactly the blind spot Fix 1's `.EXTRA_KEY_PACKAGES` mechanism was
+written to compensate for in *provenance capture*. This confirms the same blind spot also corrupts
+the *lockfile itself* when `snapshot()` is run in implicit mode, not just the provenance record.
+Lockfile reverted to the known-good `renv.lock`; no frozen number touched (Phase 0 produces no
+data). **Do not run `renv::snapshot(type = "implicit")` on this project.** If the lockfile ever
+needs regenerating, do it explicitly (`type = "explicit"`) or hand-verify every package `renv`
+proposes dropping against `install_packages.R` first — never accept an implicit re-derivation.
+
+### P0-02 — Canonical execution environment migrated Windows → Fedora 43 (`strix`); first
+successful `renv::restore()` in the project's history
+**Severity:** Major (reproducibility-blocking under the prior environment, now resolved) / N/A (no
+numeric impact — environment record, no code or frozen number touched) · **Status:** Resolved
+(2026-08-10) · **Locus:** Environment · **Relates to:** **P0-01**, **X-08**, **X-10**
+
+Execution moved from Windows to a Fedora 43 Server machine (`strix`, 32 cores / 124 GiB RAM).
+`renv::restore()` against `2 - Work/renv.lock` had never once completed successfully on Windows —
+`Rcpp`, `s2`, `units`, and `sf` would not compile there, which blocked the geospatial stack this
+entire pipeline depends on. On `strix`: 195 packages restored cleanly (log: `~/logs/renv_restore.log`,
+outside the repo), confirmed by direct inspection, not the migration report alone.
+
+Verified directly on this machine, not assumed from the handoff note: R 4.5.3 · GDAL 3.11.5 · GEOS
+3.14.1 · PROJ 9.6.2 · `sf_use_s2()` returns `TRUE`. The native system-library chain Windows had no
+equivalent path for (`gdal-devel`, `geos-devel`, `proj-devel`, `abseil-cpp-devel`, and 18 others —
+full list with installed versions) is now recorded in `DATA_PROVENANCE.md` rather than living only
+as tribal knowledge on one machine, per **P0-01**'s own point that `renv.lock` pins R packages but
+never the system libraries they compile against.
+
+**Verification — X-10 fix survived the migration, checked directly:** `julia --project=. -e 'using
+Pkg; Pkg.status("Mice")'` on `strix` reports `Mice v0.4.1` — the first version not covered by
+`Mice.jl`'s own "prior to v0.4.1 may produce incorrect results" warning (see **X-10**), i.e. the
+post-fix version, not a regression to an earlier pinned copy. Consistent with the author's separate
+June re-run note that the RF-backed fix moved the Julia pooled total from $944B to $941B. Migrating
+machines did not silently revert this fix.
+
+This entry documents infrastructure/machine state rather than a code or numeric finding — logged
+per the pattern **X-09** and **P0-01**'s Fix 2 already established, of recording
+environment-affecting decisions here even when no frozen number moves.
+
+### X-01 — Published Phase 3 results were produced at M = 5, not M = 100
+**Severity:** Critical · **Status:** Confirmed · **Locus:** Docs (code is correct)
+
+The single most consequential finding. Full detail under **P3-01**; recorded here because it
+propagates into `00_-_Phase3_Summary.md`, `Meta_Summary.pdf`, and any thesis prose quoting the
+$943B confidence interval.
+
+**Update (2026-07-25):** see **X-04** — a complete M=100 tri-language run, through Phase 6, exists
+on disk dated 2026-06-12. Whether this M=5-vs-M=100 framing still describes what's *currently
+published* needs rechecking against that run, not assumed unchanged.
+
+### X-02 — R runs a different acreage variable than Python and Julia, end to end
+**Severity:** Major · **Status:** Resolved 2026-07-27 (author decision, Gate 3) · **Locus:** Code (by design) / Docs (framing)
+
+R imputes and regresses `final_acreage` (OSM + Tigris landmarks, coalesced); Python and Julia
+use `osm_acreage` (OSM only). This persists from Phase 2 through Phase 4.
+
+- `Phase_3.R:47` — `IMPUTE_COLS <- c("final_acreage", "Baseline_Value_Per_Acre")`
+- `Phase_4.R:89-97` — hard-stops unless `final_acreage` is present
+- `Phase_4.py:81-87`, `Phase_4.jl:82-90` — both use `osm_acreage`
+
+The Phase 4 documentation already attributes R's ~10% higher `Holes` coefficient to this
+(§4D). The problem is what the framing then claims: the tri-language design is presented
+throughout as a **language/backend** robustness check, but one of the three arms is fed a
+different input variable. The R–vs–Py/Jl spread therefore confounds two effects (MICE backend
+*and* acreage definition) that the write-up treats as one.
+
+**Not necessarily a bug.** Tigris Tier 2 is defensible as R-only enrichment. But the claim
+needs to be stated as what it is, or R needs an `osm_acreage`-only variant for the parity
+comparison. See also **P2-01**.
+
+**Update (2026-07-25):** the specific mechanism the doc names —
+`01_-_Phase4_Documentation.md:485-487`, "R's Holes coefficient is ~10% higher... attributable to
+R using final_acreage (OSM+Tigris) while Julia/Python use osm_acreage" — is weakened by **P2-03**:
+in the current on-disk data, R's Tigris tier recovered **zero** courses, so `final_acreage` and
+`osm_acreage`-with-fallback are the same set of observed values for this snapshot. The stated
+explanation doesn't obviously hold for the data it's describing. Two more mechanistic, verified
+candidates now exist for the same coefficient spread: **P1-01** (R alone silently imputes 9
+`Holes` values via random forest, using `final_acreage`/`BVPA` as predictors — directly touches
+the `Holes` coefficient specifically) and **P1-05** (Python's `Ownership_Type` collapse skewed
+~10% of Python's own MICE predictor matrix, pre-fix). Neither is confirmed as *the* cause — that
+needs a re-run with fixes applied, which is out of scope now — but the doc's current explanation
+should not be treated as settled.
+
+**Confirmed live at Phase 4, `VERIFIED` by reading (Parity Audit E-1, 2026-07-25):** this isn't a
+Phase 2/3 curiosity that fades before the regression — it's the literal multiplicand of the
+regression's dependent variable. `Phase_4.R:96-99`: `Total_Opportunity_Cost <-
+final_acreage * Baseline_Value_Per_Acre`. `Phase_4.py:86-91` / `Phase_4.jl:89-92`: same
+computation, `osm_acreage * Baseline_Value_Per_Acre`. `log1p()` is applied identically, in the
+same order (multiply-then-log, not log-then-something-else), in all three — the only actual
+divergence at this step is which acreage column feeds it, which is exactly the standing **X-02**
+question, not a new one. Formula order itself checked clean.
+
+**Cross-reference (2026-07-26):** the acreage-*variable*-choice question this entry tracks
+(`final_acreage` vs `osm_acreage`) is distinct from **P2-04**'s acreage-*matching*-tie-break fix,
+but both bear on the same national total. P2-04's fix moved Python/Julia's pooled totals up and
+**widened** the cross-language spread (1.61%→1.71% — see **P3-01**), which rules P2-04 out as a
+suppressor-turned-cause of the spread and leaves this entry's four-variable-imputation-model
+candidate (via **P1-01**) as the standing lead explanation, not weakened by anything found here.
+
+**Resolved (author decision, Gate 3/Decision 3, 2026-07-27): Option B — R's Tigris Tier 2
+removed, `final_acreage` = `osm_acres` unconditionally.** Rationale, from the author: Tier 2
+recovered zero courses in every run to date, its live fetch was non-deterministic (**P2-03**'s
+diagnostic confirmed real golf landmarks exist and would have been recovered on a different run
+day), and **X-06** already established the polygon *set* is shared across all three languages —
+so the enrichment was costing determinism and parity while contributing nothing observed. R now
+runs the identical acreage variable, by identical construction, as Python and Julia. This closes
+the standing "which acreage variable is canonical" author-call question (**CLAUDE.md** §5) by
+removing the second variable rather than choosing between them. **Does not resolve or affect**
+the leading spread-cause candidate (R's four-variable imputation model, **P1-01**) — that
+divergence is at Phase 3, not Phase 2, and is untouched by this fix. Not executed beyond the
+diagnostic (§2.1); effect will be visible in the next cascade.
+
+### X-03 — Bulk-test sub-scripts are undocumented dependencies of the review
+**Severity:** Major · **Status:** Question, partially superseded by X-04 · **Locus:** —
+
+The documentation repeatedly cites results, fixes, and canonical outputs living in
+`Bulk Tests/{R,Julia,python}/`. Phase 4 §4D states outright that the canonical `Data/`
+output directories are **empty** and that all regression CSVs exist only under `Bulk Tests/`.
+None of these scripts or CSVs were supplied, so every claim sourced from them is currently
+unverifiable. Several numeric conflicts below (**P3-05**, **P4-01**) may resolve trivially
+once it's clear which tier produced which table.
+
+**Update (2026-07-25, see X-04):** the claim that `Data/` is empty is now false, and — per
+`Phase_6.R:74,107,137,220,461,1141,1421-1433,1662-1664,2072-2074,2575-2579` — was never true of
+the *code*: `Phase_6.R` reads directly from the canonical `Phase 3.../Data/{R,python,Julia}` and
+`Phase 4.../Data/{R,python,Julia}` paths, never from `Bulk Tests/`. Whatever `Bulk Tests/`
+contains, it is not what `Phase_6.R` consumes. Doesn't resolve which numbers are *currently
+published*, but narrows the question considerably — see X-04.
+
+**Open, deliberately not resolved by rounding (2026-07-25):** there may be a **third**
+run-generation, distinct from both the M=5 pilot and the Jun-12 `Data/` run. Python's `Holes`
+coefficient is **0.048** in `Final_Thesis_Figures/8.241_Table2_Regression.tex` (the Jun-12 run)
+but **0.04740** as currently published in `01_-_Phase4_Documentation.md` (labeled "from actual
+M=100 Bulk Tests CSVs"). `0.0474` does not round to `0.048` — that's a 0.0006 gap at the reported
+precision, larger than rounding noise. Two explanations remain open, not one favored: (a) the
+published table is a genuinely different `Bulk Tests/` M=100 run, predating Jun-12, or (b) same
+run, transcription/precision-loss error somewhere in the doc. **Not closing this by assumption
+either way** — if a third generation exists, its provenance (which script, which day, which
+inputs) needs establishing before the freeze, not discovered after. Needs the author's input on
+whether `Bulk Tests/{R,Julia,python}/` scripts were ever run standalone, and when.
+
+### X-04 — A complete, synchronized tri-language M=100 run already exists on disk (2026-06-12)
+**Severity:** Critical · **Status:** Confirmed, not yet reconciled with published docs · **Locus:** Data/Docs
+
+Directly relevant to **P3-01/P4-01**'s open question ("do M=100 outputs exist anywhere?") — yes.
+`VERIFIED` by reading file listings and mtimes only (no execution, §2.1):
+
+- `Data/{R,python,Julia}/*_Imputed_Dataset_{1..100}.csv` — exactly 100 files per language, all
+  three languages, mtimes clustered 2026-06-12 13:23–13:35
+- `Data/{R,python,Julia}/*_Regression_Results.csv` (Phase 4) — all three, mtimes 2026-06-12
+  13:53–13:54, ~20 minutes after the Phase 3 M=100 run completed
+- `Phase 6 Visualization/output/Final_Thesis_Figures/` and `.../QA_Verification/` — both
+  directories' contents dated 2026-06-12, 15:12–23:15, including `n020/n040/n060/n080/n100`
+  MICE-density diagnostics (an M=100 naming pattern, distinct from the older
+  `Bulk/{R,Julia}/output/` files' `n005/n025/n050/n075/n100` pattern and May 5–18 mtimes)
+
+This looks like a complete Phase 2 → 3 → 4 → 6 cascade, all three languages, run same-day,
+finishing with what appear to be curated "final" and "QA" figure sets — i.e., substantially
+further along than **X-01**/**X-03** assumed when they described the M=5 pilot as the only
+completed run and `Data/` as empty.
+
+**Caveat 1 — the cascade is synchronized from Phase 2 onward, not from Phase 1.** Phase 1
+outputs are **not** same-day: `R_Phase1_Baseline_Golf_Valuation.csv` is 2026-06-12, but
+`Py_Phase1_Baseline_Golf_Valuation.csv` is 2026-05-18 and
+`Jl_Phase1_Baseline_Golf_Valuation.csv` is 2026-05-14. Only R's Phase 1 was rerun on the 12th
+(consistent with the FIPS fix timing, see **P1-07**); Python and Julia's Phase 2 (2026-06-12) ran
+against their pre-existing, older Phase 1 outputs. Concretely: **B-6**'s +5 duplicate rows and
+**P1-05**'s collapsed `Ownership_Type` (both Python-side, both pre-existing in Python's Phase 1
+output since before this run) are already baked into this Jun-12 Phase 2/3/4/6 cascade, not
+introduced by it. "Synchronized cascade" describes Phase 2 downward; it does not mean
+"synchronized inputs."
+
+**What this does NOT mean:** these are not necessarily *correct* or ready to publish. This
+2026-06-12 run predates today's fixes and still carries every defect found in this audit that
+existed in the code at the time: fabricated `Holes` in Python/Julia (**P1-01**), the
+`Ownership_Type` collapse and missing dedup in Python (**P1-05**, **P1-06**, fixed today, not yet
+rerun), and R's silent `futuremice` imputation of `Holes`/`Ownership_Type` (**P1-01**/**P1-05**).
+It is evidence that a full cascade *can* complete (roughly 10 hours, Phase 2 start to Phase 6
+finish, from the timestamps above) — useful for planning the frozen re-run — not evidence that
+any number in it is final.
+
+**Caveat 2 — the 2026-07-28 frozen cascade runs on different hardware than this Jun-12 baseline
+(logged pre-cascade, 2026-07-27).** This run predates the Jun-12 baseline in one further respect:
+`Phase_6.jl`'s own header comment referenced a 12-core/24-thread Ryzen 3900XT; the machine
+confirmed for the 2026-07-28 cascade is an 8-core/16-thread Ryzen 7 5700X3D — different hardware
+the author has but was not using when the Jun-12 baseline (or possibly the 3900XT-era code
+comment) was produced. Seeds (`42` throughout) and the newly-pinned environments (**X-08**) should
+make this immaterial to any pooled point estimate, but it is a real, uncontrolled difference
+between the two runs being diffed under **Decision 5** — flagged explicitly so any unexplained
+delta can be checked against it before being attributed to a code fix. See also **P3-08**'s
+sibling note in `PARITY_AUDIT.md` D-5 on the untested `SAFE_WORKERS=14` extrapolation, a related
+but distinct hardware-adjacent uncertainty.
+
+**QA_Verification/ and Final_Thesis_Figures/ inventoried (2026-07-25).** `QA_Verification/`
+(26 files) is entirely per-language PNG renders — Scripts 1, 2, 5 (MICE density), 7, each split
+into `_Julia`/`_Python`/`_R` suffixed images. **It does not contain cross-language numeric
+comparison artifacts** (no CSVs, no diff tables) — it's a visual per-language sanity check, not
+something that can answer **H-4** (filter boundaries) or **H-6** (join semantics), which are
+code/data questions a rendered map can't settle. `Final_Thesis_Figures/` (32 files) is more
+useful: alongside the "TriLanguage"/"GrandMean"/"Combined" figures, it contains three actual
+`.tex` tables — `8.141_Table1_Acreage.tex`, `8.241_Table2_Regression.tex`,
+`8.301_Table3_Hawaii_Geo.tex` — real M=100 numbers, read directly rather than re-derived:
+
+- `8.241_Table2_Regression.tex`: Holes coefficient — Python 0.048, R 0.053, Julia 0.048.
+  Close to, but not obviously identical at full precision to, the coefficients already published
+  in `01_-_Phase4_Documentation.md` (R 0.05251, Python 0.04740, Julia 0.04764) — which that doc
+  itself already labels as "from actual M=100 Bulk Tests CSVs." Two different M=100 sources
+  (`Bulk Tests/` vs this Jun-12 `Data/` run) producing close-but-not-provably-identical numbers
+  is exactly what **X-03** is asking about, now with concrete numbers on both sides instead of an
+  abstract question. Not conclusively resolved — would need full-precision digits from both
+  sources to prove same-run-vs-different-run — but it's evidence, not a re-derivation.
+- `Data/{R,python,Julia}/*_Rubins_Rules_Summary.csv` (the Jun-12 run): pooled national OC R
+  $935.521B / Python $938.309B / Julia $950.637B, Grand Mean ≈ **$941.5B**. The currently
+  published Phase 3 Summary figures are $936.0B/$943.0B/$951.4B, Grand Mean $943.5B
+  (`Notes.md`) — close but **measurably different**, not a rounding artifact. This is strong
+  evidence for the open question below.
+
+**Escalating** (§5), now sharper with the above: does the author know this run exists? Two
+sub-questions, not one:
+1. If `Final_Thesis_Figures`/`QA_Verification` are what's currently cited, **X-03**'s "`Data/` is
+   empty" premise is simply wrong and needs correcting at the source, not just here.
+2. Given the National OC numbers above don't match, the manuscript most likely still cites the
+   M=5 pilot for that figure specifically — see the new open question logged at the bottom of
+   this file. If confirmed, the practical implication is good news: **a better version of the
+   headline number may already exist on disk**, pending the **P1-01**/**P1-05** fixes and a
+   reconciliation re-run, rather than requiring a from-scratch M=100 run.
+
+**Decided (author decision, Decision 5, 2026-07-27): the upcoming frozen cascade is a fresh run,
+not a reconciliation with the Jun-12 data.** The question posed above (is Jun-12 "good enough to
+reconcile toward" instead of re-running) is answered no: the Jun-12 outputs predate every fix this
+audit has made — **P1-01** (Holes), **P1-05**/**P1-06** (Ownership/dedup), **P2-04** (tie-break),
+**P2-03**/**X-02** (Tigris Tier 2 removed), **X-08**/**X-09** (environment + live-fetch pinning) —
+so treating it as a target to converge on would mean judging the new, corrected pipeline against
+an uncorrected baseline. **Its role going forward is a diff baseline, not a target:** after the
+frozen cascade completes, compare its outputs against the Jun-12 run and confirm each delta is
+explainable by a known, already-logged fix — e.g. Python's pooled total should move by
+approximately **P2-04**'s already-quantified **+$1.79B** from the tie-break fix alone, before any
+other change is accounted for. **A delta that isn't explainable by a logged fix is a red flag
+worth investigating before publication, not a number to accept because it moved.** This framing
+applies to every open provenance question in this entry (X-03's Bulk Tests tier, the two-M=100
+figures question) — none of them are being resolved *by* matching Jun-12; they're resolved by the
+frozen cascade being correct on its own terms, with Jun-12 serving only as a sanity-checkable
+diff.
+
+### X-06 — R and Julia's OSM golf-course polygons are not independently extracted — both consume Python's extraction
+**Severity:** Critical · **Status:** Confirmed · **Locus:** Code (by design, documented) / Docs (framing)
+
+Surfaced while checking **C-4** (reprojection order). This bears directly on the thesis's central
+claim (`CLAUDE.md` §1): "three independent implementations converge... evidence the result is
+not an artefact of one toolchain." For the OSM polygon geometry specifically, **it is not three
+independent extractions.**
+
+**Precise scope (2026-07-25) — this is not a blanket claim about the pipeline.** The project is
+a controlled comparison from Phase 2 onward, not an independent replication end to end, and the
+independence boundary is exact, not fuzzy:
+- **Phase 1 (parsing):** genuinely independent — three separate parsers run on the same raw
+  `Golf Courses-USA.csv`, with real algorithmic differences (**P1-01**, **P1-05**, **P1-06**).
+- **Phase 2, polygon *extraction*:** shared, not independent — Python's `pyosmium` pass only,
+  inherited by R and Julia (below).
+- **Phase 2, area computation / reprojection / plausibility filtering / point-matching:**
+  independent per language (different libraries, own code paths) — verified in **C-3**/**C-4**.
+- **Phases 3–6:** independent per language (each language's own MICE call, own regression, own
+  visualization code).
+So: independent inputs into a shared Phase-2 geometry step, independent processing on both sides
+of it. Correcting the framing wherever the thesis claims blanket independence is a post-freeze
+documentation task, same as the `Phase_2.R:4`/`Phase_2.jl:9` "fully self-contained" header
+claims below — logging both here, not editing either now (`CLAUDE.md` §2.2 applies to these
+headers the same as to `.md`/`.qmd` docs, per author instruction).
+
+`READ`, all three headers and Step-0/Step-1 code:
+- **Python** (`Phase_2.py:1-83`) is the only language that independently streams the 11 GB
+  `us-260413.osm.pbf` file, via `pyosmium`'s C++ streaming handler, filtering `leisure=golf_course`
+  areas and building multipolygon WKB geometries. This produces
+  `Data/Python/Py_Phase2_OSM_Golf_Polygons.gpkg`.
+- **Julia** (`Phase_2.jl:1-18,29,89`): header states inputs are
+  `Data/Python/Py_Phase2_OSM_Golf_Polygons.gpkg` — Julia has **no PBF-parsing code at all**. Step 1
+  is `isfile(PY_GPKG) || error("Python GPKG not found... Run Phase_2.py first.")` followed by
+  `GeoDataFrames.read(PY_GPKG)`. Julia recomputes area (`ArchGDAL.geomarea`), reprojects, filters,
+  and does its own point-matching against its own Phase 1 data — but the polygon geometries
+  themselves are Python's.
+- **R** (`Phase_2.R:1-29,111-163`): documented and coded as GPKG-first. `Phase_2.R:122-123`:
+  "Priority: use the Python GPKG if it exists (fast, clean); only attempt the PBF as a last resort
+  when the GPKG is absent." The code checks `file.exists(PY_GPKG)` **first** and only attempts its
+  own `st_read(PBF_FILE, ...)` if that's missing — and the comment at `Phase_2.R:119-121` explains
+  why: "GDAL's OGR driver cannot reliably parse this particular 11 GB PBF file (crashes at ~byte
+  3,049,247,581 due to data corruption). The Python pipeline used pyosmium... which tolerates the
+  corruption." **R's own independent PBF-parsing path is known-broken on this file** and exists
+  only as an unreachable fallback, since `Py_Phase2_OSM_Golf_Polygons.gpkg` is already present on
+  disk — the `file.exists(PY_GPKG)` branch fires every time, in practice, today.
+
+**What is and isn't independent, precisely:** the *set of polygons* — which real-world features
+count as a golf course, their exact boundary shapes, and (per **C-6**) how multipolygon relations
+get assembled into single areas — is decided **once**, by Python's `pyosmium` pass, and inherited
+identically by R and Julia. What R and Julia *do* independently: recompute area from that shared
+geometry (via `sf`/GDAL vs `ArchGDAL` — different libraries, could still numerically diverge),
+reproject, apply the plausibility filter, and run their own point-to-polygon matching against
+their own Phase 1 baseline data. So the acreage **numbers** downstream of the shared geometry are
+still independently computed — but any omission, mis-tagged feature, or corruption-handling
+choice in Python's extraction is silently present in all three arms, not caught by cross-language
+comparison, because there's only one extraction to disagree with.
+
+**Why this matters more than a typical finding:** the whole audit is framed around catching
+places where the three languages *aren't actually independent* and a bug masquerades as
+convergence. This is that pattern, but upstream and structural rather than a coding accident —
+and it's the one variable (acreage) most implicated in candidate #1 of **P3-01**'s spread
+analysis and in **X-02**. Also worth noting: this is honestly documented in both scripts' own
+headers and comments — it was a deliberate engineering decision (a real, reproducible GDAL crash
+on this PBF), not something hidden. But "fully self-contained" (`Phase_2.R:4`, `Phase_2.jl:9`) is
+the wrong description for what's actually a documented hard dependency on Python's Phase 2
+running first.
+
+**Analytic consequence — this makes the origin of the P3-01 spread decisively testable.** Because
+all three languages match the *same* polygon set, the same points against it, and independently
+compute area from *identical* geometry, observed (non-imputed) acreage should be numerically
+identical across languages — any divergence there would have to come from area computation,
+reprojection, or matching, not from the geometry itself. See **D-0**.
+
+**D-0 result (2026-07-25):** `VERIFIED` — largely confirms the prediction, with one real
+exception. Joined the three Phase 2 outputs on (round(lat,4), round(lon,4), Course_Name); 16,290
+keys common to all three (2 short of the 16,292 in each language individually — a small join
+gap, not investigated further, noted as a caveat on the count). Of 11,604 keys with acreage
+observed in all three languages: **11,563 (99.6%) match to within 1e-6 relative tolerance** (2
+bit-exact, 11,561 float-tolerance-exact) — strong confirmation that shared geometry produces
+shared area for the overwhelming majority of courses, exactly as predicted. But **41 rows (0.35%)
+differ substantially** — not floating-point noise: relative differences from 2.7% to 85%, median
+37%. Logged as **P2-04**: the pattern in nearly every one of the 41 is *two* languages agreeing
+exactly while the third differs by a large, non-trivial amount (odd-language-out tally over all
+41: Julia 15, Python 14, R 12 — roughly even, no single language is the systematic outlier).
+That signature points to independent **point-to-polygon matching** picking a *different candidate
+polygon* from the shared pool for a small number of ambiguous courses (e.g. multi-course
+complexes), not an area-formula or CRS bug — C-3/C-4 already verified those clean. Rough dollar
+impact: summed max pairwise acreage difference across the 41 rows ≈ 4,324 acres; at the ~$414k/
+acre national mean BVPA, order-of-magnitude **~$1.8B** — real, but well short of the ~$15B
+(1.61%) cross-language spread in **P3-01**, so this does not replace R's four-variable imputation
+model as the leading candidate, it adds a small, independently-verified, second contributor.
+**Interpretation per the two branches posed:** acreage is identical for the overwhelming majority
+of rows (supports **candidate 3**: the spread mostly originates at Phase 3+), but a genuine,
+verified minority-case divergence exists in matching (a real, if small, second finding) — the
+result is not cleanly one branch or the other.
+
+**Escalating** (§5): this doesn't necessarily need a code fix — R's fallback exists for a real
+reason (a genuine GDAL crash). But it changes how the "three independent implementations" claim
+should be *worded* wherever it discusses acreage specifically, and it's worth the author knowing
+explicitly rather than finding out from a reviewer. Recommend: correct "fully self-contained" in
+both headers, and add a sentence to whichever documentation makes the independence claim, scoping
+it correctly (independent area computation and matching, shared polygon extraction).
+
+### X-05 — RETRACTED as originally written: Julia is not clean on imputation-model shape either
+**Severity:** Major (upgraded from Cosmetic — this was a wrong conclusion, not just a record) · **Status:** Corrected 2026-07-25 · **Locus:** —
+
+**Original claim (2026-07-25, same day): "Julia's `""` sentinel... is a valid non-missing
+category level... gets R's correct parsing behavior without R's accidental imputation
+behavior." This is wrong, or at best unverified overclaiming, and is corrected here rather than
+silently edited — per the evidence standard (§4), the record should show the correction, not
+hide that it was needed.**
+
+**What actually happened (D-2, 2026-07-25):** direct NA/blank counts on the on-disk Phase 2
+outputs that fed the Jun-12 run:
+
+| | Holes NA | Ownership_Type/Course_Type NA | Acreage NA | BVPA NA | Columns with missingness |
+|---|---|---|---|---|---|
+| R | 9 | 1 | 4,687 | 1,064 | **4** |
+| Python (pre-fix) | 0 | 0 | 4,687 | 1,064 | **2** |
+| Julia | 0 | **1** | 4,687 | 1,064 | **3** |
+
+Julia's `Ownership_Type` **does** have a real missing value — 1 row (the same
+`Turtle Creek Golf Club, FL` "CLOSED|" row as R and, before the fix, as R alone was thought to
+have). `READ`, `Jl_Phase2_Acreage_Matched.csv`: the field is written as a **fully empty,
+unquoted CSV field** (`,,`), not the literal string `""`.
+
+**Promoted to `VERIFIED` (author confirmation, 2026-07-25):** `Phase_3.jl:50`
+(`CSV.read(input_csv, DataFrame)`) passes no `missingstring` argument. `CSV.jl`'s documented
+default is `missingstring=""` — an empty field is read as `missing` by default, with no override
+in this call. So the empty-field evidence above is conclusive, not merely suggestive:
+`Phase_3.jl:63` (`categorical(acreage_df.Ownership_Type)`) preserves the `missing`
+(`CategoricalArrays.jl` supports `missing` natively) and `Phase_3.jl:74`
+(`mice(imp_df, m=m_datasets, iter=10)`) encounters it as real missingness in `Course_Type` —
+confirmed as a third imputation target in Julia, by the same general "MICE imputes every column
+with missingness" default shared by `mice`, `miceforest`, and `Mice.jl` alike.
+
+**Revised picture:** R and Julia share the *same* root cause (both use the raw
+leading-parenthetical regex, both fail identically on the one `CLOSED|`-prefixed row) and, most
+likely, the *same* consequence (an accidental extra imputation target) — Julia isn't structurally
+clean, it's structurally identical to R on this axis, just with one fewer accidental target
+(`Holes` fabricates cleanly in Julia; it doesn't in R). Python (pre-fix) was the only language
+with a *fully* 2-variable imputation model for the Jun-12 run — but only because its Ownership
+extraction was *wrong* (**P1-05**) in a way that happened to never leave a missing value. Once
+**P1-05**'s fix is carried through a Python re-run, Python's `Ownership_Type` will *also* pick up
+this same 1-row `NA` (correctly, this time) — and `Phase_3.py`'s `miceforest.ImputationKernel`
+call (`Phase_3.py:85-89`) has no explicit `variable_schema`, so by the same shared MICE-library
+default, Python would then **also** inherit a 3rd accidental imputation target, ironically as a
+direct consequence of fixing the parsing bug. **No language is a clean reference on this axis
+without an explicit `predictorMatrix`/`variable_schema` fix in Phase 3** — the fix belongs at the
+Phase 3 MICE-call level (constrain which columns are imputed), not at the Phase 1 parsing level,
+and applies to R, Julia, and (once P1-05 is carried forward) Python alike.
+
+### X-07 — `Data/Python` vs `Data/python` path casing, live in 5 master scripts, fixed
+**Severity:** Minor (Windows-masked; would break on a case-sensitive filesystem) · **Status:** Fixed 2026-07-26 · **Locus:** Code
+
+Parity Audit **G-8**. `VERIFIED`: every phase's actual on-disk Python output directory is
+lowercase `python` (`ls -d Data/*/` confirmed for Phase 1, 2, 4, 5). `Phase_3.py` and
+`Phase_6.jl`'s real code already used lowercase correctly. But `Phase_1.py:28`, `Phase_2.py:
+28-30`, `Phase_2.jl:29`, `Phase_4.py:26,28`, and `Phase_5.py:35,42,49,63` all constructed the
+path string with capitalized `"Python"` — silently masked on this Windows machine only because
+NTFS/Windows path lookups are case-insensitive; the exact same code would fail to find (or would
+create a second, divergent) directory on Linux/macOS/most CI runners. Notably this included
+`Phase_2.jl:29` — Julia's own hardcoded path to **Python's** Phase 2 polygon output
+(`Py_Phase2_OSM_Golf_Polygons.gpkg`), the cross-language dependency file **X-06** already
+established Julia hard-depends on — so this wasn't only a Python-internal-consistency issue.
+
+**Fixed:** all 8 occurrences across the 6 files above changed to lowercase `"python"`, matching
+the actual directory and `Phase_3.py`/`Phase_6.jl`'s existing correct convention. Also corrected
+`Phase_6.jl:4,7` (**G-7**): the header comment said "scripts 5, 6, and 10" (missing 11-14) and
+referenced `Data/Python` — now reads "scripts 5, 6, and 10-14" and `Data/python`. Purely
+mechanical, output-path-only changes — no computed value, seed, or algorithm touched.
+`(Legend/display strings like Phase_6.jl:146,2078` and `Phase_6.R`'s `"Python"` plot-label text
+were left alone — those are human-readable labels, not directory paths.)
+
+### X-08 — No pinned environment in any of the three languages; `Phase_1.jl`'s `XLSX` dependency was never installed on this machine
+**Severity:** Major (blocks Phase 1 entirely, currently) · **Status:** Fixed 2026-07-27 (all three languages, freeze blocker per Gate 3) · **Locus:** Environment
+
+Found during the dress-rehearsal cascade, `VERIFIED` by execution. `Phase_1.jl:17` does
+`using CSV, DataFrames, GeoDataFrames, ArchGDAL, Downloads, XLSX, Printf, Statistics` — `XLSX` is
+needed to read `2024 - FHFA June 20 Land Prices.xlsx`. Running `Phase_1.jl` from a clean
+invocation failed immediately: `ArgumentError: Package XLSX not found in current path.` **This
+project has no `Project.toml`/`Manifest.toml` anywhere in the repository** — grepped, none found
+— so every Julia master script runs against this machine's single global environment
+(`~/.julia/environments/v1.12`), and that environment's package list (checked earlier this audit:
+`ArchGDAL, CSV, CairoMakie, CategoricalArrays, ..., Mice, ...` — 20 packages) never included
+`XLSX`. Every *other* Julia master script (`Phase_2.jl` through `Phase_6.jl`) uses only packages
+already present, so this was invisible until Phase 1 specifically was executed.
+
+**Fixed (environment-level, not a code change):** ran `Pkg.add("XLSX")` against the global
+environment. `Phase_1.jl` then ran to completion. **Not fixed: the underlying reproducibility
+gap.** Without a committed `Project.toml`/`Manifest.toml`, there's no record of which Julia
+package versions the pipeline was validated against, and no way for a different machine (or a
+future environment reset on this one) to reproduce the same dependency set automatically — the
+exact failure mode just hit here. Recommend `Pkg.activate(".")` + a committed
+`Project.toml`/`Manifest.toml` for the whole project as a post-freeze infrastructure item; out of
+this audit's scope to add unilaterally (touches every Julia master script's invocation
+convention, a structural change beyond a parity fix).
+
+**Reclassified as a freeze blocker (author decision, Gate 3, 2026-07-27) — fixed, all three
+languages, same day.** Unpinned environments make the frozen cascade non-reproducible on any
+other machine or after any environment reset on this one; the `XLSX.jl` gap was the symptom, not
+the whole problem — R and Python had exactly the same exposure, just no missing-package crash
+yet to reveal it.
+
+- **Julia:** `Project.toml`/`Manifest.toml` generated at `2 - Work/` (repo Julia-project root),
+  pinning the 16 packages actually used across `Phase_1..6.jl` (`ArchGDAL 0.10.11`,
+  `CSV 0.10.16`, `CairoMakie 0.15.11`, `CategoricalArrays 1.1.1`, `Colors 0.13.1`,
+  `DataFrames 1.8.2`, `Distributions 0.25.126`, `GLM 1.9.5`, `GeoDataFrames 0.4.2`,
+  `Mice 0.4.1`, `XLSX 0.12.0`, plus stdlibs) to the exact versions already validated by the
+  2026-07-26 dress-rehearsal cascade — not whatever the registry currently resolves to. Wired in:
+  every master script now runs `Pkg.activate(normpath(joinpath(@__DIR__, "..")); io = devnull)`
+  as the first line of its `LIBRARIES` section, before any `using`. `VERIFIED` by execution: a
+  standalone activation+load test against `Phase_2.jl`'s dependency set succeeded, confirming
+  `Base.active_project()` resolves to `2 - Work/Project.toml` when run as a real file (this
+  matters — an inline `julia -e` test initially gave a false pass by resolving `@__DIR__` to the
+  shell's `pwd()` instead of the script's own location; caught and re-verified against a real
+  file before trusting it).
+- **R:** `renv::init(bare = TRUE)` + `renv::hydrate()` (linked 200 already-installed packages
+  into a project-local library, auto-installed 9 more that were used but not yet present:
+  `janitor`, `osmdata`, `pacman`, `viridis`, + transitive deps) + `renv::snapshot()` at `2 - Work/`
+  produced `renv.lock` pinning **209 packages** (every `library()` call across all six master
+  scripts and their real dependency trees, via static analysis of the `.R` files). Wired in: each
+  master script now runs a small `local({...})` bootstrap as the first thing in its `LIBRARIES`
+  section — locates its own file path via `commandArgs()` (no package dependency, so it works
+  before any `library()` call), derives the project root two directories up, sets
+  `Sys.setenv(RENV_PROJECT = proj_dir)`, then `source()`s `renv/activate.R`. **The explicit
+  `RENV_PROJECT` env var is load-bearing, not optional** — `VERIFIED` by execution: the first
+  attempt (without it) silently bootstrapped a *second*, wrong, empty renv project rooted at
+  whatever directory `Rscript` happened to be invoked from, rather than the real one at `2 - Work`
+  — caught by inspecting `Sys.getenv("RENV_PROJECT")` and `.libPaths()` after activation, not
+  assumed correct. Re-verified after the fix: `.libPaths()` correctly resolves to
+  `2 - Work/renv/library/...` and a full Phase 1 `library()` load succeeds against packages
+  installed there, not the machine's personal library. `renv`'s own `renv/.gitignore`
+  (auto-generated) already excludes `library/` (574 MB) from version control; `renv.lock`,
+  `.Rprofile`, and `renv/activate.R` are small and trackable.
+- **Python:** `pip list --format=freeze` against the current environment (already minimal and
+  project-dedicated, 34 packages, no unrelated system pollution) written to
+  `2 - Work/requirements.txt`, pinning `geopandas 1.1.3`, `lightgbm 4.6.0`, `miceforest 6.0.5`,
+  `numpy 2.4.6`, `osmium 4.3.1`, `pandas 3.0.3`, `pyogrio 0.12.1`, `pyproj 3.7.2`,
+  `scipy 1.17.1`, `shapely 2.1.2`, `statsmodels 0.14.6`, and all transitive deps, Python 3.13.13.
+  Not wired into the scripts at runtime — Python has no per-script self-activation idiom
+  equivalent to Julia's `Pkg.activate`/R's `renv/activate.R`; `requirements.txt` is the
+  install-time contract (`pip install -r requirements.txt`), consistent with standard Python
+  practice.
+- **No `Pkg.add()` calls exist in any Julia master script** (`Phase_1..6.jl`) — grepped before
+  touching anything. The `XLSX.jl` install earlier this audit was run interactively against the
+  global environment, never written into a script, so there was nothing to remove per the
+  original instruction. The only `Pkg.add()` calls in the repo are in
+  `Bulk Tests/Julia/{parameter_pooling,model_fitting}.jl`, each already self-flagged in-code as
+  `# [OUTSTANDING ISSUE] runs on every execution -- remove once packages installed` by whoever
+  wrote them — pre-existing, out of master-script scope, left alone.
+
+### X-09 — Every live network fetch in the master pipeline vendored; no master script performs a network call at run time
+**Severity:** Major · **Status:** Fixed 2026-07-27 · **Locus:** Code / Environment
+
+Gate 3 (2026-07-26) asked for confirmation that RUCC (**A-3**/**P1-04**) was the only live fetch in
+the pipeline. It was not — a full grep of every master script for URL literals, `Downloads`/
+`tigris`/`pygris` calls found **five** distinct live-fetch sites across three languages:
+
+1. **RUCC 2023 CSV** (`Phase_1.R`, `Phase_1.py`) — live USDA ERS URL. Julia already read a local
+   mirror (**P1-04**).
+2. **County boundary, full-resolution TIGER/Line** (`Phase_1.R`, `Phase_1.py`, `Phase_1.jl`) — the
+   FIPS-join boundary source, the same one **P1-07**'s fix depends on.
+3. **County boundary, cartographic (cb=TRUE, Oahu test)** (`Phase_5.R`, `Phase_5.py`) — a
+   *different* Tigris/pygris call from #2, used only for the Honolulu County intersects test.
+4. **County + state boundary, cartographic 500k (GENZ2022)** (`Phase_6.R`, 5 call sites: 3 county,
+   2 state) — used for the national/state choropleth maps. The **state** boundary fetch
+   (`tigris::states(cb=TRUE)`, `Phase_6.R:335,1311`) was not on the author's original list and is
+   recorded here as the "found one you hadn't listed" item Gate 3 asked for.
+5. **Tigris Area Landmarks** (`Phase_2.R` Tier 2) — removed entirely, not vendored; see **P2-03**.
+
+**Correction to the original risk framing (author correction, 2026-07-27):** the initial write-up
+described #2/#3's risk as the underlying *content* shifting between runs (Census republishing a
+different county-boundary vintage). That overstates it — `tl_2022_us_county.zip` and
+`cb=FALSE, year=2022` both pin the **2022 TIGER vintage explicitly**, and Census publishes new
+vintage years alongside old ones rather than rewriting a published year's file in place. The
+realistic failure mode for #2–#4 is **availability** (a renamed URL, a Census outage, or a network
+hiccup on cascade day causing a hard crash, same failure class as **A-3**'s RUCC risk) — not
+silent content drift. Corrected here rather than left overstated in the register.
+
+**Fixed — vendored, one policy, no per-fetch triage (author decision, Gate 3, 2026-07-27):**
+- **RUCC:** R and Python repointed from `RUCC_URL` (live) to `RUCC_CSV`
+  (`00 - Data Sources/Secondary/2023-rural-urban-continuum-codes.csv`) — the same file Julia
+  already used, byte-identical per **A-3**'s earlier MD5 check.
+- **County boundary (#2):** `VERIFIED` this file was *already vendored* on disk
+  (`00 - Data Sources/Original Data/tl_2022_us_county.{shp,shx,dbf,prj,cpg}`) — Julia's Phase 1
+  already checked-then-downloaded-only-if-missing, so it was never actually re-fetching on a
+  cache hit; R and Python were the two languages genuinely hitting the network every run. Both
+  repointed to `sf::st_read()`/`gpd.read_file()` on the local shapefile; schema confirmed
+  identical to what `tigris::counties()`/`pygris.counties()` return (`STATEFP`, `GEOID`, `NAME`,
+  3,235 rows), `VERIFIED` by reading it directly. Julia's dead `Downloads`-fallback branch removed
+  (now hard-errors like R/Python if the vendored file is missing, rather than silently attempting
+  a live download) — closes the file-existence check into the same `for path in (...)` guard
+  Julia's other inputs already use.
+- **County boundary (#3, Phase 5 Oahu test):** repointed R and Python from the live `cb=TRUE`
+  fetch onto the **same** vendored `tl_2022_us_county.shp` as #2 (filtered to
+  `STATEFP=="15" & NAME=="Honolulu"`), rather than vendoring a second, different file — this also
+  unifies Phase 5's boundary source with Phase 1's, and is the file Julia's fix (below) now reads
+  too. `VERIFIED` via a standalone Julia diagnostic read: `STATEFP`/`NAME` are `String`-typed as
+  expected, exactly one Honolulu County row present.
+- **County + state boundary (#4, Phase 6):** downloaded fresh (the on-disk `cb_2022_us_county_20m`
+  files were a *different, coarser* resolution left over from Phase 1's pre-**P1-07** boundary
+  method — confirmed by checking `tigris`'s actual default resolution for a bare `cb=TRUE` call is
+  `500k`, not `20m` — vendoring the wrong-resolution file on disk would have been a silent,
+  wrong fix). Fetched `cb_2022_us_county_500k.zip`/`cb_2022_us_state_500k.zip` from Census GENZ2022
+  (`VERIFIED` HTTP 200, schema-checked: `STATEFP`/`GEOID`/`NAME`/`STUSPS` present, 3,235
+  county / 56 state rows), stored under `00 - Data Sources/Secondary/`, all 5 `Phase_6.R` call
+  sites repointed to `st_read()` on the local files.
+- **Provenance recorded in-repo** at each repointed constant, as source URL + retrieval date in a
+  code comment (the master scripts are the tracked, non-gitignored files; the vendored data files
+  themselves fall under the repo's existing `*.csv`/`*.zip` gitignore patterns, same as the
+  pre-existing RUCC mirror already did).
+
+**Result: after this fix, no master script (`Phase_1..6.{R,py,jl}`) performs a network fetch at
+run time.** All spatial/administrative reference data is read from `00 - Data Sources/` on disk.
+
+---
+
+### X-10 — Julia's Phase 3 `mice()` call specifies no imputation method and silently defaults to predictive mean matching (PMM), not random forest — R and Python both use random forest
+**Severity:** Critical · **Status:** Author-decided (2026-07-28): run both methods, keep both results · **Locus:** Code
+
+**`READ`, `Phase_3.jl:95`:** `mice(imp_df, m = m_datasets, visitsequence = string.(IMPUTE_COLS),
+iter = 10)` — no `methods` (or equivalent) argument is passed. R's `Phase_3.R` passes
+`method = "rf"` explicitly (random forest via `ranger`). Python's `Phase_3.py` uses
+`miceforest.ImputationKernel`, which is LightGBM-backed random forest. Julia supplies nothing, so
+`Mice.jl` falls back to its own default.
+
+**`READ`, `Mice.jl` package source, confirmed against the installed depot copy
+(`~/.julia/packages/Mice/41x4x/src/makefunctions.jl:29-31`), docstring and code both, quoted
+verbatim, not inferred:**
+```
+Returns an AxisVector of strings defining the method by which each variable in `data`
+should be imputed in the `mice()` function. The default method is predictive mean matching
+(pmm).
+...
+# Use pmm for all variables by default
+methods = AxisArray(fill("pmm", no), names)
+```
+
+**Finding: Julia has never been running the same imputation algorithm as R and Python — reframed
+per author review (2026-07-28).** The original framing above treated Julia as the outlier. On
+review, that framing itself needs correcting: R's own `mice` package defaults to PMM too —
+`method="rf"` is R's explicit, deliberate override of its package's canonical default, not the
+neutral baseline. Python's `miceforest` is RF-only by construction (no PMM option). So the
+accurate statement is: **a methodological choice (random forest) was made explicitly in two
+languages and silently left unmade — defaulting to each package's own baseline — in the third.**
+Julia is not "wrong" or "deviating from a standard"; it is running `Mice.jl`'s canonical default
+while its two counterparts run a configured, non-default alternative. The defect is the silence,
+not the algorithm. PMM (donor-based nearest-neighbor matching on predicted values) and random
+forest (tree-ensemble regression) are different statistical methods, not different
+implementations of one method — this is exactly the class of divergence `CLAUDE.md` §1 exists to
+catch, one level deeper than any single-language bug found so far in this audit. It plausibly
+explains, in one mechanism: (a) the
+large speed gap observed in the 2026-07-28 cascade (Julia's Phase 3, M=100/maxit=10, completed in
+53-62s against R's 218s and Python's 272s — PMM's donor-matching is far cheaper per iteration than
+fitting hundreds of RF trees), and (b) a meaningful share of the cross-language pooled-total spread
+(see `Expected_Deltas.md`'s post-cascade correction — the fresh cascade's spread widened to 2.03%
+from the Jun-12 baseline's 1.61%, and Julia's total moved +$4.07B against Python's +$2.79B and R's
+essentially-flat +$0.05B, an asymmetry PMM-vs-RF is a strong candidate to explain, though not yet
+isolated from other candidates by a controlled test).
+
+**Escalated per `CLAUDE.md` §5, decision returned 2026-07-28: run Julia both ways, keep both
+results.** Converts X-10 from a defect into a quantified methodological sensitivity result rather
+than a silently-absorbed discrepancy. Rationale (author): RF is likely the more defensible choice
+for this model specifically — `Longitude`/`Latitude` are predictors, and are close to
+meaningless as PMM donor-matching covariates in a linear donor model, whereas RF can capture
+their spatial nonlinearity — but the point of the exercise is that the choice becomes explicit
+and consistent across languages, with the alternative quantified rather than silently absorbed
+into "Julia's number."
+
+**`Mice.jl` does support random forest — `VERIFIED` against package source, not the docs alone.**
+`~/.julia/packages/Mice/41x4x/ext/MiceBetaMLExt.jl` is a package extension (loads only when
+`BetaML` is also `using`'d) that registers an `"rf"` imputer (`registerimputer!("rf", RF_IMPUTER)`,
+line 57) backed by `BetaML.RandomForestImputer`, defaulting to `n_trees=10`. Checked for a
+coincidental parity point: R's own RF backend, `mice::mice.impute.rf` (`Rscript -e
+'deparse(mice::mice.impute.rf)'`), also defaults to `ntree=10` — so Julia-RF-with-defaults and
+R's RF match on tree count without extra tuning. `BetaML` was not previously an environment
+dependency (present only as a `Manifest.toml` `weakdeps` extension trigger, unresolved) — added
+explicitly to `Project.toml` and resolved (`Pkg.add("BetaML"); Pkg.resolve()`), pulling BetaML
+v0.13-line and 62 transitive dependencies. `Mice.jl` is pinned at exactly v0.4.1 — the first
+version *not* covered by the package's own "`Mice` versions prior to v0.4.1 may produce incorrect
+results" warning, so no separate correctness concern there.
+
+**Implementation:** `Phase_3.jl` now builds an explicit `methods` `AxisArray` via `makemethods()`,
+overrides `IMPUTE_COLS` (`osm_acreage`, `Baseline_Value_Per_Acre`) to `"rf"` and all
+`PREDICTOR_COLS` to `""` (mirroring R's `method_vec` pattern from **P1-01**/**D-2**), and adds
+`using BetaML` (required for the extension to register — being a `Project.toml` dependency alone
+does not trigger it). Smoke-tested against the real Phase 2 input (`m=2, iter=2`): `"rf"`
+genuinely registered and applied, 0 missing values remained post-imputation.
+
+**Real-world cost discovered during smoke-testing, before committing to the full run.** Two
+timed calibration runs against the real input data (`m=2,iter=2` → 8 RF fits → 94.4s; `m=10,iter=3`
+→ 60 RF fits → 671.6s) fit a linear model of ≈11.1s per RF fit + ≈5.6s fixed overhead.
+`Mice.jl`'s `sampler!` (`src/sampler.jl:57`, `for j in 1:m`) fits one model per imputation
+**serially** — no internal parallelization across the `m=100` imputations, unlike R's
+`futuremice()`, which explicitly parallelizes the equivalent work across `future` workers
+(`SAFE_WORKERS=14` here). This is the dominant reason R's RF-based Phase 3 completes in 3m38s
+while Julia's is estimated at **≈6h10m** for the same `M=100, iter=10, ntree=10` — not a
+difference in tree count or dataset size. `BetaML.RandomForestImputer` being a pure-Julia
+implementation (versus `ranger`'s compiled backend) is a second, unisolated contributor. Neither
+factor is fixable without patching `Mice.jl`'s internals or `BetaML` itself, which is out of
+scope here. **Author confirmed proceeding with the full `M=100` run at this cost** rather than a
+reduced-`M` sensitivity check, to keep the RF-vs-PMM comparison apples-to-apples with R/Python's
+own `M=100`.
+
+**Archived:** the PMM-based Julia Phase 3/4/5 outputs and the full (PMM-Julia-pooled) tri-language
+Phase 6 output were copied to `Archive/2026-07-27_Julia_PMM/` before `Phase_3.jl` was changed
+(file counts and an MD5 spot-check verified against source; see that archive's own `README.md`).
+
+**Principle applied pipeline-wide, matching D-2's rationale:** a package default that differs
+across languages is exactly the mechanism that produced X-10. All three languages now state their
+imputation method explicitly rather than relying on a package default — R (`method="rf"`,
+pre-existing), Python (`miceforest`, RF-only by construction, no implicit default to diverge on),
+Julia (`methods["osm_acreage"|"Baseline_Value_Per_Acre"] = "rf"`, added here).
+
+---
+
+## Phase 1 — Spatial Parsing & Economic Baseline Valuation
+
+### P1-01 — `extract_holes()` fabricates `Holes = 18` on regex failure (Python AND Julia)
+**Severity:** Major · **Status:** Fixed at source (2026-07-25) + belt-and-braces schema fix · **Locus:** Code
+
+`Phase_1.py:69` and `Phase_1.jl:79` both return `18` as the default when the holes regex fails
+to match; R (`Phase_1.R:76`) returns `NA` for the identical input. **Correction to the original
+framing:** this is not Python-only — Julia does the same thing. It is R alone against both its
+brothers, and R is the one that's right. The Phase 1 documentation logs this as a "minor
+cross-language inconsistency" — it is more than that:
+
+1. `Holes` is a **regressor** in the Phase 4 model, not a passive field.
+2. `Holes` is a **predictor** in the Phase 3 MICE model, so a fabricated value propagates into
+   imputed acreage and BVPA for other courses.
+3. R's `NA` rows are visible to MICE and get imputed; Python's and Julia's silently become a
+   hard 18. The languages aren't handling missingness differently — Py/Jl aren't recording it.
+
+**Resolved (Parity Audit A-2, 2026-07-24):** `VERIFIED` — counted against the raw 16,297-row
+CSV: Py/Jl fail on **9 rows (0.055%)**, R fails on the *same* 9 rows (0 asymmetric failures).
+Inspected all 9: 7 have true value 18 (fabricated default happens to be correct), 1 is a 36-hole
+course (Streamsong, FL — fabricated 18 understates by half), 1 is an ambiguous two-course combo.
+None are driving ranges/par-3s/practice facilities — the hypothesized directional bias toward
+undercounting small-format courses does not occur in this dataset. **The row count alone is a
+footnote, not a finding.**
+
+**But a deeper mechanism was found underneath it.** `Holes` is a `PREDICTOR_COLS` member in all
+three (never `IMPUTE_COLS`), but because Py/Jl's `extract_holes()` never returns missing,
+`Holes` reaches their Phase 3 `mice` calls with zero NAs — a purely-observed covariate. R's 9
+real NAs, combined with `Phase_3.R:125-131`'s `futuremice(method = "rf", ...)` being called with
+`method` as a **bare string** (no `predictorMatrix` override), mean `mice`'s documented default
+behavior applies `"rf"` to *every* column with missingness — so `Holes` becomes a **second
+imputation target in R alone**, jointly modeled with (and predicted by) `final_acreage` and
+`Baseline_Value_Per_Acre` across `maxit = 10` FCS iterations. Python/Julia never do this. This
+is a genuine methodological divergence in the imputation model structure, not just a value
+difference, on top of the original NA-vs-18 finding.
+
+**Resolved at source (2026-07-25, author call: fix both layers, not just one).**
+
+**(1) Regex fix, all three languages.** `extract_holes()` now tries, in order: the existing
+strict `"(N Holes)"` pattern; a new combo pattern for two-course facilities,
+`"(N Holes & M Holes)"` → sum to `N+M`; a new bare-digit fallback `"(N)"` with no "Holes" text,
+restricted to the substring before the first comma (so a phone area code or zip can never
+match). Validated against all 16,297 raw rows (scratchpad `validate_p1_fixes.py`, read+count
+only) before touching any source file:
+- **0 regressions** — no row that previously parsed correctly changes value, in either the
+  Py/Jl-style or R-style engine.
+- Py/Jl: 2 rows visibly change value (Streamsong FL: `18`→`36`, correcting a wrong fabrication;
+  Roseburg OR combo: `18`→`27`, correcting an ambiguous fabrication). The other 7 originally-
+  fabricated rows already read `18` under the old fallback and still read `18` now — but for the
+  right reason (actually parsed) instead of guessed. **Fabricated-18-fallback count: 9 → 0.**
+- R: all 9 `NA` rows become real parsed values (`18`×8, `36`×1 via bare-digit;
+  `27`×1 via combo). **`NA` count: 9 → 0.**
+Applied to `Phase_1.py:66-79`, `Phase_1.jl:76-89`, `Phase_1.R:63-76` (new named helper function,
+added to the previously-empty `# === 3. FUNCTIONS ===` section, called via `map_dbl()` in the
+`mutate()` — R's existing inline-mutate convention preserved for `Course_Name`/`State_Abbr`,
+diverged from only because this logic no longer fits a one-line `str_extract`).
+
+**(2) Schema declared explicitly, all three, belt-and-braces.** Even with `Holes` (and
+`Ownership_Type`, **P1-05**) no longer carrying stray NAs, an explicit schema was added so a
+*future* stray NA anywhere in the predictor set can never silently become an accidental
+imputation target again:
+- `Phase_3.R:110-131` — `futuremice()`'s bare `method="rf"` replaced with a named per-column
+  vector (`method_vec`), `""` for every predictor, `"rf"` only for `IMPUTE_COLS`.
+- `Phase_3.py:85-90` — `mf.ImputationKernel(...)` now takes `variable_schema=IMPUTE_COLS`.
+- `Phase_3.jl:77` — `mice(...)` now takes `visitsequence=string.(IMPUTE_COLS)` (per `Mice.jl`'s
+  documented API — "you can skip the imputation of a column by removing it from the
+  `visitsequence`" — confirmed against the package's own README, `tom-metherell/Mice.jl`).
+  **Correction (2026-07-25, caught during D-5's execution):** the original edit passed
+  `visitsequence=IMPUTE_COLS` directly; `IMPUTE_COLS` is declared as `Vector{Symbol}`
+  (`Phase_3.jl:37`, used elsewhere for DataFrame column selection), but `Mice.jl`'s `mice()`
+  signature requires `visitsequence::Vector{String}` (`READ`, confirmed against
+  `Mice.jl/src/Mice.jl:57,92,132`) — the original fix would have thrown a `TypeError` on the
+  first line of any real run. Caught only because D-5 actually executed the scoped-exception
+  reproducibility test; would not have been caught by reading alone. Fixed to `string.(...)`.
+- `Phase_3.R:113-115`'s "Variables to be imputed: {IMPUTE_COLS}" print statement, previously a
+  claim the code didn't honor, is now accurate as a direct consequence of the method-vector fix.
+No behavior change expected on data that's already clean (which, after (1), is all of it) — this
+closes the trap for any future Phase 1 change that leaves a stray NA in a predictor column,
+in all three languages, not just R.
+**Not regenerated:** per `CLAUDE.md` §2.1, none of the on-disk outputs (any language, any phase)
+were rerun. All existing data remains from before these fixes.
+
+**Downstream verification, `VERIFIED` (Parity Audit E-2, 2026-07-25):** checked whether this
+bug's fingerprint is still visible at the Phase 4 boundary, against the current (pre-fix, June-12
+run) on-disk `*_Imputed_Dataset_1.csv` files. Replicated Phase 4's exact drop logic
+(`dropna`/`complete.cases` on `Log_Opportunity_Cost`, `Holes`, `Baseline_Value_Per_Acre`,
+`county_type`): **0 rows dropped in all three languages** — every language reaches Phase 4 with
+zero missingness in the model columns. On its face this looks like clean agreement. It isn't, for
+the same reason **P1-01** exists: **R's zero-missingness is an artifact of the very bug this item
+tracks** — the 9 originally-`NA` `Holes` values in R's raw Phase 1 output were silently filled in
+by `mice()`'s pre-fix default full-column imputation (this is `A-2`'s original finding), so by the
+time this June-12 run reached Phase 3's output, R's `Holes` column was already complete, not
+missing. Python and Julia's `Holes` is complete for an unrelated reason — their old
+`extract_holes()` fabricated `18` rather than ever emitting a null. **Same outcome (0 drops, N
+match on model columns), three different mechanisms, one of them a bug this audit exists to
+catch** — exactly the trap `CLAUDE.md` §1 describes. Going forward, after today's **P1-01** source
+fix (Holes now parses correctly with `NA` as R's honest fallback, confirmed 0 raw `Holes` `NA`s in
+the current 16,297-row dataset) and the **D-2** schema fix (no more accidental full-column
+imputation), the *next* real run should reach the same 0-drop outcome for the right reason in all
+three — not verified, since that requires the prohibited full cascade re-run.
+
+Row-count note (separate, already-tracked mechanism): R and Julia's `Dataset_1` both have 16,292
+rows; Python's has 16,297 — the same 5-row gap **B-6**/**P1-06** already traced to Python's Phase
+2 having no course-level dedup. Confirmed here that the gap survives unchanged all the way through
+to the actual Phase 4 regression sample size, not just Phase 2's intermediate output.
+
+### P1-02 — `course_id` and address fields absent from Python's Phase 1 output
+**Severity:** Minor · **Status:** Won't fix (verified harmless) · **Locus:** Code
+
+Python's output lacks `course_id`, `Address`, `City`, `State_Abbr`, `Zip_Code`. Phase 1 docs
+flag this as the "highest-risk gap"; Phase 2 §2C then resolves it — `Phase_2.py` joins spatially
+only and never touches `course_id`. Confirmed harmless **for the current pipeline**, but it's a
+tripwire for any future Python-side join.
+
+### P1-03 — `Course_Name` content differs between R and Py/Jl
+**Severity:** Minor · **Status:** Won't fix (documented) · **Locus:** Code
+
+R applies `str_remove(Name_State, "-.*$")`; Julia and Python carry the raw suffixed string
+(`"Seamountain Golf Course"` vs `"Seamountain Golf Course-HI"`). No downstream join uses
+`Course_Name`, so it's inert — but it means any human-readable cross-language spot-check on
+course names will appear to fail.
+
+### P1-04 — RUCC source split: live URL (R, Python) vs local mirror (Julia)
+**Severity:** Minor · **Status:** Fixed 2026-07-27 — see X-09 · **Locus:** Both
+
+`Phase_1.R:45` and `Phase_1.py:35` fetch RUCC 2023 live from a USDA ERS URL; `Phase_1.jl:32`
+reads a local mirror (`00 - Data Sources/Secondary/2023-rural-urban-continuum-codes.csv`).
+
+**Resolved (Parity Audit A-3, 2026-07-24):** `VERIFIED` — fetched the live URL today (HTTP 200,
+9,704 lines) and diffed it against the local mirror: byte-identical, same MD5. No content
+divergence exists right now. Neither live fetch (`Phase_1.R:165-169`, `Phase_1.py:160`) is
+wrapped in error handling — a fetch failure crashes the script rather than degrading silently.
+Read (not run) the three already-on-disk `*_Phase1_Baseline_Golf_Valuation.csv` outputs:
+`FIPS`/`RUCC_2023`/`county_type` all show **0 blanks** in all three languages — full join
+coverage currently, nothing for a silent-imputation mechanism to act on today.
+
+**Residual risk, not a current bug:** `county_type` sits in `Phase_3.R`'s `predictors` vector
+(`Phase_3.R:110`) exactly like `Holes` (**P1-01**) and `Ownership_Type` (**P1-05**) do. If a
+future live fetch (R or Python) ever degrades partially — ERS renames/moves the file, or a proxy
+returns a truncated-but-parseable response — R would silently promote the resulting
+`county_type` NAs to a `futuremice` imputation target by the same scalar-`method` mechanism as
+**P1-01**, while Julia (mirror) is unaffected. **Recommendation (escalated, §5):** vendor the
+RUCC CSV for all three languages with retrieval date and provenance recorded in-repo before the
+frozen re-run — removes both the hard-crash risk and the latent silent-imputation risk in one
+move.
+
+**Fixed 2026-07-27 (Gate 3/X-09):** R and Python repointed to the local `2023-rural-urban-
+continuum-codes.csv` mirror Julia already used. No live fetch remains in any language.
+
+### P1-05 — `extract_ownership()`: Python collapses `"Semi Private"` into `"Private"` for ~10% of courses
+**Severity:** Major · **Status:** Fixed (2026-07-25) · **Locus:** Code
+
+`Phase_1.py:60-65` lowercases the whole `Details` string and substring-matches, in fixed
+priority order, against `("public","private","municipal","military","resort")`. Julia
+(`Phase_1.jl:71-74`) and R (`Phase_1.R:75`) both extract the raw leading parenthetical verbatim.
+
+**Found (Parity Audit B-1, 2026-07-24):** `VERIFIED` against the raw 16,297-row CSV: **1,663
+rows (10.2%) disagree**, almost entirely because `"private"` is a substring of `"semi private"`
+— Python silently discards the "Semi" qualifier on every such course. Cross-checked the on-disk
+`Ownership_Type` columns (2026-06-12 run): R and Julia both show a `Semi Private` category of
+1,661 courses; **Python's output has no such category at all** — those 1,661 courses (plus 1
+more from the B-6 dedup set) are folded into Python's `Private` bucket, which reconciles exactly
+(`2716 + 1661 + 1 = 4378`, Python's actual count). This is 0 rows of failure-sentinel divergence
+(Python's `"Unknown"` never fires here) — it's pure miscategorization, a different failure mode
+from **P1-01**.
+
+Also carries the same second-imputation-target mechanism as **P1-01**: R/Julia's leading-paren
+regex fails on exactly 1 row (`Turtle Creek Golf Club, FL` — a `CLOSED|` prefix breaks the `^\(`
+anchor; Python's substring scan still recovers `"Public"` for it). That 1 `NA` in R's
+`Ownership_Type` makes it a third silent `futuremice` imputation target in R alone, same root
+cause as **P1-01**.
+
+`Ownership_Type` is a Phase 3 `PREDICTOR_COLS` member in all three (not a Phase 4 regression
+term), but that undersells the impact: MICE imputes `osm_acreage`/`final_acreage` for 28.8% of
+courses and `Baseline_Value_Per_Acre` for a further ~6.7% (per **P2-02**). Every one of Python's
+M=100 random-forest imputations was splitting on a 3-category `Ownership_Type` where R and Julia
+split on 4. This doesn't move a published *coefficient* so much as it can move the pooled
+**national total** — the thesis's headline number.
+
+Also a live candidate for part of the Holes-coefficient spread that
+`01_-_Phase4_Documentation.md:485-487` currently attributes entirely to R's `final_acreage`
+(OSM+Tigris) vs Python/Julia's `osm_acreage` (OSM-only) — see the new cross-cutting note below;
+**P2-03** found R's Tigris tier currently contributes zero rows, which weakens that explanation
+for the current on-disk data.
+
+**Fixed 2026-07-25 (pass 1):** the completed Python M=100 run already on disk (2026-06-12, see
+**X-04**) was invalid regardless — it also carries **P1-01** (fabricated `Holes`). Per roadmap
+§0.1, a correctness fix is not held hostage to output already scheduled for deletion by the
+frozen re-run. Changed `Phase_1.py:60-64` from substring-keyword matching to the same
+leading-parenthetical regex R/Julia used (`^\(([^)]+)\)`), verbatim, no case normalization —
+structurally removes the substring-collision hazard rather than reordering the keyword list.
+Verified 0/16,297 disagreements against R/Julia's extraction after the fix.
+
+**Fixed 2026-07-25 (pass 2, same day — all three languages this time):** D-2 then found R and
+Julia both still had the 1-row `CLOSED|`-prefix `NA`/`missing` this entry originally described as
+R-only-adjacent (**X-05**'s correction). Root cause: the leading-paren regex was anchored to
+position 0 (`^\(`), which the `"CLOSED|(Public)..."` row defeats in all three. Fixed by removing
+the anchor in all three — `Phase_1.py`, `Phase_1.R:55-61` (new helper, previously inline),
+`Phase_1.jl:71-74` — now searching for the first parenthetical *anywhere* in the string instead
+of requiring it at position 0. Validated against all 16,297 rows: **1 row changes (Turtle Creek,
+FL), 0 regressions.** `Ownership_Type` `NA`/blank count: R 1→0, Julia 1→0, Python already 0.
+Combined with **P1-01**'s belt-and-braces MICE-schema fix, `Ownership_Type` is now (a) parsed
+correctly in all three and (b) structurally guaranteed to stay a predictor even if some future
+row does leave it missing. **The on-disk outputs were not regenerated** (§2.1) in either pass —
+all three languages' data remains stale pending the frozen cascade re-run.
+
+### P1-06 — Python has no course-level deduplication; explains B-6's "+5 rows" (not a `geopandas` default)
+**Severity:** Minor · **Status:** Fixed 2026-07-27 (Decision 4) · **Locus:** Code
+
+`Phase_1.R:83-89` and `Phase_1.jl:171-176` both deduplicate `courses_df` on
+`(round(lat,4), round(lon,4), Course_Name)` before any spatial join. `Phase_1.py` has **no
+course-row dedup step at all** — its only `drop_duplicates` calls (`:137,147,165`) are on the
+USDA/FHFA/RUCC lookup tables. The "+5 Python rows" previously logged as "documented as a
+`geopandas` dedup default, plausible, not verified" is neither: there is no dedup default at
+play, there's an absent dedup step.
+
+**Resolved (Parity Audit B-6, 2026-07-24):** `VERIFIED` — found exactly 5 duplicate groups in
+the raw CSV by that key, all genuine same-address, same-course double-listings (e.g. The
+Boulders Resort Golf Club, Carefree AZ, listed once as `(Private)` and once as `(Public)` at
+identical coordinates) — real source duplicates, not 5 distinct courses. R and Julia use
+*different* tie-break rules (`arrange(desc(Holes))` vs first-encountered) but happen to select
+the same winner in all 5 current cases — a latent, currently-harmless divergence (H-5 class).
+Full row-count ledger closes exactly to the row once **P1-05**'s mislabeling is folded in (see
+Parity Audit B-6 for the arithmetic). All 5 "extra" Python rows are in `county_type = Urban`
+counties. **Escalated:** the fix (add the same dedup to Python) is straightforward, but R and
+Julia's tie-break rules aren't actually the same rule, they just haven't collided yet — pick one
+documented rule for all three rather than porting either incidentally.
+
+**Correction (Decision 4 review, 2026-07-27) — the "different tie-break rules" premise above was
+wrong; R and Julia already agreed.** Re-reading `Phase_1.jl:189-192` directly (not from memory of
+the earlier B-6 characterization) shows `sort!(g, :Holes, rev=true)` immediately before
+`first(g)` — this is the *same* Holes-descending rule as R's `arrange(desc(Holes)) |> slice(1)`,
+not "first-encountered, original row order" as originally logged. `VERIFIED` via `git show HEAD`
+that this line predates this entire audit session — it was never a genuine R/Julia divergence,
+just a mischaracterization in the original B-6 write-up that went uncaught until this review.
+Only Python needed a fix.
+
+**Fixed (Decision 4, 2026-07-27):** added the same `(round(lat,4), round(lon,4), Course_Name)`
+dedup to `Phase_1.py`, sorted by `Holes` descending (stable `mergesort`, matching R's/Julia's
+stable-sort tie handling) before `drop_duplicates(keep="first")` — the same rule R and Julia
+already implemented, not a new 3-way standardization. `VERIFIED` by a standalone diagnostic
+against the raw 16,297-row CSV: **16,292 rows after dedup, 5 duplicate groups removed**, exactly
+matching R/Julia's row count and the same 5 groups B-6 originally identified. Not executed beyond
+the diagnostic (§2.1) — documents the source fix, not a re-verified pipeline output.
+
+**Bonus, logged in passing:** one row in the raw CSV (`Turtle Creek Golf Club, Rockledge FL`) has
+`Details = "CLOSED|(Public) (18 Holes), ..."` — a course marked closed in the source data that is
+still counted in the active 16,297/16,292-course valuation total in all three languages. Single
+row, `Won't fix (verified low-impact)` unless the author wants closed courses excluded on
+principle — flagging for awareness, not proposing a filter unilaterally.
+
+### P1-07 — FIPS boundary fix: confirmed now applied in all three languages, not R-only
+**Severity:** Cosmetic (corrects a stale record, not a code defect) · **Status:** Confirmed · **Locus:** Docs (Notes.md)
+
+The session log in `999 - Late Stage/Notes.md` (2026-05-14 entry) states the county-boundary
+FIPS fix (`cb=FALSE`, full-resolution TIGER/Line instead of the coarse 20m cartographic
+boundary) "was applied to `Phase_1.R` only," and that Python/Julia "remain FIPS-NA: 34 →34
+(unchanged)."
+
+**Checked (Parity Audit B-5, 2026-07-25):** `READ` — this is no longer true of the code, and
+per the on-disk data, has not been true for a while:
+- `Phase_1.R:105` `counties(cb = FALSE, year = 2022, ...)`
+- `Phase_1.py:97` `counties(cb=False, year=2022)`
+- `Phase_1.jl:35,37,206,212` downloads `tl_2022_us_county.zip` directly from
+  `www2.census.gov/geo/tiger/TIGER2022/COUNTY/` — TIGER/Line full resolution, not the coarse
+  `cb_2022_us_county_20m` cartographic file
+All three use equivalent fine-resolution boundary sources. Cross-checked the on-disk
+`*_Phase1_Baseline_Golf_Valuation.csv` for all three languages (Jun 12 / May 18 / May 14 —
+mismatched vintages, see caveat below): **0 blank `FIPS` in all three**, not 34/0/0 as the stale
+note implies. FIPS zero-padding is also consistently applied (`str_pad(...,5,"0")` R,
+`.zfill(5)` Python, `lpad(s,5,'0')` Julia).
+
+**Caveat:** the three baseline files checked are not a synchronized same-day triple (R
+2026-06-12, Python 2026-05-18, Julia 2026-05-14) — same limitation as **A-3**'s check. Confirms
+FIPS coverage was complete as of each language's most recent available snapshot, not necessarily
+simultaneously. `Notes.md` is scratch/session-log per its own header, not a tracked source of
+truth — flagging here rather than editing it directly (out of scope, and it isn't one of the two
+files this audit is permitted to edit). Recommend the author prune or update that stale entry.
+
+### P1-08 — Dual-proxy RUCC boundary (1–3 → FHFA/Urban, 4–9 → USDA/Rural): verified clean, one dormant edge case
+**Severity:** Minor (dormant, not currently reachable) · **Status:** Confirmed · **Locus:** Code
+
+**Checked (Parity Audit B-7, 2026-07-25):** `READ`, character-by-character, all three:
+`Phase_1.R:182-185` (`RUCC_2023 %in% 1:3` / `%in% 4:9` / else `NA`), `Phase_1.py:168-171`
+(`.isin([1,2,3])` / `.between(4,9)` [pandas default `inclusive="both"`] / else `None`),
+`Phase_1.jl:347-358` (`rucc_val in 1:3` / `in 4:9` / else `missing`). The 3-vs-4 boundary (where
+FHFA flips to USDA, a ~60× per-acre swing) is inclusive on both ends in all three, covers the
+full 1–9 RUCC range with no gap or overlap, and is implemented identically. Missing/unclassified
+`RUCC_2023` correctly falls through to a missing `county_type` and a missing
+`Baseline_Value_Per_Acre` in all three (verified the R `%in%`/`case_when` NA-handling
+specifically, since `NA %in% x` in R is `FALSE` rather than `NA` — a common R gotcha — but
+`case_when`'s fall-through still lands on the correct `NA_character_` result either way).
+
+**Constraint on future finer-geography relaxation (2026-07-27, advisor feedback investigation):**
+if `Baseline_Value_Per_Acre` is ever relaxed from county-uniform to a finer geography (tract or
+ZIP), the Urban/FHFA side has a viable finer national source (Census ACS tract/block-group
+median value, or Zillow ZHVI at ZIP resolution) but the Rural/USDA side does not — no finer
+national agricultural land-value product was found to exist. A finer-geography relaxation would
+therefore be **structurally asymmetric by construction** (finer for Urban, still county-uniform
+for Rural), not a uniform resolution upgrade. This is a substantive scope constraint for the
+advisor to weigh, not just an implementation detail — see the finer-geography investigation
+report (2026-07-27) for the full reasoning.
+
+**One dormant divergence found, not currently live:** on a non-integer `RUCC_2023` value, R's
+`as.integer(Value)` (`Phase_1.R:173`) truncates (e.g. `3.5` → `3` → classified `Urban`), while
+Python's `pd.to_numeric` (`Phase_1.py:161`) would preserve `3.5` and have it match neither
+`isin([1,2,3])` nor `.between(4,9)` (unclassified), and Julia's `tryparse(Int64, ...)`
+(`Phase_1.jl:339`) would fail outright on a non-integer string (also unclassified). **Checked the
+actual RUCC source data** (`00 - Data Sources/Secondary/2023-rural-urban-continuum-codes.csv`):
+`RUCC_2023` values are the 9 clean integers `1`–`9`, nothing else — `VERIFIED` this divergence
+cannot currently fire. Logged for completeness per the audit's evidence standard, not because
+it's live.
+
+### P1-09 — `Phase_1.py`'s hardcoded FHFA column name (fixed); two dead-code claims checked
+**Severity:** Cosmetic · **Status:** Fixed (2026-07-25) · **Locus:** Code
+
+**B-9, fixed:** `Phase_1.py:143` hardcoded `as_is_col = "Land Value\n(Per Acre, As-Is)"` — a
+literal embedded newline, fragile to any FHFA source header reformatting. `Phase_1.R:148`
+(`grep(...)`) and `Phase_1.jl:311-319` (`occursin(...)` loop, errors if absent) both already used
+a dynamic match; Python was the 1-of-3 outlier. Changed to a dynamic substring match over
+`fhfa_df.columns`, raising if not found — identical behavior on current data, robust going
+forward. R and Julia untouched.
+
+**B-8, checked, mixed result:** of three claimed dead-code items, two confirmed
+(`Phase_1.jl:22`'s `ENV["JULIA_NUM_THREADS"]="24"` mid-script assignment is a genuine runtime
+no-op; `Phase_1.R`'s loaded-but-unused `future`/`furrr`/`plan(multisession)` is genuine dead
+code) and originally recorded only, not fixed. The third — "`Downloads.
+download(COUNTY_CB, COUNTY_ZIP)` passes a local path where a URL is expected" — **does not match
+current code**: `COUNTY_CB` doesn't exist in `Phase_1.jl`; the actual call uses `COUNTY_URL`, a
+correct, genuine URL. No fix needed; the original claim was stale or mistaken.
+
+**Fixed 2026-07-27 (standing rule: an execution-path defect gets fixed before the cascade
+regardless of which list it appeared on).** The `ENV["JULIA_NUM_THREADS"]="24"` no-op is a
+genuine oversubscription/correctness risk, not cosmetic dead code — Julia fixes its thread pool
+at process launch, so this assignment never took effect, and every prior Julia run (including
+the Jun-12 M=100 baseline, if launched without an explicit `-t`/`--threads` flag) may have run
+single-threaded throughout. `VERIFIED` directly: `julia -e 'ENV["JULIA_NUM_THREADS"]="24";
+println(Threads.nthreads())'` prints `1`; `julia --threads=auto -e 'println(Threads.nthreads())'`
+prints the true logical core count. Removed the no-op assignment from `Phase_1.jl`; added the
+`julia --threads=auto` launch-convention header comment and a `Threads.nthreads() == 1` runtime
+`@warn` to all six Julia master scripts (`Phase_2.jl` already had the header note and thread
+print but not the warning; `Phase_6.jl` already had both — used as the reference pattern).
+`Phase_1.R`'s dead `future`/`furrr` imports remain logged-only, out of scope for this fix (not an
+execution-path correctness issue, just unused code).
+
+**New finding, 2026-07-28 cascade: `Phase_6.jl`'s `record_provenance()` call reproducibly fails
+with `UndefVarError: record_provenance not defined in Main`, root cause not confirmed.**
+`VERIFIED` by execution, twice: the live cascade run and an isolated re-run of `Phase_6.jl` alone
+both hit the identical error at the same line (the top-level `record_provenance(...)` call, placed
+immediately after `main()`). `Phase_6.jl` is the only one of the six Julia master scripts that
+uses `Threads.@spawn` across multiple internal `module Mod_N ... end` blocks; the other five
+(no threaded submodule structure) never hit this. Two isolated minimal reproductions — `include()`
++ two submodules + `Threads.@spawn` + `fetch()`, once with a stand-in function and once with the
+real `provenance.jl` — both **failed to reproduce** the error, so the specific trigger (INFERRED:
+something about the combination of 7 spawned submodules, heavier real workloads inside them, and
+first-time JIT compilation under `--threads=auto`) is not pinned down. **Not a data-integrity
+issue** — confirmed via file mtimes that all of Phase 6's real output (maps, tables, figures)
+completes and saves successfully *before* this line executes; only the provenance CSV row for
+Julia Phase 6 is affected. **Mitigated, not fixed:** wrapped the call site itself in `try`/`catch`
+in all six Julia scripts (the function body was already guarded; the call site wasn't) — confirmed
+by a second isolated re-run that this stops the error from being fatal (`@warn` fires, script
+exits 0, all outputs regenerate correctly) without resolving why the name fails to resolve.
+**Consequence:** `Run_Provenance_Julia.csv` will never have a Phase 6 row until the real cause is
+found. Recommend, if this becomes worth chasing: move the `include(provenance.jl)` call to
+immediately before the `record_provenance()` call (currently it's at the top of the file) as the
+next diagnostic step, since that would rule out a world-age effect from the intervening `module`
+and `Threads.@spawn` code.
+
+**Second finding, same cascade: Julia's Phase 1 and Phase 2 `Run_Provenance_Julia.csv` rows have
+blank `git_sha`/`git_dirty` fields; Phase 3/4/5/6 populate correctly.** Diagnosed 2026-07-28
+(reported during the cascade per the standing rule that diagnosis is fine mid-run but fixes wait
+until after). `provenance.jl`'s `_git()` wraps the `git -C <repo_dir> rev-parse HEAD` subprocess
+call in a bare `try/catch` that silently returns `nothing` on any failure — so the blank fields
+mean the subprocess call threw, but the original code discarded the exception, leaving no
+diagnostic trail. **Could not reproduce standalone:** running the identical code path (`git -C
+"...\Phase 1 Parsing" rev-parse HEAD`) outside the cascade, pointed at the real Phase 1 directory,
+succeeds and returns the correct SHA. Root cause remains `INFERRED`, not `VERIFIED` — most likely
+a transient subprocess-spawn issue specific to how the two earliest scripts in the chain were
+launched, but this is a guess, not a finding. **Fixed 2026-07-28 (defensively, not at the
+unconfirmed root cause):** `_git()`'s `catch` block now logs `@warn` with the actual exception,
+`repo_dir`, and `args` before returning `nothing`, so a recurrence produces a diagnosable console
+message instead of a silent blank CSV cell. This does not claim to fix the underlying cause —
+consistent with `CLAUDE.md` §4's evidence-tagging standard, an unreproduced hypothesis is not
+presented as a resolved defect.
+
+**Root cause confirmed, `VERIFIED`, 2026-07-28 (same day, next cascade run) — the defensive
+logging fix above paid off immediately.** The 2026-07-28 RF re-run cascade hit this again on
+Phase 1/2, and this time the warning surfaced the real exception: `UndefVarError: read not
+defined in Main` (with Julia's own hint: "two or more modules export different bindings with
+this name, resulting in ambiguity"). `_git()` calls the bare `read(cmd, String)`; Phase 1 and
+Phase 2 both `using` GIS-heavy packages (`ArchGDAL`, `GeoDataFrames`) that export their own
+`read` bindings, ambiguating the unqualified call at `Main` scope once `include()`'d. Phase 3-6
+never hit this because their package sets don't produce the same export collision — this was
+never a subprocess-spawn timing issue (the original, now-retired hypothesis); it's a Julia name
+resolution collision, fully deterministic given each phase's `using` list. **Not fixed yet, by
+design** — the standing instruction for this specific finding was to diagnose during the cascade
+but fix only after it completes, since a mid-run edit carries no benefit (Phase 1/2 already ran;
+Phase 3-6 never call this path) and only the discipline of waiting was asked for. **Actual fix,
+to apply post-cascade:** qualify the call as `Base.read(cmd, String)` in `provenance.jl`'s
+`_git()`.
+
+### P1-10 — `extract_holes()`'s ultimate fallback still returns fabricated `18` in Python/Julia, `NA` in R (dormant — P1-01's fix means it's currently unreachable)
+**Severity:** Minor (dormant — 0/16,297 rows currently reach this branch) · **Status:** Open · **Locus:** Code
+
+Surfaced while reading `Phase_1.py`/`Phase_1.jl` for **Decision 4**'s dedup fix — not part of that
+task, logged per `CLAUDE.md` §6 rather than fixed inline. `READ`: after **P1-01**'s three-pattern
+fix (strict `"(N Holes)"`, combo `"(N Holes & M Holes)"`, bare `"(N)"` before the first comma),
+all three languages fall through to a final catch-all if none match. `Phase_1.py:88` and
+`Phase_1.jl:94` both `return 18` (fabricated); `Phase_1.R:82` returns `NA_real_` (honest) — the
+exact same **P1-01** pattern, just one layer deeper, at the true last-resort fallback rather than
+the primary regex.
+
+**Currently dormant:** **P1-01** already validated 0/16,297 raw rows reach this fallback after the
+three-pattern fix — every row matches one of the three real patterns. So today this is inert,
+same shape as **P1-08**'s dormant RUCC edge case. **Not currently live, but not structurally
+impossible either** — any future row whose `Details` field doesn't match any of the three
+patterns (a new source-formatting variant, e.g.) would silently diverge exactly like **P1-01**'s
+original finding: Python/Julia fabricate a plausible-looking `18`, R honestly returns `NA` and
+lets Phase 3's MICE schema handle it. Not fixed here — this is a "does the fallback value itself
+need to match, not just the patterns before it" question, and per **P1-01**'s own precedent
+(R's `NA` is the correct behavior, the two-language majority was wrong), the fix would be
+changing Python/Julia's final fallback to `None`/`missing` rather than harmonizing on `18`. Flagging
+for the author rather than deciding unilaterally, since it's a small but real behavioral change,
+not a mechanical parity gap like **P5-07**.
+
+### P1-11 — Proposal: exclude `Holes`/`Ownership_Type` from Phase 3's MICE predictor matrix to remove circularity with Phase 4's Holes coefficient
+**Severity:** N/A (methodology proposal, not a defect in current code — excluded from the running
+tally below, same convention as **P6-05**/**P6-07**) · **Status:** **Won't fix (closed 2026-08-10,
+author decision).** Predictor matrix unchanged; circularity handled by the observed-subset estimate
+plus the Table 2 caveat added below, not by removing predictors. The outstanding filter
+verification below is being closed separately by reproducing the observed-subset regression
+in-repo, not left open against this entry. · **Locus:** Both (Code: `Phase_3.R:126` predictor
+list; Docs: Appendix A.4) · **Relates to:** **X-10**, **P0-01**
+
+**Proposal being evaluated:** drop `Holes` and `Ownership_Type`/`Course_Type` from Phase 3's MICE
+predictor list to eliminate a dependency with Phase 4's Holes coefficient. Raised by the author,
+originally mislabeled `P1-01` by a prior session relaying it secondhand — reassigned here since
+`P1-01` (`extract_holes()`'s `18` default) is a different, already-`Fixed` issue and the register's
+own rule is IDs are never reused.
+
+**Evidence the dependency exists, `VERIFIED` against current code, not assumed:** `Phase_3.R:126` —
+`predictors <- c("Holes", course_col, "county_type", "Longitude", "Latitude")` — is the MICE
+predictor list for imputing `final_acreage`/`osm_acreage` and `Baseline_Value_Per_Acre`
+(`Phase_3.R:67`). `Phase_4.R:50` — `FORMULA_STR <- "Log_Opportunity_Cost ~ Holes +
+factor(county_type)"` — regresses on the same `Holes` column, and `Log_Opportunity_Cost` is
+constructed from the two columns Phase 3 just imputed. For the 28.8% of courses needing acreage
+imputation (and a further subset needing value imputation), the random-forest imputer uses `Holes`
+to help construct part of the value Phase 4 then regresses on `Holes` — the fitted Holes
+coefficient for those rows is partly determined by the imputer's own use of `Holes`, not by an
+independent association in the data. This is real, but narrow: it affects Phase 4's Holes
+coefficient specifically. It does **not** touch Phase 3's pooled national aggregate ($941B), which
+never runs Phase 4's regression.
+
+**Predicted effect on imputed acreage:** removing `Holes`/`Ownership_Type` drops two informative
+covariates (course size and ownership type both plausibly correlate with acreage and land value)
+from the imputation model. Expected direction: reduced imputation accuracy (higher FMI, noisier
+imputed values) for the affected ~28.8%/~6.7% of courses. Magnitude not quantifiable without
+running it — this is a real cost, not a free fix.
+
+**Predicted effect on the national aggregate:** small and unsigned without running it. The
+aggregate sums over ~16,292 courses; predictor removal degrades imputation precision on the
+affected subset, with no obvious directional bias on the total. Not expected to move the $941B
+figure by much, but not zero either — "small" is a prediction here, not a measurement.
+
+**Methodology impact:** would contradict Appendix A.4 as currently written (author's account) and
+change the MICE predictor specification in production code — a substantive methodology change, not
+a bug fix.
+
+**Recommendation — reject the predictor-matrix exclusion, argued rather than relayed.** The
+circularity is real for the full-sample Phase 4 Holes coefficient, but the manuscript already
+reports the observed-acreage/value subset (N = 10,926) as the substantive Holes finding, which
+sidesteps the mechanism entirely — imputation never touches those rows, so nothing about them is
+circular. Removing predictors from Phase 3 would degrade imputation quality pipeline-wide to fix a
+problem already solved one layer up, at the reporting level. Applied instead of the code change: an
+explicit circularity caveat added to the full-sample Holes coefficient everywhere it's presented as
+a finding — Table 2's LaTeX footnote (`8_LaTeX_Tables.R`), `00 - Phase4_Summary.md`,
+`01 - Phase4_Documentation.md`, `Phase7_Summary.md`, `Phase7_Documentation.md` — pointing to
+Appendix A.4 for the estimate free of this dependency.
+
+**Outstanding verification — closed 2026-08-10, reproduced in-repo.** The Windows-side
+`secret/Preview_R_Canonical/` script never migrated to `strix` and still isn't present in this
+repo, so the manuscript's cited N = 10,926 / β = 0.038 was not independently checkable from code
+until now. Reproduced instead with a fresh, documented script —
+`Phase 4 Econometric Modeling/Phase_4_Observed_Subset_Regression.R` — that filters Phase 3's own
+pre-imputation input (`R_Phase2_Acreage_Matched_v2.csv`) on `acreage_source == "OSM" &
+!is.na(Baseline_Value_Per_Acre)` (excludes rows with *either* imputed acreage *or* imputed value,
+read directly off columns Phase 3 hasn't touched yet — not the `acreage_source`-only convention
+`01 - Phase6_Documentation.md` §7.2 uses for its bivariate maps), then fits the identical
+`Log_Opportunity_Cost ~ Holes + factor(county_type)` formula and DV construction
+(`log1p(final_acreage × Baseline_Value_Per_Acre)`) `Phase_4.R` uses. **Result: N = 10,925, β_Holes
+= 0.0384 (HC1 SE 0.0025).** β matches the cited 0.038 to the precision reported. N is off by
+exactly 1 from the cited 10,926 — traced to Phase 2's `acreage_source` split itself shifting by one
+row on this run (11,604 `OSM` / 4,688 `MICE_Target` today vs. the 11,605/4,687 documented in
+`00 - Phase2_Summary.md`), not to any difference in the observed-subset filter or regression logic;
+not chased further, single-row/0.01% and doesn't move β at the reported precision. Output saved to
+`Phase 4 Econometric Modeling/Data/R/R_Observed_Subset_Regression.csv`.
+
+### Phase 1 — noted, no issue raised
+
+- Cross-language mean BVPA converges to within $5 ($413,695.90 / $413,699.57 / $413,700.97).
+- The FIPS zero-padding fix is real, well-explained, and the highest-value catch in the project.
+
+---
+
+## Phase 2 — OSM Polygon Extraction & Acreage Matching
+
+### P2-01 — `acreage_source` / primary column asymmetry is structural, not cosmetic
+**Severity:** Minor (as documented) · **Status:** Fixed 2026-07-27 — see P2-03/X-02 · **Locus:** Code
+**Escalates to:** **X-02**
+
+**Resolved:** Tier 2 removed (**P2-03**), so R's `acreage_source` is now two-valued (`OSM`/
+`MICE_Target`) like Python/Julia's, and `final_acreage` = `osm_acres` unconditionally. The
+asymmetry this entry tracked no longer exists.
+
+R carries a three-tier schema (`OSM` / `Tigris` / `MICE_Target`) and coalesces to
+`final_acreage`; Python and Julia carry two tiers and `osm_acreage`. The mitigation in the
+docs — "Phase 3 scripts filter on `acreage_source != "MICE_Target"` rather than on a positive
+value" — is correct and works. The issue isn't the filter, it's that R's MICE target set is
+strictly smaller and its acreage values come from a partly different source. Tracked at the
+Phase 2 level as schema; tracked at **X-02** as the thing that actually bites.
+
+**Correction (Parity Audit C-5, 2026-07-25):** the doc's *mechanism* description is wrong, even
+though its conclusion is right. Grepped all three `Phase_3.{R,py,jl}` for `acreage_source` /
+`MICE_Target` — **0 matches in any of them.** Phase 3 never filters on the label string at all;
+it relies purely on whether `final_acreage`/`osm_acreage` is `NA`/missing, which `coalesce()`
+(R) and a failed OSM match (Python/Julia) already produce directly, with no read of
+`acreage_source` needed. Practical behavior is unaffected (NA-detection is equally consistent
+across languages) but "Phase 3 scripts filter on acreage_source" should not be repeated as a
+description of the code.
+
+### P2-02 — "Final data profile heading into Phase 3" table is pre-fallback and contradicts everything else
+**Severity:** Minor · **Status:** Confirmed · **Locus:** Docs (code is correct)
+
+`01_-_Phase2_Documentation.md` §"Phase 2 Refinement" reports:
+
+| Source | Count | % |
+|---|---|---|
+| MICE_Target | 10,834 | 66.5% |
+| OSM | 5,458 | 33.5% |
+
+Those are the **Step 1 intersect-only** numbers (5,458 direct hits, 10,834 misses). Every other
+statement in the corpus — the summary, §Step 2, Phase 3's missing-data profile — uses
+**11,605 matched (71.2%) / 4,687 missing (28.8%)** after the 500 m nearest-neighbour recovery
+of 6,147 courses. The `03_Finalize_Acreage.R` output being described here appears to skip the
+Tier-1b fallback entirely.
+
+**Resolved (Parity Audit C-2, 2026-07-24):** `VERIFIED` by reading the actual on-disk
+`Phase 2 .../Data/R/R_Phase2_Acreage_Matched_v2.csv` (mtime 2026-06-12, the file
+`Phase_3.R:36-40` actually reads): `acreage_source` counts are `OSM 11,605 / MICE_Target 4,687`
+— matching the post-fallback figure exactly, not the 5,458/10,834 pre-fallback one. Cross-checked
+same-day Python and Julia `Data/{python,Julia}/*_Phase2_Acreage_Matched*.csv` outputs (same
+2026-06-12 run): Python `OSM 11,610 / MICE_Target 4,687`, Julia `OSM 11,605 / MICE_Target 4,687`
+— all three in close parity, confirming the 500 m nearest-neighbour fallback (`Phase_2.R:291-313`,
+`Phase_2.py:169-185`, `Phase_2.jl:170-220`) is present and functioning identically across all
+three languages, and that **R's live Phase 3 input does include the fallback tier.**
+
+The `5,458/10,834` table was never wrong about the code — it genuinely describes
+`Bulk Tests/R/03_Finalize_Acreage.R`, a separate legacy script that writes its own
+`R_Phase2_Acreage_Matched_v2.csv` to `Bulk Tests/R/`, a different path from the one
+`Phase_3.R` reads (`Phase 2 .../Data/R/`). The documentation table was transcribed from the
+legacy script's console output, not the consolidated `Phase_2.R`'s. Root cause is `Docs`, not
+`Code`: no fix needed in `Phase_2.R`; the doc table should be corrected in the post-freeze
+documentation pass (**out of scope now** — do not edit `01_-_Phase2_Documentation.md` per
+`CLAUDE.md` §2.2). See new **P2-03** for a related but distinct finding surfaced during this
+check.
+
+### P2-03 — R's Tigris fallback tier (Tier 2) recovered zero courses in the current on-disk data
+**Severity:** Minor · **Status:** Fixed 2026-07-27 — Tier 2 removed (author decision, Gate 3, Decision 3) · **Locus:** Code (was environmental, now moot)
+**Relates to:** **P2-01**, **X-02**
+
+Surfaced while resolving P2-02 above. In the current `Data/R/R_Phase2_Acreage_Matched_v2.csv`
+(2026-06-12 run), `acreage_source` has exactly two observed values — `OSM` (11,605) and
+`MICE_Target` (4,687) — and zero rows are labeled `Tigris`. `final_acreage` is `NA` for all
+4,687 `MICE_Target` rows and, since Tigris contributed nothing, is otherwise identical to
+`osm_acreage` for every row in this snapshot.
+
+`READ`, `Phase_2.R:391-395`: Tier 2 live-downloads Census `tigris::landmarks(type="area")` for
+every state and filters to golf-related `FULLNAME`s; if the combined download yields zero
+polygons, it hits `warning("No Tigris golf landmarks downloaded -- check internet / tigris
+version. Skipping Tier 2.")` and Tier 2 is skipped entirely — which is consistent with what the
+data shows. `INFERRED`: this looks like exactly that branch firing on the day this file was
+generated (network hiccup, `tigris` cache state, or a Census landmarks API change), not a logic
+bug in the fallback code itself — but this wasn't run today to confirm, per `CLAUDE.md` §2.1.
+
+**Why it matters:** `final_acreage` vs `osm_acreage` (**X-02**) is already an escalated,
+author-decides question. This finding means that *as things currently stand*, the two are
+identical in practice for R (Tigris tier is contributing nothing), so the "3-tier vs 2-tier"
+structural difference (**P2-01**) is currently latent, not live. But it is fragile: a future
+run of `Phase_2.R` on a day when the live Tigris fetch succeeds would silently repopulate the
+`Tigris` tier and change `final_acreage` for some subset of the 4,687 currently-`MICE_Target`
+rows — meaning the R arm's Phase 3 input could shift between runs for reasons having nothing to
+do with any code change, purely from Census landmark-service availability on run day. Same
+non-reproducibility shape as **A-3**'s RUCC live-fetch risk. Recommend: before the frozen
+re-run, either vendor the Tigris landmarks extract too, or deliberately decide (author call) that
+Tier 2 is disabled/removed so R's acreage pipeline is not weather-dependent.
+
+**Corroboration (2026-07-25, see P3-01):** the Phase 4 documentation's own explanation for R's
+~10%-high `Holes` coefficient (`01_-_Phase4_Documentation.md:485-487`, "attributable to R using
+final_acreage... while Julia/Python use osm_acreage") is undermined twice over now. First, by
+this entry — Tigris contributed 0 rows, so the acreage variables share the same observed values.
+Second, by the M=100 Jun-12 run: the same ~10% gap is still there (R 0.053 vs Python/Julia 0.048,
+`Final_Thesis_Figures/8.241_Table2_Regression.tex`) at 20× the imputations, in a run where Tigris
+still contributed nothing. An acreage-variable explanation predicts the gap should track Tigris
+recovery; it hasn't moved while Tigris stayed at zero across two separate runs. See **P3-01**'s
+candidate-ranking table — R's structurally different imputation model (**P1-01**) is now the
+leading explanation instead.
+
+**One-time offline diagnostic (author-directed, 2026-07-27, not committed as pipeline code) —
+network miss, not structural non-match.** Before removing Tier 2, ran the exact
+`landmarks(st_abbr, type="area") |> filter(str_detect(FULLNAME, "(?i)Golf|Country Club"))` call
+from `Phase_2.R` standalone against 7 states (FL, CA, AZ, SC, NC, HI, GA), read-only, nothing
+written to `Data/`. `VERIFIED`: every state returned real golf/country-club area landmarks — FL
+109, CA 504, AZ 67, HI 26, GA 15, NC 3, SC 2. The zero-recovery in the 2026-06-12 run was a
+network/environment miss on that specific run day, not a structural absence of golf-tagged
+landmarks in the dataset or a join-key mismatch — golf landmarks genuinely exist in this Census
+layer and the existing filter finds them correctly. This *confirms* the non-determinism concern
+rather than undercutting it: a fallback tier that silently succeeds on some run days and silently
+fails on others, changing R's `final_acreage` distribution for reasons unrelated to any code
+change, is exactly the reproducibility risk described below — now with a diagnosed cause instead
+of an unexplained zero.
+
+**Fixed (author decision, Gate 3/Decision 3, 2026-07-27): Tier 2 removed entirely, not vendored.**
+`final_acreage` is now `osm_acres` unconditionally in R — identical in construction to Python and
+Julia's `osm_acreage` (no `coalesce()`, no live fetch). This closes **P2-01**'s three-tier-vs-
+two-tier structural asymmetry and **X-02**'s "which acreage variable is canonical" question by
+making the answer moot: there is no longer a second candidate variable to choose between. Removed
+from `Phase_2.R`: the `ALL_STATES` constant, the `library(tigris)` import (no longer used
+elsewhere in the file), `options(tigris_use_cache = TRUE)`, and the entire Tier 2 block (~100
+lines). `acreage_source` is now two-valued (`OSM` / `MICE_Target`) instead of three-valued.
+Header comment and step numbering updated to match. Not executed beyond the diagnostic above
+(§2.1) — this documents the source fix; the corrected `R_Phase2_Acreage_Matched_v2.csv` will only
+exist once Phase 2 is next run (the upcoming rehearsal, then the frozen cascade).
+
+### P2-04 — 41 courses (0.35% of comparable rows) have genuinely different observed acreage across languages, despite sharing OSM geometry
+**Severity:** Minor · **Status:** Fixed 2026-07-25 (Python + Julia standardized onto R's tie-break rule) · **Locus:** Code
+**Relates to:** **X-06**, **D-0**
+
+Surfaced by **D-0** (author-directed cross-language acreage identity check). Joined the three
+Phase 2 outputs on `(round(lat,4), round(lon,4), Course_Name)`; of 11,604 rows with acreage
+observed in all three, 11,563 (99.6%) match to float tolerance — expected, given **X-06**'s
+shared-geometry finding. **41 rows (0.35%) differ by 2.7%–85% (median 37%)** — far beyond
+floating-point or library-precision noise.
+
+**Characterization (2026-07-25, author-directed, before any fix):**
+
+- **Candidate-polygon count:** ran a real spatial join (not inferred) of the 41 course points
+  against the shared Python OSM polygon set (`Py_Phase2_OSM_Golf_Polygons.gpkg`, 15,166
+  polygons, EPSG:5070). **27/41 (66%) sit directly inside exactly 2 candidate polygons** —
+  genuine spatial ambiguity, always exactly 2, never 3+. **14/41 (34%) don't intersect any
+  polygon directly and were matched via the 500 m nearest-neighbour fallback**, at distances of
+  4.5–282.7 m — all comfortably inside the 500 m threshold, so the boundary itself is not in
+  question. **0/41** have their nearest polygon beyond 500 m.
+- **Tie-break rule per language, `READ` from the actual matching code — `VERIFIED`, not
+  inferred:**
+  - **R** (`Phase_2.R:267-276`): `st_join(..., join = st_intersects)` fans out to one row per
+    matching polygon, then `arrange(row_idx, desc(area_sqft)) |> filter(!duplicated(row_idx))`
+    — **explicit, principled: the largest polygon by area wins.**
+  - **Python** (`Phase_2.py:154-161,187-188`): `gpd.sjoin(..., predicate="intersects")` also
+    fans out, then `courses_geo[~courses_geo.index.duplicated(keep="first")]` — keeps whichever
+    row `gpd.sjoin`'s internal spatial-index traversal happened to return first. **Not
+    size-based, not otherwise principled — an accident of library internals.**
+  - **Julia** (`Phase_2.jl:176-191`): a manual loop over `osm_golf_geo` in raw table order,
+    `if ArchGDAL.intersects(pt, poly_geoms[j]) ... break` — **keeps whichever polygon appears
+    first in the table's on-disk order. Also not size-based, also an accident of ordering,** and
+    by a different mechanism than Python's, so there's no reason to expect the two even agree
+    with each other.
+  - **Conclusion: only R's tie-break reflects a deliberate decision.** Python's and Julia's are
+    both "first-encountered," via unrelated implementation-specific orderings, with no golf-
+    course-relevant justification and no reason to coincide. This is the direct mechanism behind
+    the 27 direct-intersect divergences. The 14 NN-fallback divergences are a distinct, smaller
+    puzzle — `sjoin_nearest`/manual-nearest should generally agree since true-nearest is well-
+    defined; residual disagreement there most likely traces to CRS/precision differences between
+    matchers rather than a tie-break choice, not separately traced further today.
+- **Urban/rural skew:** confirmed. 37/41 (90%) of divergent rows are `Urban` vs. a 76.5% Urban
+  base rate across all 11,604 comparable rows — courses in denser development are more likely to
+  have a second nearby golf-tagged OSM feature to be ambiguous against.
+- **Geographic clustering:** spread nationally (lat 26°–46°, lon -124° to -74°), no single tight
+  cluster; roughly 23/41 in a central-US longitude band, the rest spread across the west, east,
+  and mountain regions.
+
+**Tag-disambiguation check (2026-07-25, author-directed decisive query) — `VERIFIED` by reading
+the extraction filter, not inferred:** `Phase_2.py:50`, the OSM-extraction handler, keeps a
+polygon *only if* `a.tags.get("leisure") == "golf_course"`; every other tag combination is
+discarded before the polygon ever reaches the GeoPackage. Confirmed against the actual file:
+`Py_Phase2_OSM_Golf_Polygons.gpkg` carries only `osm_id`, `name`, `osm_acreage`, `geometry` — no
+tag columns survive extraction, and there is no broader-feature (resort/park/`landuse=*`) polygon
+anywhere in the shared polygon set to disambiguate against. **All 27 direct-multi pairs are two
+`leisure=golf_course` polygons overlapping each other** — tag-based disambiguation is not just
+absent from the code, it's categorically impossible given how the polygon set was built.
+
+**Applying the author's stated decision rule (both-golf-tagged branch): standardized on R's
+largest-area rule in all three languages, 2026-07-25.** Sanity-checked first: for a 5-row sample
+of the 27, the point's largest *directly-containing* polygon by `osm_acreage` matched R's current
+`final_acreage` to 8+ significant figures in 4/5 (the 5th's rounded-coordinate spot-check
+produced a false negative from lat/lon rounding in the verification script, not a real
+mismatch) — confirms R's `arrange(row_idx, desc(area_sqft))` is already exactly "largest polygon
+wins," so Python and Julia were changed to match it rather than R being re-derived:
+- **Python** (`Phase_2.py:154-166`): after the `sjoin`, added `courses_geo =
+  courses_geo.sort_values("osm_acreage", ascending=False)` before the existing
+  `duplicated(keep="first")` dedup, so "first" is now "largest" by construction. Same fix applied
+  to the NN-fallback dedup (`Phase_2.py:181-183`), sorting by `["_dist", "osm_acreage"]` so
+  equidistant ties (not observed in the 41, but possible in principle) also resolve by area.
+- **Julia** (`Phase_2.jl:176-212`): the manual intersect loop no longer `break`s on the first hit;
+  it now scans every candidate and keeps the one with the highest `poly_acres[j]`. The NN-fallback
+  loop's `dist < min_dist` condition gained an explicit `dist == min_dist &&
+  poly_acres[j] > poly_acres[best_idx]` tie-break branch for the same reason.
+- **R unchanged** — it already implements the rule being standardized on.
+
+This is a `§3` three-brothers-compliant change: behavior changes in Python and Julia only, in the
+same commit, converging all three onto one documented, principled rule rather than three
+different (two of them arbitrary) ones. Not yet executed (`§2.1`) — the corrected CSVs will only
+exist once Phase 2 is next run; this entry documents the source fix and its expected effect, not
+a re-verified output.
+
+**Dollar impact of the corrected rule vs. the current (pre-fix) mixed behavior, on the 27
+direct-multi rows, using each row's own `Baseline_Value_Per_Acre` (not a national average) —
+`VERIFIED`, computed from the actual on-disk Phase 2 + Phase 3 data:**
+- **Python:** 22/27 rows actually change (5 already coincidentally matched R's pick).
+  Acreage delta sums to **+1,997.0 acres**; dollar delta sums to **+$1,794,979,303** —
+  **0.191% of Python's own $938.309B pooled national total.**
+- **Julia:** 15/27 rows actually change (12 already coincidentally matched R's pick, one row,
+  Stonebridge Golf & Country Club, has no `Baseline_Value_Per_Acre` and can't be dollarized).
+  Acreage delta sums to **+1,122.6 acres**; dollar delta sums to **+$958,706,994** —
+  **0.101% of Julia's own $950.637B pooled national total.**
+- Single-largest-row effect: Industry Hills At Pacific Palms Conference Resort, Python
+  213.5→420.4 acres, +$855.5M alone (Los Angeles County BVPA ≈ $4.13M/acre) — one course in one
+  language accounts for nearly half of Python's total correction, underscoring that this is a
+  small-N/high-leverage effect (25/27 affected rows are Urban, where BVPA is 1-2 orders of
+  magnitude above the Rural USDA rate) rather than a broad-based one.
+- The 41-row set (27 fixed here + the still-unexplained 14 NN-fallback rows) is retained as a
+  **sensitivity set** per instruction, so the alternative (leaving the mixed tie-break) can still
+  be quantified later if needed.
+
+**Consequence for the national spread — recorded explicitly under P3-01, not buried here.**
+Applying this fix moves Python's pooled total **938.309B → 940.099B** and Julia's
+**950.637B → 951.596B** (R unaffected — it already implemented the standardized rule); the
+cross-language spread **widens**, 1.61% → 1.71%. This means the pre-fix 1.61% was partly two
+independent errors (Python's and Julia's arbitrary tie-breaks) partially cancelling against each
+other and against R, not a clean read of the real divergence. See **P3-01** for the full table and
+the standing-candidate ranking this changes — P2-04 is now *ruled out* as a driver of the spread,
+having demonstrably suppressed rather than caused it.
+
+---
+
+### P2-05 — Phase 2's Pass-2 nearest-feature fallback silently mis-assigns polygons for ~572-1,437 courses nationally; the same defect class as P5-14's Kahuku/Hoakalei/Ted Makalena, now measured at scale
+**Severity:** Major, confirmed three-language (course-level evidence: individual courses like
+Kahuku carry a confidently-wrong measurement) / Minor, converging on negligible (aggregate $
+impact — three independent tests found no detectable systematic bias; see item 4/5/7) ·
+**Status:** Closed (2026-07-28) — quantified, accepted limitation, not pursued as a fix;
+**re-verified 2026-08-10 on `strix`, closed conclusion holds** (see addendum below) ·
+**Locus:** Code, all three languages (`Phase_2.R:321-338`, `Phase_2.py:178-196`,
+`Phase_2.jl:211-231` — see item 0 below) · **Relates to:** **P5-12**, **P5-14**
+
+Surfaced by the author, generalizing P5-14's Kahuku/Hoakalei/Ted Makalena finding: those three
+Oahu courses carry `acreage_source == "OSM"` with zero apparent uncertainty, yet were assigned a
+*different, adjacent* course's polygon by Pass 2's unverified nearest-neighbour fallback — a
+confidently-wrong measurement, invisible to every downstream check because it looks identical to
+a correct OSM match. This entry asks the same question nationally, read-only, no fix scoped.
+
+**Method, `VERIFIED`:** Phase 2's own output CSV (`R_Phase2_Acreage_Matched_v2.csv`) retains
+`acreage_source` and `final_acreage` but not which pass matched a course or which polygon it got.
+Reproduced `Phase_2.R`'s Pass 1 (`st_intersects`) + Pass 2 (`st_nearest_feature`, ≤500 m) logic
+exactly, reading only the already-produced `R_Phase2_OSM_Golf_Polygons.gpkg` and
+`R_Phase1_Baseline_Golf_Valuation.csv` (no re-parse of the 11 GB PBF, no write to `Data/`) —
+Pass 1: 5,458 matches; Pass 2: **6,147 matches** (matches the author's own figure exactly);
+combined 11,605 — cross-checks exactly against the production `acreage_source == "OSM"` count.
+Then applied the identical tokenize-and-Jaccard name-match method **P5-14** used nationally.
+
+**0. Cross-language check, `VERIFIED` (2026-07-28), upgraded from the prior `INFERRED` claim —
+read directly, not assumed:** `Phase_2.py:183-193` calls `gpd.sjoin_nearest(..., max_distance=
+MAX_NEAREST_M)`, sorts by `(_dist, osm_acreage)` ascending/descending and keeps the first
+(nearest, tie-broken by largest area) — no name check. `Phase_2.jl:211-231` implements the same
+fallback as a manual loop: nearest polygon within `MAX_NEAREST_M`, tie-broken by largest area —
+no name check. **All three languages implement the identical unverified-nearest-neighbour
+mechanism, same 500 m cap, same missing safeguard.** This is a three-language defect, not an
+R-specific one; severity above is set accordingly.
+
+**1. Name-plausibility of the 6,147 Pass-2 assignments, `VERIFIED`:**
+
+| Category | Count | % of 6,147 |
+|---|---:|---:|
+| Exact/near-exact name match (Jaccard ≥ 0.9) | 3,868 | 62.9% |
+| Strong match (Jaccard ≥ 0.5) | 4,435 | 72.1% |
+| Weak match (0 < Jaccard < 0.5) | 275 | 4.5% |
+| Zero name-token overlap (naive "confirmed-error" reading) | 1,437 | 23.4% |
+
+**The naive 1,437 overstates the real count, the same way P5-14's "within 5 km" ceiling overstated
+its count by 2.6×.** 865 of the 1,437 (60.2%) are zero-overlap only because the *assigned polygon
+has no name at all in OSM* (`name == "Unknown"`) — unverifiable by name in either direction, not
+provably wrong. Excluding those: **572 of 6,147 (9.3% of Pass-2 matches; 3.5% of the entire
+16,292-course national baseline) are assigned to a real, differently-named polygon** — the same
+mechanism, individually verified, that produced Kahuku/Hoakalei/Ted Makalena. This 572 is the
+number that should be cited as "confirmed-error," not 1,437.
+
+**2. Duplicate polygon assignment, `VERIFIED`, checked against the full matched population
+(Pass 1 + Pass 2, 11,605 courses), since a Pass-2 course can collide with either pass:** 319 of
+6,147 Pass-2 matches (5.2%) share their assigned polygon with at least one other course in the
+dataset (298 with exactly one other course, 21 with two or more) — the clearest possible
+signature of a wrong match, since two real golf courses essentially never occupy one polygon.
+**This signal strongly corroborates item 1 rather than being independent of it:** of the 572
+true-confirmed-wrong courses, 156 (27.3%) are also duplicate-flagged, a 5.2× enrichment over the
+5.2% base rate across all Pass-2 matches — two independently-derived signals (name mismatch,
+polygon reuse) converging on much of the same defect.
+
+**3. Orphaned polygons near the 572 true-confirmed-wrong courses, `VERIFIED`:** 3,803 of 15,166
+national OSM golf polygons (25.1%) are claimed by no course under either pass. Of the 572:
+- 317 (55.4%) have no unclaimed polygon within 5 km at all — most likely these courses simply
+  aren't digitized as a distinct OSM polygon (an unmatchable case masquerading as a matched one).
+- 165 (28.8%) have unclaimed candidate(s) nearby but none name-plausible — ambiguous, not
+  resolved further here.
+- **90 (15.7%) are recoverable: a name-plausible unclaimed polygon exists within 5 km** —
+  concrete, checkable evidence of what the correct assignment likely is.
+
+**4. SECOND CORRECTION (2026-07-28), author-caught: the $2.084B/0.221% figure above (this
+entry's prior revision) was itself invalid — do not quote it.** The 165-subset "reference" (nearest
+*unclaimed* polygon) is mechanically biased small relative to the assigned (claimed) polygon,
+independent of whether the original match was right or wrong: a larger polygon is the
+nearest-feature target for a larger catchment of points, so larger polygons get claimed more
+often, leaving smaller polygons systematically over-represented among what remains unclaimed.
+Tested this directly, `VERIFIED`:
+
+- **Population-wide, no course pairing at all:** mean area of all 11,363 claimed polygons =
+  146.7 ac; mean area of all 3,803 unclaimed polygons = 96.3 ac (median 137.5 vs. 65.8 ac). A
+  50.4 ac mean / 71.7 ac median gap exists **for every claimed-vs-unclaimed comparison in this
+  dataset, with no relationship to correctness.**
+- **Placebo test:** applied the identical "assigned acreage minus nearest-unclaimed-polygon
+  acreage" construction to a sample of 460 courses from the *confidently-correct* population
+  (Pass 1 + Pass-2 Jaccard ≥ 0.5) that happen to have an unclaimed candidate within 5 km. **Mean
+  placebo gap: +47.8 ac** — larger than the 165-subset's own observed +31.3 ac gap.
+- **Residual after subtracting the placebo baseline from the 165-subset's observed gap: −16.4
+  ac.** Negative. The 165-subset shows *less* apparent oversizing than the construction artifact
+  alone predicts. **The entire +31.3 ac effect is fully explained by how the reference was built;
+  none of it is evidence of a real defect-specific bias.** The $2.084B figure built on it is
+  retracted, not refined — it measured a research-design artifact.
+
+**Corrected primary finding: the name-verified 90-course subset is the only evidence-backed
+impact estimate, and it shows no detectable bias.** Mean signed diff −0.7 ac/course (median
+−10.8 ac), 43.3% assigned larger vs. 56.7% smaller — indistinguishable from noise. Scaled: 90 ×
+(−0.7 ac) ≈ **−63 ac total, ≈ −$0.026B, ≈ −0.003% of the $942B headline** — a rounding error, not
+a correction. **The 165-subset's +31.3 ac/course should be reported only as a lower-confidence
+upper bound carrying the methodological caveat above, never as a point estimate.** The **$2.084B
+figure from this entry's previous revision must not be quoted anywhere as the impact estimate.**
+
+**5. Directionality and the size-inheritance hypothesis: tested, `VERIFIED`, and REJECTED.**
+The author's geometric hypothesis (bigger polygons have bigger Voronoi cells under
+nearest-feature matching, so small courses should disproportionately inherit large neighbours'
+polygons) does not survive three independent tests:
+- **Acreage, name-verified (n=90):** no directional bias (mean −0.7 ac; §4 above).
+- **Acreage, proximity-only (n=165):** the apparent +31.3 ac skew is fully explained by the
+  claimed-vs-unclaimed construction artifact (§4 above); residual is negative.
+- **Archetype spot-check:** of the three original Oahu motivating cases, only Kahuku fits the
+  hypothesis (58.7 ac true vs. 459 ac assigned, +400 ac — and this diagnostic's independently-
+  derived reference of 58.7 ac matches the previously-verified P5-12 crosswalk figure of 58.75 ac
+  almost exactly, a strong validation of the method itself). Hoakalei (244 ac true vs. 150 ac
+  assigned, −94.3 ac) and Ted Makalena (149 ac true vs. 133 ac assigned, −16.5 ac) both go the
+  *other* direction. Two of the three motivating cases do not fit the pattern they motivated.
+- **Holes (independent variable, untouched by Pass-2), `VERIFIED`:** built a clean reference
+  population (Pass 1 + Pass-2 Jaccard ≥ 0.5, 9,893 courses) with median 7.71 ac/hole, mean 8.17.
+  The 572 confirmed-wrong courses (using their wrong assigned acreage): median 7.23 ac/hole
+  (0.94×), mean 8.23 (1.01×) — statistically indistinguishable, slightly *below* on the median.
+  250/572 (43.7%) run above the Holes-implied expectation, 322/572 (56.3%) below.
+
+**Conclusion: Kahuku is a real, individually striking example, not evidence of a systematic
+national-scale mechanism.** The hypothesis is recorded as tested and rejected — a defensible
+prior that the data does not support at aggregate scale, reported as found rather than adjusted
+to fit the motivating example.
+
+**6. Pass-2 match-distance distribution, `VERIFIED` — answers the "cheap fix?" question directly:**
+
+| Subset (n) | Median dist (m) | Mean dist (m) | % ≥ 400m (near 500m cap) | % ≥ 450m |
+|---|---:|---:|---:|---:|
+| All Pass-2 (6,147) | 44.5 | 86.4 | 2.4% | 1.1% |
+| True confirmed-wrong (572) | 62.0 | 113.4 | 4.7% | 1.9% |
+| Name-matched, Jaccard>0 (4,710) | 41.1 | 82.1 | 2.4% | 1.0% |
+
+Confirmed-wrong matches skew moderately farther (median +51%, mean +38% vs. correctly-matched)
+— a real but modest signal — but are **not concentrated near the 500 m cap**: over 95% of the 572
+sit below 400 m, the same range most correct matches occupy. **Tightening the radius would be a
+low-yield partial fix** (it would catch only the worst few percent of wrong matches while also
+discarding correct matches at the same distances) — **per the author's own framing, this is the
+"spread evenly" case: name verification, not a shorter cap, is what actually separates correct
+from wrong.**
+
+**7. The 317-course residual, resolved without re-imputation, `VERIFIED` (2026-07-28).** The
+earlier revision of this entry marked the 317 (no candidate polygon within 5 km — the cleanest
+sub-case, since these should have been `MICE_Target` and never should have reached Pass 2's
+fallback) as blocked, because the frozen M=100 datasets never imputed them and no fitted model
+object exists to score them against retroactively. **Resolved per author direction: instead of
+re-imputing, compare each of the 317's wrongly-assigned acreage against the empirical distribution
+of what MICE actually imputed for genuine `MICE_Target` courses matching on `Holes` and
+`county_type`, pooled from the frozen M=100 datasets** — no MICE execution, reads only.
+
+- **Row-alignment method, `VERIFIED` before trusting any result:** `R_Imputed_Dataset_i.csv`
+  carries no `course_id` (`mice::complete()` strips identifying columns, keeping only the
+  predictor/outcome matrix). `Phase_3.R:108-132` reads `R_Phase2_Acreage_Matched_v2.csv` with
+  `read.csv` (row order preserved) and subsets columns with no reorder and no filter, so row *k*
+  of every imputed CSV is row *k* of `R_Phase2_Acreage_Matched_v2.csv`. Verified directly, not
+  assumed: joined the two by row position and compared `final_acreage` for all 11,605 `OSM`-
+  sourced rows (which MICE never touches) — **0 mismatches across 11,605 rows.** Alignment holds.
+- Pooled `final_acreage` for the 4,687 genuine national `MICE_Target` courses across all M=100
+  datasets (468,700 draws). For each of the 317, built a reference distribution from pooled draws
+  of `MICE_Target` courses sharing the same `Holes` and `county_type`; all 317 had ≥30 reference
+  draws (none skipped for thin reference groups).
+- **Median percentile: 47.6. Mean: 48.9.** Essentially the middle of the distribution — the 317's
+  wrongly-assigned acreage sits almost exactly where genuinely-imputed courses of the same profile
+  land. **Tail check: bottom decile 48/317 (15.1%), top decile 49/317 (15.5%)** — close to
+  symmetric (would be 10%/10% under a perfectly uniform percentile distribution; the modest excess
+  in both tails together, not concentrated in one, is consistent with ordinary dispersion rather
+  than a directional bias). **Mid-distribution result: no aggregate bias detected for the 317,
+  consistent with the null result already found in the 90-subset and the Holes-based check.**
+
+**Aggregate conclusion, all three measurable populations now checked: no detectable systematic
+bias anywhere.** Name-verified (n=90): no bias. Proximity-only (n=165): apparent bias fully
+explained by construction artifact. No-candidate (n=317): mid-distribution against genuine MICE
+draws, symmetric tails. **The size-inheritance hypothesis is rejected at aggregate scale; Kahuku
+remains a real individual example, not a systematic effect.** The true aggregate $ impact of
+P2-05, across everything measured, is indistinguishable from zero and almost certainly smaller
+than the retracted $2.084B figure — likely closer to the −0.003% found in the one population with
+a genuinely clean reference (item 4).
+
+**Closed (2026-07-28), author's decision: quantified, accepted limitation, no further work in
+this class absent an incidental finding.** Both **P5-14** (0.25% national impact) and **P2-05**
+(≤0.22% as an upper bound, more likely ~0% per the three converging null results above) fall
+below this project's own 1.65% cross-language spread — undetectable in the results themselves,
+not just individually small. **Not fixed. Freeze holds.** No candidate remediation designed —
+whether/how to correct the 572 (or the smaller `named-polygon` core) remains an author call if
+ever revisited, but this entry does not carry it forward as open defect-hunting work.
+
+**Addendum (2026-08-10) — re-verified on `strix` after the Charlotte Golf Links / Providence
+Country Club case surfaced while diagnosing `P2-06`, `VERIFIED` where stated, method gap flagged
+honestly where not.** New script, `Phase_2_Pass2_Name_Diagnostic.R`, read-only, reproduces
+`Phase_2.R`'s Pass 1/Pass 2 logic exactly (validated: its total, 11,604, matches production's
+`acreage_source == "OSM"` count exactly) and additionally retains the matched polygon's `name` and
+which pass matched — information the production pipeline computes internally but never persists.
+
+- **Population stability, `VERIFIED` and directly comparable — the strongest part of this
+  addendum.** Pass 1: 5,463 (fresh) vs. 5,458 (original P2-05 reproduction). Pass 2: 6,141 (fresh)
+  vs. 6,147 (original). Both within single digits. **The population this entry's finding is about
+  has not materially changed since migration** — P2-05's original conclusion rests on essentially
+  the same set of courses this addendum re-examined.
+- **The 572/9.3% confirmed-wrong point estimate could not be independently reproduced, and this
+  addendum's own number should not be read as replacing it.** The original tokenize-and-Jaccard
+  script was a one-off diagnostic, never committed to this repo — only its output numbers survive
+  in this file. This addendum's independent reimplementation (documented inline in the new script:
+  lowercase, punctuation-stripped, whitespace-tokenized, generic words like "golf"/"club" *not*
+  stripped) gets a **materially different point estimate: 153 confirmed-wrong (2.5% of Pass 2,
+  0.94% of the 16,292-course baseline)**, against a much larger "weak partial overlap" bucket
+  (958, 15.6%) than the original reported (275, 4.5%). That pattern — more partial-overlap noise,
+  fewer clean zero-overlap cases — is consistent with this reimplementation's tokenization being
+  more lenient than whatever the original script did, not with the underlying mismatch rate having
+  actually dropped 3.7×. **153 and 572 are not apples-to-apples; treat this addendum as unable to
+  independently confirm the exact original figure, not as revising it downward.**
+- **Dollar figure computed here measures something different from P2-05's original impact
+  estimate — flagged explicitly to avoid the same mistake this entry's own item 4 already caught
+  once.** Summed `matched_acres × Baseline_Value_Per_Acre` for the 153 confirmed-wrong courses
+  against the observed-only total ($789.848B): **$9.699B, 1.228%.** This is raw dollar *exposure*
+  sitting on confirmed-wrong-polygon courses, not the corrected *error* P2-05's original ≤0.22%
+  figure measured (the delta between assigned and true acreage, via reference distributions and a
+  placebo-tested correction) — a mis-assigned course still gets some real polygon's acreage, so
+  exposure overstates impact the same way the original entry's retracted $2.084B figure did.
+  **Not a re-estimate of P2-05's impact number; do not cite 1.228% as comparable to 0.22%.**
+- **Charlotte Golf Links, added as a concrete individual example (`P2-06`'s finding, cross-
+  referenced here since it's this entry's defect class):** in R specifically it isn't a Pass-2
+  mismatch — R doesn't match it at all (0.55 m past the 500 m cap, per `P2-06`). It *is* a Pass-2
+  mismatch in Python and Julia, both of which assign it "Providence Country Club"'s polygon, a
+  real, differently-named, real-world-adjacent course — the same mechanism as Kahuku/Hoakalei/Ted
+  Makalena, found this time via cross-language comparison rather than this entry's own diagnostic.
+- **Net conclusion: the closed disposition holds, on the strongest available evidence.** The
+  Pass-2 population itself is stable across the migration (bullet 1), so there is no data-driven
+  reason to think P2-05's original materiality conclusion (below the project's own 1.65%
+  cross-language spread) no longer applies. The exact 572/9.3% and ≤0.22% figures remain the
+  citable ones from the original 2026-07-28 measurement; this addendum corroborates the population
+  they were computed on rather than superseding their values with a differently-tokenized rerun.
+
+### P2-06 — `strix` re-run: R matches 1 fewer course than Python/Julia (11,604 vs 11,605); Pass-1 direct-intersect counts diverge across all three (R 5,463 / Python 5,501 / Julia 5,458)
+**Severity:** Minor (0.006% of the course list; national-aggregate impact not separately
+quantified but bounded by the single-course scale) · **Status:** **Closed (2026-08-10, author
+decision).** N-discrepancy root cause fully traced (item 2). Pass-1 divergence: recorded as a
+known, non-impacting cross-language implementation difference, not pursued further — Pass 1 is an
+intermediate diagnostic quantity nothing downstream reads, and the 38-course R-vs-Python spread
+reconciles to a single course after Pass 2 (item 1), which is itself explained to sub-meter
+precision (item 2). `sf` and `GeoPandas` calling GEOS through different bindings producing
+sub-meter boundary-predicate differences is the same general class of expected cross-language
+divergence already accepted elsewhere in this pipeline (e.g. **X-02**'s `final_acreage` vs.
+`osm_acreage`). **Julia's CRS pipeline (item 4) is split out as a separate, actionable defect —
+see P2-07 — since it's a real code fix candidate, not just a diagnostic footnote.** · **Locus:**
+Code · **Relates to:** P2-02 (`MAX_NEAREST_M = 500` documentation gap), **P2-07**
+
+Surfaced by the author on the first post-migration `strix` run of Phase 2 in all three languages.
+The three final `acreage_source` counts (Python 11,605 `OSM` / Julia 11,605 `OSM` / R 11,604
+`OSM`) matter beyond their own small size because the manuscript's §4.1 footnote 2 cites
+`11,605 − 679 = 10,926` explicitly, and **P1-11**'s observed-subset reproduction (this file,
+above) used R's `acreage_source` directly and got N = 10,925 — the same off-by-one, now traced to
+its source rather than left as an unexplained 1-row gap.
+
+**1. The specific divergent course, `VERIFIED` by direct three-way join.** `course_id` is
+**not** a shared key across languages — joining Python/Julia/R Phase 2 output on `course_id`
+produces a 100% `Course_Name` mismatch rate (each language assigns it independently, in whatever
+order its own Phase 1 pipeline processes rows). `Course_Name` itself isn't a usable join key
+either: R stores the bare name (`"Seamountain Golf Course"`), Julia and Python both embed
+`"-City,State"` into the same field (`"Albertville Golf & Country Club-Albertville,AL"`), in two
+different row orderings. The only field that's genuinely shared and directly comparable is raw
+`Longitude`/`Latitude` — rounded to 6 decimals, 16,273 of 16,292 rows join cleanly across all
+three, confirming the underlying point coordinates are essentially identical across languages
+(ruling out independent Phase 1 coordinate drift as the explanation for anything below). Joined on
+that key: Python and Julia agree on `acreage_source` for every one of the 16,273 rows with zero
+exceptions. R disagrees with both on exactly one: **"Charlotte Golf Links"**
+(`-80.76979, 35.05457`) — `MICE_Target` in R, `OSM` in Python and Julia.
+
+**2. Why R alone drops it, `VERIFIED` by direct geometric recomputation.** Loaded R's own
+`R_Phase2_OSM_Golf_Polygons.gpkg` and computed `st_distance()` from Charlotte Golf Links' point
+(reprojected to the polygon layer's own CRS, `NAD83 / Conus Albers`) to the nearest polygon
+directly: **500.5466 m** — 0.55 m past `Phase_2.R`'s `MAX_NEAREST_M = 500` cutoff. This is a
+boundary case in the most literal sense: the course sits within rounding distance of the exact
+threshold, and Python/Julia's independently-computed distance evidently lands fractionally under
+500 m where R's lands fractionally over. (Separately worth noting, not the subject of this entry:
+the nearest polygon is named `"Providence Country Club"`, not `"Charlotte Golf Links"` — the
+500 m fallback tier doesn't check name similarity, so even the languages that "match" this course
+are assigning it a neighboring course's polygon, not its own. `Phase_2.R`'s own polygon set has no
+feature named `"Charlotte Golf Links"` at all — the real polygon for this course is apparently
+unmapped in OSM, and every language's Pass-2 match for it is a same-class approximation, not a
+correct identification.)
+
+**3. Ruled out: the three languages' polygon sets are not the source of the Pass-1 gap,
+`VERIFIED`.** Loaded all three languages' own `*_Phase2_OSM_Golf_Polygons.gpkg` files directly:
+identical polygon count (15,166), identical CRS (`NAD83 / Conus Albers`), identical acreage range
+(5.014678–1326.852), and identical acreage sum (2,033,208.0) to the precision checked, across all
+three. Whatever is causing the Pass-1 intersect-count spread, it is not a language-specific
+difference in which polygons exist or how large they are.
+
+**4. Julia's point reprojection uses a different CRS pipeline than R and Python's — real, code-
+verified, but only a partial explanation for the Pass-1 spread; the actionable fix is logged
+separately as `P2-07`.** `Phase_2.jl`'s point reprojection (`match_osm_to_courses`, ~line 163)
+builds its target CRS from a **manually specified PROJ4 string**:
+`+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +ellps=GRS80
++towgs84=0,0,0,0,0,0,0 +units=m +no_defs` — a hand-rolled Albers Equal Area with an explicit
+zero-shift WGS84→NAD83 datum approximation. `Phase_2.R` (`sf`) and `Phase_2.py` (`pyproj`) both
+instead resolve `EPSG:5070` by its authoritative code, going through PROJ's real NAD83
+transformation pipeline rather than a null-shift stand-in. WGS84 and NAD83 differ by roughly 1–2 m
+across CONUS depending on location — small, but exactly the right order of magnitude to flip a
+handful of near-boundary Pass-1 matches, and Julia's Pass-1 count (5,458) is the lowest of the
+three, consistent with this being a real contributor. **What this does not explain, and is not
+pursued further under this entry:** R and Python both use the authoritative EPSG:5070 path yet
+their Pass-1 counts still differ by 38 courses (5,463 vs 5,501) — polygon-set differences are ruled
+out (item 3) and raw input coordinates are confirmed near-identical (item 1), so this residual gap
+is almost certainly `sf`-vs-`GeoPandas` GEOS-binding boundary-predicate behavior, the accepted class
+of divergence per this entry's closing disposition above, not chased to a line-level cause.
+
+**Impact on the manuscript.** §4.1 footnote 2's `11,605 − 679 = 10,926` should read `11,604 − 679
+= 10,925` for R specifically, on this run — consistent with **P1-11**'s independent reproduction
+above (N = 10,925). Per author instruction, held pending the cascade's completion — §4.1 and
+footnote 2 get synced in one pass from the final tables, not edited piecemeal here. The underlying
+mechanism (item 2) is a single course sitting 0.55 m past a hard 500 m cutoff — not a systematic
+defect — so this does not, on its own, suggest the 71.2%/28.8% split is unstable beyond this one
+course. The R-vs-Python Pass-1 gap (item 4) is recorded, not chased further, as the kind of
+cross-language geometric non-determinism Phase 2's `X-02`/`P2-02` discussion of
+`MAX_NEAREST_M = 500` being "a defensible-but-arbitrary threshold" (`Project roadmap.md` §2.2)
+already anticipated as a defense-relevant characteristic of the two-pass design; this entry is
+concrete evidence for that already-documented characteristic, not a new open investigation.
+
+### P2-07 — `Phase_2.jl` reprojects course points with a hand-written PROJ4 string instead of the authoritative `EPSG:5070` lookup R and Python both use
+**Severity:** Minor (plausible contributor to a handful of near-boundary Pass-1/Pass-2 flips;
+national-aggregate impact not separately quantified, bounded by `P2-06`'s scale) · **Status:**
+Open, actionable — split out of `P2-06` item 4 · **Locus:** Code (`Phase_2.jl`, ~line 163) ·
+**Relates to:** **P2-06**
+
+`Phase_2.jl`'s `match_osm_to_courses` builds its target CRS for point reprojection from a manually
+specified PROJ4 string: `+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0
++ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs` — an Albers Equal Area definition with an
+explicit **null (zero-shift) WGS84→NAD83 datum transformation**. `Phase_2.R` (`sf::st_transform`)
+and `Phase_2.py` (`geopandas.to_crs(epsg=5070)`) both instead resolve `EPSG:5070` by its
+authoritative EPSG code, which routes through PROJ's real NAD83 transformation rather than
+assuming WGS84 and NAD83 are coincident. They are not — the two datums differ by roughly 1–2 m
+across the CONUS extent, in a spatially-varying way a null shift cannot reproduce. This is not
+equivalent to the authoritative lookup; it is an approximation with unmodeled, direction-dependent
+error, small in absolute terms but structurally capable of flipping any point sitting within that
+margin of a polygon boundary — exactly the mechanism `P2-06` traces for `MAX_NEAREST_M`, and
+plausibly a contributor to Julia's Pass-1 count being the lowest of the three languages
+(`P2-06` item 4).
+
+**Recommended fix:** replace the manual PROJ4 string with an EPSG-code-based transform, matching
+R and Python's approach — e.g. construct the target CRS via `EPSG:5070` directly (`ArchGDAL`
+supports importing by EPSG code the same way `importPROJ4` is used here) rather than hand-writing
+the projection parameters. **Diagnostic only, not applied here** — no code changed, per the
+author's instruction that this investigation stay read-only; logged as an actionable item for
+whoever next touches `Phase_2.jl`, not fixed in this pass.
+
+---
+
+## Phase 3 — MICE Imputation & Rubin's Rules
+
+### P3-01 — Every published Phase 3 figure was computed at M = 5
+**Severity:** Critical · **Status:** Confirmed · **Locus:** Docs
+
+**The code is correct.** `Phase_3.py:164`, `Phase_3.R:179`, `Phase_3.jl:155` all implement
+`v_t = v_w + v_b + v_b/m` — algebraically `V_W + (1 + 1/M)·V_B`, exactly Rubin. All three
+`main()` blocks pass `M = 100`.
+
+**The published numbers cannot have come from that code at M = 100.** Solving the documented
+tables for the implied M returns **exactly 5.00** in all three languages:
+
+| Lang | Doc `V_W` | Doc `V_B` | Doc `V_T` | `V_T` if M=100 | `V_T` if M=5 | Implied M |
+|---|---|---|---|---|---|---|
+| Python | 2.1215e16 | 9.7765e18 | **1.1753e19** | 9.8955e18 | **1.1753e19** | 5.00 |
+| R | 2.1111e16 | 2.0232e19 | **2.4300e19** | 2.0455e19 | **2.4300e19** | 5.00 |
+| Julia | 2.1339e16 | 1.2354e19 | **1.4846e19** | 1.2499e19 | **1.4846e19** | 5.00 |
+
+Reproduces to every printed digit. `V_T / V_B ≈ 1.2020` in all three — that is `1 + 1/5`.
+
+**Corroborating evidence, independent of the arithmetic:**
+- Each results table in `01_-_Phase3_Documentation.md` lists exactly **five** per-dataset
+  aggregates (Dataset 1–5), matching a summary CSV built from an M=5 run.
+- `01_-_Phase5_Documentation.md` Julia data-flow diagram: `Phase 3 CSVs (×5)`.
+- `01_-_Phase4_Documentation.md` labels its results `(M = 5 pilot)` and states they "will be
+  updated once the M = 100 pipelines complete."
+
+**Consequences:**
+1. Published SEs are inflated by `√(1.2/1.01) ≈ 1.09` — roughly 9% too wide.
+2. `V_B` is estimated from 5 draws. Its own sampling error is enormous; this is precisely the
+   instability the M=100 choice was made to eliminate. The Phase 3 Summary's argument for
+   M=100 over M=5 is sound — it just wasn't the run that got published.
+3. The $943.0B / $936.0B / $951.4B point estimates and every CI in the Phase 3 Summary,
+   Phase 3 Documentation, and `Meta_Summary.pdf` are stale.
+4. ~~The "cross-language spread of 1.6%" claim is a spread between three 5-draw estimates. It may
+   tighten or widen at M=100; it is currently unknown.~~ **Resolved 2026-07-25 — see below: it
+   does not tighten.**
+
+**Re-characterized (2026-07-25, per X-04).** Original framing: "the M=100 run never happened,
+action = re-run at M=100." **That's now wrong.** A complete, synchronized, tri-language M=100
+run exists on disk, dated 2026-06-12 (see **X-04**) — Phase 3 through Phase 6, including
+LaTeX tables and figures. The algebra above still stands exactly as computed: the *currently
+published* tables were built from an M=5 run. What changes is the diagnosis: this is not a
+missing-run problem, it's a **documentation-lag problem** — the write-up was never updated after
+the M=100 run completed. Root cause moves from `Locus: Docs (code correct, run needed)` to
+`Locus: Docs (code correct, run exists, write-up stale)`.
+
+**Read the Jun-12 run directly** (`Data/{R,python,Julia}/*_Rubins_Rules_Summary.csv`):
+Pooled national OC — R $935.521B, Python $938.309B, Julia $950.637B (Grand Mean ≈ **$941.5B**).
+This is close to but **not identical** to the published $936.0B/$943.0B/$951.4B (Grand Mean
+$943.5B, per `Notes.md`) — confirming these are genuinely two different runs, not the same
+numbers presented two ways. The M=5-vs-M=100 algebra in this entry used the *published* numbers
+and is unaffected by this; it's independent confirmation that the Jun-12 run is not what's
+currently cited anywhere.
+
+**Action, revised:** No re-run needed to get *an* M=100 result — one already exists. What's
+needed is (a) the author's confirmation of whether the Jun-12 run is fit to publish as-is (it
+predates **P1-01**/**P1-05**, so it isn't — see **X-04**), and (b) once fixes land and the frozen
+cascade re-run happens, updating the write-up from *that* output, not treating "get an M=100 run"
+as the open task. Nothing needs fixing in the pooling code — unchanged from the original finding.
+
+**Finding: the cross-language spread does not narrow at M=100 — Monte Carlo noise is eliminated
+as an explanation (2026-07-25).**
+
+| Run | R | Python | Julia | Mean | Spread |
+|---|---|---|---|---|---|
+| M=5 (published) | 936.0 | 943.0 | 951.4 | 943.47 | 1.63% |
+| M=100 (Jun-12) | 935.521 | 938.309 | 950.637 | 941.489 | 1.61% |
+| M=100, **P2-04-corrected** | 935.521 | **940.099** | **951.596** | 942.405 | **1.71%** |
+
+A twentyfold increase in imputations (M=5 → M=100) moved the spread by **0.02 percentage
+points** — statistically indistinguishable from unchanged — and the **ordering is identical in
+both runs**: R lowest, Python middle, Julia highest, in both. If the spread were an artifact of
+M=5's known instability (**consequence #2 above**), M=100 should have visibly tightened it, and
+it did not. This rules out "not enough imputations" as the explanation for the cross-language
+divergence.
+
+**The spread widens under correction (2026-07-26) — recorded explicitly, not buried in P2-04's
+entry.** Applying **P2-04**'s fix (standardizing Python and Julia's polygon tie-break onto R's
+largest-area rule) moves Python's total **938.309 → 940.099** (+$1.79B, matching P2-04's computed
+dollar impact exactly) and Julia's **950.637 → 951.596** (+$0.959B, ditto). R is unaffected — it
+already implemented the rule being standardized on. **Range widens from $15.116B to $16.075B;
+spread widens from 1.61% to 1.71%.** The direction matters as much as the number: the *pre-fix*
+1.61% was not a clean measurement of the structural divergence — it was **two independent errors
+partially cancelling** (Python's arbitrary tie-break happened, on net, to pull its total closer to
+R's; Julia's happened to pull less far away than Python's, but still short of the honest gap).
+Removing the tie-break noise doesn't shrink the spread, it **reveals a wider one that noise had
+been partially masking.** The corrected 1.71% is the honest figure — this is now the number to
+carry forward, not 1.61%.
+
+This is the **second** time the spread has resisted the expected direction of travel: it did not
+narrow at 20× the imputations (M=5→M=100), and it does not narrow under a genuine bug fix
+(P2-04) — it widens. A stochastic or noise-driven explanation predicts shrinkage under both
+interventions; neither happened. Both results point the same way: toward a **structural**
+cause, not a Monte Carlo artifact — and further isolate that structural cause away from Phase 2
+(P2-04's own contribution, now measured and removed, turns out to have been suppressing the
+spread, not producing it) and back onto Phase 3, keeping **R's four-variable imputation model
+(candidate 3 below) the leading explanation**, now on slightly stronger footing than before this
+correction. Recording this as a **finding about the pipeline**, exactly as the M=100 result above
+was — a spread stable-or-widening across two independent interventions is a stronger,
+more characterizable result than an unresolved discrepancy would be.
+
+**Candidate explanations for the (real, stable) cross-language spread, ranked as of today:**
+1. ~~Acreage variable (`final_acreage` vs `osm_acreage`)~~ — weakened by **P2-03** (R's Tigris
+   tier recovered 0 rows; the two variables share the same observed values in current data).
+2. ~~M=5 Monte Carlo noise~~ — **eliminated by the finding above.**
+3. **R's structurally different imputation model — now the leading candidate.** Per **P1-01**/
+   **P1-05**, R's `futuremice(method="rf")` jointly imputes **4** variables (`final_acreage`,
+   `Baseline_Value_Per_Acre`, `Holes`, `Ownership_Type`) via a single scalar `method` argument
+   with no `predictorMatrix` override; Python and Julia impute **2** (acreage, BVPA only —
+   `Holes`/`Ownership_Type` are always fully observed in their pipelines, so `mice` never touches
+   them). Same *observed* values entering MICE, different *imputed* values coming out, feeding
+   directly into `log1p(acreage × BVPA)`. See **C-1** (elevated to high-value — this is now the
+   same structural question as **A-2**, applied to the headline number instead of a single
+   coefficient).
+4. MICE backend differences (R's `ranger`/RF vs Python's LightGBM vs Julia's `Mice.jl`) — still
+   open, not yet isolated from #3 above (both act through the same imputation step).
+5. Phase 1 date/vintage skew (R Jun-12 vs Python May-18 vs Julia May-14, per **X-04** caveat 1) —
+   still open, and now independently testable since Part B fixed the known Phase 1-level
+   divergences (**P1-05**, **P1-06**, **P1-09**) that would otherwise have confounded it.
+6. ~~Phase 2 polygon-matching tie-break (**P2-04**)~~ — **quantified and fixed, 2026-07-26; it
+   was suppressing the spread, not producing it.** Standardizing Python/Julia onto R's tie-break
+   rule *widened* the spread (1.61%→1.71%, see above), the opposite of what a contributing-cause
+   candidate would do once corrected. Ruled out as a driver of the spread; kept as its own tracked
+   fix under **P2-04**.
+
+**Corroborating evidence, added to P2-03:** R's `Holes` coefficient is ~10% above Python's and
+Julia's in the M=100 run too (0.053 vs 0.048 vs 0.048, `Final_Thesis_Figures/8.241_Table2_Regression.tex`)
+— the identical gap the M=5-era `01_-_Phase4_Documentation.md:485-487` attributes to the Tigris
+acreage difference, which **P2-03** already showed contributed zero rows. The gap surviving a
+20× change in M, in a variable (`Holes`) that **P1-01** already proved R silently imputes and
+Python/Julia never do, is a second independent line of evidence for candidate #3 above.
+
+### P3-02 — `Phase_3.jl` retained `m_datasets = 5` as the default in all three function signatures
+**Severity:** Critical (as a latent trap) · **Status:** Fixed 2026-07-25 (Parity Audit D-1) · **Locus:** Code
+
+```julia
+Phase_3.jl:36   const M = 100
+Phase_3.jl:43   function run_imputation(input_csv::String, out_dir::String; m_datasets::Int = 5)
+Phase_3.jl:125  function run_pooling(in_dir::String, out_csv::String; m_datasets::Int = 5)
+Phase_3.jl:231  function run_acreage_summary(in_dir::String, out_csv::String; m_datasets::Int = 5)
+```
+
+Harmless **at the time this was found**: `main()` passes `m_datasets = M` to all three. But any
+call that omits the keyword — an interactive `include()`, a REPL invocation, a future bulk
+script — would have silently run at M=5 and written a file whose name and header claim M=100.
+Given **P3-01**, this is very likely the mechanism by which the M=5 results were generated in
+the first place.
+
+Python (`Phase_3.py:48,131,223`) has the same shape but defaults to `m_datasets=100`, so it
+fails safe.
+
+**Fixed (Parity Audit D-1, 2026-07-25):** `Phase_3.jl:43,125,231` changed to `m_datasets::Int =
+M` (not a literal `100` — that would have reintroduced the same desync risk against a future
+edit to `const M`, an error caught and corrected same-day, see `PARITY_AUDIT.md` D-1). Same
+belt-and-braces fix applied to `Phase_3.py:48,131,223` even though its literal `100` default
+wasn't broken today. **This entry's status was stale until 2026-07-26** — the fix landed under
+D-1 the same day this issue was logged, but the ID's own status field was never updated to
+match; caught and corrected during the Gate 2 status audit.
+
+### P3-03 — MICE-free complete-case value is bit-identical to Python's pooled estimate
+**Severity:** Major · **Status:** Open · **Locus:** Docs
+
+`01_-_Phase3_Documentation.md` §"Complete Case Analysis (MICE-Free)" reports the MICE-free
+national value as **$943.025 B**. Python's pooled MICE Q̄ is **$943.025 B** — identical to three
+decimals.
+
+A complete-case sum over 5,115 courses landing on exactly the multiply-imputed pooled sum over
+~16,292 courses is not a coincidence; it's a transcription error. And the doc then reasons *from*
+the coincidence:
+
+> "The MICE-free national value ($943.025 B) is remarkably close to the pooled MICE estimates…
+> This suggests that: 1. The 28.8% of courses missing `osm_acreage` are not systematically
+> different in value…"
+
+That conclusion is currently unsupported. If a genuine complete-case analysis exists it should
+be quoted; if not, the robustness claim must be withdrawn. Note the direction of the risk: a
+complete-case estimate that *matches* the imputed one is the single most attractive result for
+the thesis, which is exactly why it needs to be right.
+
+Minor arithmetic in the same section: "excluding 68.4% of the sample (5,115 vs. ~16,292)" —
+5,115/16,292 = 31.4%, so the exclusion is 68.6%, consistent with the 11,177 removed stated two
+lines above.
+
+### P3-04 — Acreage-pooling rationale contradicts itself
+**Severity:** Minor · **Status:** Open · **Locus:** Docs
+
+§Step 3 states:
+
+> "Acreage is a **fixed spatial measurement** … it does not vary across imputed datasets
+> because MICE imputes acreage itself, not geography."
+
+Acreage demonstrably *does* vary across imputed datasets — 28.8% of it is imputed, and the same
+section proceeds to compute its between-imputation variance `V_B` and build a CI from it. The
+*conclusion* (drop `V_W`, since a completed dataset's total is a deterministic sum with no
+within-dataset sampling variance) is defensible. The stated reason is not, and a committee
+member reading it closely will notice.
+
+### P3-05 — Two different sets of national acreage totals are published
+**Severity:** Minor · **Status:** Open · **Locus:** Docs
+
+| Source | R | Julia | Python |
+|---|---|---|---|
+| §"Results — National Acreage" | — | 2,293,146 | 2,305,904 |
+| §3D "Confirmed from Output CSVs" | 2,303,152 | 2,291,064 | 2,306,485 |
+
+Two runs, both published in the same document. §3D claims to read the actual CSVs, so it is
+presumably authoritative — but the earlier section isn't marked stale. Likely the same M=5/M=100
+split as **P3-01**; needs confirming rather than assuming.
+
+Also in §"Results": the R acreage table is a stub — the header exists, the numbers were never
+filled in.
+
+### P3-06 — Julia `Pooled_Acres` written in scientific notation
+**Severity:** Minor · **Status:** Won't fix (documented) · **Locus:** Code
+
+`Jl_National_Acreage_Summary.csv` writes the national total as `2.29106386e6`. Parses fine
+everywhere; noted only because it will look like a defect to anyone opening the CSV by hand.
+
+**Re-confirmed (Parity Audit D-7, 2026-07-25):** still present on the current Jun-12 output, and
+it's inconsistent even within the same file — `National Total` and `Urban` rows are scientific
+notation (`2.29090437e6`, `1.70409671e6`), `Rural` is plain decimal (`586807.66`), same file, same
+column. Likely just Julia's default float-formatting magnitude threshold. Status unchanged.
+
+### P3-07 — R has no explicit floor at 0 on imputed acreage/BVPA; Python and Julia both do
+**Severity:** Minor (currently dormant — no negative values observed) · **Status:** Fixed 2026-07-25 · **Locus:** Code
+
+**Checked (Parity Audit D-4, 2026-07-25):** `Phase_3.py:98-101`
+(`.clip(lower=0)` on both `osm_acreage` and `Baseline_Value_Per_Acre`) and `Phase_3.jl:82-85`
+(`clamp.(..., 0, Inf)` on both) explicitly floor imputed values at 0 before writing. `Phase_3.R`'s
+save loop (`Phase_3.R:136-141`, `complete_data <- complete(imputed_list, i); write.csv(...)`) has
+**no equivalent clip anywhere** — grepped for `clip|clamp|pmax`, 0 matches in `Phase_3.R`.
+
+**Checked whether this currently matters:** read `Dataset 1` for all three languages —
+**0 negative values in any of `final_acreage`/`osm_acreage`/`Baseline_Value_Per_Acre`, all three,
+min values identical (5.05 acres, $325) across all three**, matching the plausibility-filtered
+floor, not a clipped artifact. So R's `ranger`-backed `"rf"` method isn't currently producing
+negative draws in practice — the missing clip is dormant, not live. Only checked Dataset 1 of
+100 per language, not all M=100 × 3.
+
+**Why it's still worth recording:** Python/Julia's authors evidently found it *necessary* to add
+this guard, implying their RF backends (LightGBM, Julia's implementation) can produce
+negative regression-tree predictions near a zero boundary. Whether R's `mice`+`ranger` "rf"
+method structurally can't (e.g. because it draws literal observed donor values rather than
+predicted means, which would mathematically preclude negatives if no observed value is negative)
+or simply hasn't yet in the checked samples is not established either way — that open question
+is unaffected by the fix below and is not resolved here.
+
+**Fixed 2026-07-25:** added `complete_data$osm_acreage <- pmax(complete_data$osm_acreage, 0)` and
+the equivalent for `Baseline_Value_Per_Acre`, in `Phase_3.R`'s per-dataset save loop (right after
+`complete(imputed_list, i)`, before `write.csv`) — mirrors Python's `.clip(lower=0)` and Julia's
+`clamp.(..., 0, Inf)` at the same point in their save loops. Currently a no-op against this RF
+backend's draws (Dataset 1 check above still holds), added purely for defensive parity so all
+three behave identically **by construction** rather than by the current backend's luck. Not
+executed (`§2.1`) — this documents the source fix, not a re-verified output.
+
+**Correction (2026-07-26, caught during the dress-rehearsal cascade):** the fix above used the
+wrong column name — `complete_data$osm_acreage`, copied from Python/Julia's convention, but R's
+imputed column is `final_acreage` (`IMPUTE_COLS <- c("final_acreage", ...)`, `Phase_3.R:44`).
+`complete_data$osm_acreage` doesn't exist in R's frame, so `pmax(NULL, 0)` returned a zero-length
+vector and the assignment crashed: `Error in $<-.data.frame(...) : replacement has 0 rows, data
+has 16292`. **`VERIFIED` by execution** — this was not caught by re-reading the diff, only by
+actually running `Phase_3.R` end-to-end during the rehearsal. Fixed to
+`complete_data$final_acreage <- pmax(complete_data$final_acreage, 0)`; re-ran, clean. See the
+rehearsal writeup in `PARITY_AUDIT.md` for the other two crashes it caught.
+
+### P3-08 — Julia's `mice()` hard-crashes if any predictor categorical column contains a missing value
+**Severity:** Major (was live against pre-P1-05 on-disk data; confirmed non-recurring post-fix) · **Status:** Verified resolved 2026-07-26 (dress-rehearsal cascade) · **Locus:** Code / cross-cutting
+
+**Surfaced incidentally during D-5's execution** (author-authorized scoped exception to `CLAUDE.md`
+§2.1 — see `PARITY_AUDIT.md` D-5). Running a minimal standalone reproduction of `Phase_3.jl`'s
+imputation step against the current, unmodified on-disk `Jl_Phase2_Acreage_Matched.csv` produced
+an immediate crash — `VERIFIED` by execution, not inferred:
+
+```
+ERROR: MethodError: Cannot `convert` an object of type Missing to an object of type
+CategoricalValue{String15, UInt32}
+```
+
+Traced into `Mice.jl`'s `initialiseworkingdata` (`Mice/src/makefunctions.jl:131`). Root cause:
+`Course_Type` (`= categorical(acreage_df.Ownership_Type)`) is a **predictor**, not an imputation
+target (it's not in `IMPUTE_COLS`/`visitsequence`) — but the current on-disk data still carries
+the single pre-**P1-05** missing `Ownership_Type` value (Turtle Creek, the same row **X-05**
+traced to `CSV.jl`'s `missingstring=""` default). `Mice.jl` does not skip or otherwise tolerate a
+`missing` in a non-imputed categorical predictor column — it refuses to build its internal working
+data structures at all, and the failure is total (no partial output, no imputed columns, nothing).
+
+**Practical consequence:** `Phase_3.jl`, run today exactly as it sits on disk, against today's
+on-disk Phase 2 output, **would not complete** — not a silent divergence, a hard stop. R's `mice`
+and Python's `miceforest` were not observed to have an equivalent failure mode (both completed
+against the same underlying missingness pattern in their respective per-language predictor
+columns without incident).
+
+**Why this is (probably) already fixed, but not verified as fixed:** **P1-05**'s source-level
+regex fix removes the underlying missing `Ownership_Type` value at Phase 1, before it can reach
+Phase 2 or Phase 3 — once the post-freeze cascade re-run regenerates Phase 2's output from the
+fixed Phase 1, this crash should no longer trigger, because the predictor column it depends on
+will have zero missing values. **Not verified**, because verifying it means running Phase 1 → 2 →
+3 in sequence, which is out of scope beyond the single D-5 exception already granted.
+
+**Recommend:** treat this as a standing risk, not a closed item — if any *other* predictor column
+(not just `Ownership_Type`) ever picks up a stray missing value in a future data refresh, Julia's
+Phase 3 will hard-crash where R and Python would (per **A-2**'s original finding) silently
+mis-impute it instead. Worth a defensive `dropmissing`/assertion on `PREDICTOR_COLS` in
+`Phase_3.jl` before the `mice()` call, so the failure mode is an explicit, informative check
+rather than an opaque library `MethodError` — not implemented here, as it's a robustness
+improvement beyond what D-5 was scoped to fix, and touches only Julia (no equivalent R/Python
+divergence to correct in parallel under **§3**).
+
+### P3-09 — `run_pooling()`'s within-imputation variance used cross-sectional dispersion of course values, not the sampling variance of the pooled total; same defect independently in all six national/Oahu pooling sites
+**Severity:** Major (specification error, confirmed) / Minor (numerical impact — see magnitudes below) · **Status:** `VERIFIED`, fixed 2026-07-29 · **Locus:** Code
+
+Author-supplied handoff (`repool.py` + accompanying spec), independently verified line-for-line
+before any code changed, per standing practice of not trusting a handoff's file/line claims
+without checking the repo. Confirmed real, identically, in **six** places:
+
+| Site | Python | R | Julia |
+|---|---|---|---|
+| Phase 3 (national) | `Phase_3.py:157` | `Phase_3.R:201` | `Phase_3.jl:181` |
+| Phase 5 (Oahu Step 3) | `Phase_5.py:480` | `Phase_5.R:329-332` | `Phase_5.jl:435` |
+
+`v_w = mean(var(Total_Opportunity_Cost))` — the cross-sectional dispersion of individual
+course-level dollar values within one completed imputation — was used as Rubin's Rules'
+within-imputation variance term. The estimand at every one of these six sites is a **census
+total** (sum over all courses in a completed dataset, national or the Oahu crosswalk set): given
+a completed dataset the total is known exactly, so the true within-imputation sampling variance
+is zero, not the between-course dispersion. **Internal control:** `pool_acreage()` (Phase 3, all
+three languages) already implements `v_w = 0` correctly (`se = sqrt(v_b + v_b/M)`, no within
+term), and R/Julia carry the literal comment *"within-variance is zero for a spatially fixed
+attribute"* — `run_pooling()` diverged from its own neighbor function; not a deliberate modelling
+choice. Cross-language tri-implementation agreement could not catch this, since all three
+implemented the identical (wrong) formula.
+
+**Verified magnitudes, from the actual frozen outputs (not estimated):**
+
+| Scale | sqrt(v_w) | sqrt(v_b) | SE change (v_w→0) | Corrected-vs-published CI99 half-width |
+|---|---:|---:|---:|---:|
+| National (16,297 courses, R) | $145.6M | $2.825B | −0.13% | **1.018×** (wider — t-correction dominates) |
+| Oahu Step 3 (36 courses, R) | $434M | $981M | −8.47% | **0.933×** (narrower) |
+
+The full corrected-vs-published CI99 ratio needs **both** corrections applied together — v_w→0
+alone understates the true delta at national scale, since the originally-published CI used z
+critical values and the corrected one correctly uses t(M−1); z99=2.576 vs t99(df=99)=2.6264.
+Nationally the two corrections nearly cancel (net: published CIs marginally too narrow, not too
+wide — no qualitative claim changes). At Oahu scale v_w's share of total variance is large enough
+(sqrt(v_w)/sqrt(v_b) ≈ 0.44, vs ≈ 0.05 nationally) that the net effect is a real ~6.7% narrowing —
+this **strengthens**, not undermines, the existing §4.4.2 footnote's claim that Oahu's reported
+uncertainty is measurement error concentrated in a handful of identifiable courses, not general
+imputation-model uncertainty: removing an unjustified variance term makes that framing easier to
+defend.
+
+**Fixed at all six sites** (`v_w = 0`, `t(M−1)` critical values in place of z, old z-based
+v_w/SE/CI retained as `[superseded]` rows in each site's output for the audit trail; point
+estimates unaffected — only SE/CI change). `repool.py` (author-supplied, fixed for its own
+hardcoded-`osm_acreage` crash on R's `final_acreage`-named column, verified against all three
+languages) is the standalone re-pool-without-re-imputing utility for Phase 3; the in-place fixes
+above are what a future fresh pipeline run will produce.
+
+**Not applied:** no full pipeline re-run performed. Phase 3's `*_Rubins_Rules_Summary.csv` and
+Phase 5's `Phase5_Oahu_Comparison.csv` still contain the pre-fix (z-based) SE/CI until the author
+re-runs the affected scripts; `repool.py`'s `*_CORRECTED.csv` outputs are the reproducible
+preview of Phase 3's corrected numbers in the meantime. See **P5-20** for a separate, unrelated
+defect found while verifying this one — the Oahu Step 3 q_bar in the committed
+`Phase5_Oahu_Comparison.csv` does not reproduce from the current code at all, independent of this
+v_w fix.
+
+**Three secondary claims in the original handoff, checked and withdrawn — logged so they don't
+recur:**
+
+| Claim | Status |
+|---|---|
+| "R seed doesn't reach `future` workers; needs `furrr_options(seed=TRUE)`" | **Not a defect.** `Phase_3.R` uses `futuremice(..., parallelseed = 42, ...)` — the package's own dedicated parallel-safe seed mechanism. No bare `future_map()` call exists that would need it. |
+| "Julia `m_datasets` default is 5" | **Already covered by P3-02** (fixed 2026-07-25) — current default is `m_datasets::Int = M`, `const M = 100`, and every call site passes `M` explicitly. Only `Phase_3.jl`'s header comment still said "m=5"; corrected here (2026-07-29) as a pure documentation fix, no computational effect. |
+| "Julia thread `ENV` is a no-op" | **Real pattern, but not present in Phase 3.** No `ENV["JULIA_NUM_THREADS"]` assignment exists in `Phase_3.jl`. Already found and fixed in `Phase_1.jl`/`Phase_2.jl` 2026-07-27 (see entries above, lines ~1268-1284). |
+
+### P3-10 — Cross-platform reproduction: all three languages' Windows-frozen national totals reproduce on `strix` to within 0.06%; empirical backing for Appendix A.5
+**Severity:** N/A (positive/confirmatory result, not a defect) · **Status:** `VERIFIED` where stated
+below, one figure relayed and not independently located · **Locus:** N/A (cross-cutting
+reproducibility result) · **Relates to:** **P0-02**, **P2-06**, **P3-09**
+
+The `strix` migration's first full tri-language M=100 cascade re-run reproduces the prior
+Windows-frozen national aggregates closely enough to serve as the empirical backing for
+Appendix A.5's reproducibility claim — a lockfile-driven `renv::restore()` that never once
+succeeded on Windows (**P0-02**), run fresh on different hardware, a different OS, and (per
+**P2-06**) partially different GEOS/GDAL/PROJ library versions, reproducing the frozen figures to
+within a fraction of a percent.
+
+| Language | `strix` fresh (`VERIFIED`, this run's own `*_Rubins_Rules_Summary.csv`) | Windows frozen | Delta | Frozen source |
+|---|---:|---:|---:|---|
+| R | $935.036B | $935.573B | **−0.057%** | `Expected_Deltas.md:157`, `VERIFIED` — quoted directly |
+| Python | $940.950B | $941.096B | **−0.016%** | Author-relayed (`repool.py` corrected run) — see below |
+| Julia | $951.119B | $951.092B | **+0.003%** | Author-relayed, `VERIFIED` — fresh figure matches to the dollar |
+
+**R and Julia's frozen figures are independently corroborated, not just taken on trust.** R's
+$935.573B is quoted verbatim from `Expected_Deltas.md`'s own text ("R's fresh total: $935.573B").
+Julia's $951.119B fresh figure was read directly from `Jl_Rubins_Rules_Summary.csv` on this
+machine — it matches the author-stated fresh figure to the dollar, which is strong indirect
+evidence the paired frozen figure ($951.092B) is accurate too, even though no file in this repo
+states it directly. **Python's frozen figure ($941.096B) could not be independently located in
+this repo** — searched `Issue_Register.md`, `Expected_Deltas.md`, `Project roadmap.md`, and all
+`Archive/` snapshots; the closest candidates found in-repo (`Expected_Deltas.md`'s Jun-12
+baseline, $938.309B; the P2-04-corrected prediction, $940.099B) are both different runs, not this
+figure. $941.096B is author-relayed as sourced from the same `repool.py` corrected run that
+produced R's $935.573B and Julia's $951.092B frozen figures — a specific source, not a
+back-solved value, but still not one this repo can independently confirm. Flagged, not treated
+as verified.
+
+**Attribution, in two parts with different evidence strength:**
+
+1. **The Pass-2 boundary case (`P2-06`), `VERIFIED` and R-specific.** R's fresh run matches 11,604
+   OSM-sourced courses against Python/Julia's 11,605 — one course, Charlotte Golf Links, sits
+   500.5466 m from its nearest polygon, 0.55 m past `MAX_NEAREST_M = 500`. Directly verified by
+   recomputing the distance in R's own geometry (`P2-06` item 2). This is R-specific, consistent
+   with R carrying the largest of the three deltas (0.057% vs Julia's 0.003%), but the magnitude
+   of $537M this delta represents is well beyond what one course's own acreage (≈194 ac at the
+   matched neighbor's size) could produce directly — the plausible mechanism is that flipping one
+   course's `MICE_Target` status changes the random-forest imputer's training population for the
+   other ~4,688 imputed courses, not a simple one-row swap. **Not independently isolated or
+   quantified here** — flagged as the most likely single contributor, not a proven one.
+2. **GEOS/GDAL/PROJ version differences between the Windows and `strix` environments, author-
+   stated, not independently verified.** Plausible in principle — this migration exists precisely
+   because Windows could never complete `renv::restore()` for the geospatial stack (`sf`/`s2`/
+   `units`/`Rcpp`), so the Windows environment's exact library versions are unknown and
+   unreachable from `strix` to compare directly. Cannot be checked further without access to the
+   retired Windows machine.
+
+**Reading the ordering, not just the magnitudes:** all three deltas are an order of magnitude
+below this project's own established cross-language spread (~1.6-1.7%, `X-01`/`P3-01`), so none
+of them are individually alarming. The ordering (Julia smallest → Python middle → R largest)
+is directionally consistent with R being the one language with a *known, verified* extra defect
+(the Pass-2 boundary case) that Python and Julia don't share — a plausible, not proven,
+explanation for why R's gap is the largest.
+
+---
+
+## Phase 4 — Econometric Modeling
+
+### P4-01 — Documentation contradicts itself on whether the results are M=5 or M=100
+**Severity:** Major · **Status:** Open · **Locus:** Docs
+
+Same numbers, two incompatible labels, one document:
+
+- §Results: *"the tables below reflect pilot runs at M = 5 imputations. They will be updated
+  once the M = 100 pipelines complete"* — Python 12.2822 / 0.0474 / 4.1720.
+- §4D: *"Coefficient Comparison (from actual M=100 Bulk Tests CSVs)"* — Python 12.2822 /
+  0.04740 / 4.17199.
+
+Identical to five significant figures. Both labels cannot be true. Given **P3-01**, M=5 is the
+more likely provenance — and if so, §4D is mislabelled and the Phase 4 Summary's coefficient
+table inherits the error. Resolution depends on **X-03** (which tier's CSVs are which).
+
+### P4-02 — Python's MICE backend is described three different ways
+**Severity:** Minor · **Status:** Open · **Locus:** Docs
+
+Phase 4 §"What the Data Tells Us" ¶3 attributes Python's imputation to `IterativeImputer`.
+Everywhere else — Phase 3 docs, Phase 3 Summary, Phase 4 §Master Scripts — it is
+`miceforest` v6.0.5 with a LightGBM backend. `IterativeImputer` is a **scikit-learn** class
+and a materially different algorithm (typically Bayesian ridge). One sentence, but it appears
+in the paragraph that explains away the cross-language spread, so it undercuts the explanation
+it's offered in support of.
+
+### P4-03 — The 60× urban premium is largely mechanical, and the caveat is load-bearing
+**Severity:** Major · **Status:** Open (author is aware) · **Locus:** Docs
+
+Recorded not as an error but as the interpretive exposure most likely to be pressed at defence.
+The Phase 4 Summary already concedes it:
+
+> "the hybrid valuation algorithm in Phase 1 assigns urban courses the FHFA residential price
+> and rural courses the USDA agricultural price, and the FHFA–USDA per-acre ratio is itself
+> approximately 60× in many counties."
+
+Which means `β_urban ≈ 4.1` substantially recovers the ratio that Phase 1 *assigned by
+construction*, and `R² ≈ 0.70–0.77` is high largely because the dummy reproduces a
+deterministic branch in the data-generating process. The Summary handles this well — it calls
+the regression a *decomposition* rather than a causal estimate and carries the caveat to §5.3.
+
+The exposure is that Phase 4 §"What the Data Tells Us" ¶1 does **not** carry the caveat, and
+instead reads the coefficient straight: *"reflecting the well-known urban land price gradient."*
+Any figure or table generated from that framing (Forest Plot, Table 2) inherits the stronger
+claim without the qualification. The two documents need to agree.
+
+### P4-04 — Phase 4 function parity sweep (E-1, E-3–E-6): clean, one unused-import conflict flagged
+**Severity:** Cosmetic · **Status:** Verified clean except one flagged item, not acted on · **Locus:** Code
+
+Parity Audit Part E, batch result. E-2 is its own entry (folded into **P1-01** above, since it's a
+direct downstream consequence of that bug). The rest:
+
+- **E-1 (dependent variable): clean.** Covered above under **X-02** — `log1p(acreage × BVPA)`,
+  multiply-then-log, identical order in all three; the only divergence is *which* acreage column,
+  already tracked as **X-02**.
+- **E-3 (HC1 SEs): `VERIFIED` numerically identical, not just formula-identical.** Built one common
+  dataset (Python's `Dataset_1`, `Log_Opportunity_Cost`/`Holes`/`county_type`, N=16,297, no
+  missingness) and fit `Log_Opportunity_Cost ~ Holes + county_type` through each language's own
+  HC1 code path against the *same* data — `sandvich::vcovHC(type="HC1")` (R), `cov_type="HC1"` via
+  `statsmodels` (Python), and the hand-rolled sandwich estimator in `Phase_4.jl:111-117`
+  (`(n/(n-k)) .* bread * meat * bread`). Coefficients and SEs agree to 6+ significant figures
+  across all three (e.g. `Holes` SE: `0.002318615` R / `0.002319` Py / `0.002318615126867545`
+  Jl) — the formula is genuinely the same estimator in all three, not just described the same way.
+- **E-4 (significance stars): clean.** `stars()` (R, Python) / `get_stars()` (Julia) all use the
+  same four strict `<` thresholds (0.001/0.01/0.05/0.1) with no `<=` anywhere, so boundary
+  behavior at exactly `p = 0.05` (etc.) is identical (no star) in all three. `NA`/`NaN` handling:
+  R and Julia guard explicitly (`is.na`/`isnan`); Python has no explicit guard but relies on
+  IEEE-754 `NaN < x` always evaluating `False`, which falls through to the same `""` result —
+  stylistically different, functionally identical.
+- **E-5 (Barnard–Rubin df): clean.** `df_old`, `df_obs`, `df_adj` formulas are algebraically
+  identical in all three (`Phase_4.R:214-219`, `Phase_4.py:178-182`, `Phase_4.jl:229-233`),
+  including the same choice of `df_com` = the **first** imputed dataset's residual df in all
+  three, not an average or a recomputation per-dataset.
+- **E-6 (unused `broom` import): confirmed unused, NOT removed — flagging the conflict rather
+  than resolving it.** `Phase_4.R:15`: `library(broom)`, 0 calls to `tidy()`/`glance()`/
+  `augment()`/any broom function anywhere in the file (`VERIFIED`, grepped). The checklist item
+  asks to "verify and remove," but the import line itself carries an explicit
+  `# pre-existing dependency - do not remove` comment — the identical comment also guards
+  `library(wooldridge)` in the same file and in `Phase_3.R`. Given `CLAUDE.md` §6 (preserve
+  existing conventions, don't opportunistically clean up) and that this looks like a deliberate
+  prior instruction rather than an oversight, **not removed** — surfaced here for the author to
+  decide, rather than silently complying with either the checklist item or the in-code comment.
+
+---
+
+## Phase 5 — Hawaii Micro-Case Study
+
+### P5-01 — Three different Oahu opportunity-cost totals are in circulation
+**Severity:** Major · **Status:** Open · **Locus:** Docs
+
+| Value | Source | Basis |
+|---|---|---|
+| **$25.400B** | Phase 5 Summary + Phase 5 Doc §Step 1–3 | Rubin-pooled, 33 dedup courses, CI $22.663–$28.137B |
+| **$28.6B** | Phase 5 Summary §Key result; Phase 6 waffle chart | "gross HBU estimate" — decomposed 23.4 / 3.9 / 1.3 |
+| **$31.197B** | Phase 6 Doc §Last Verified Run | "M=100 R draws, 37 courses" |
+
+The $28.6B figure has no derivation anywhere in the corpus. It appears fully formed in the
+Preservation Paradox decomposition, and the three sub-figures ($23.4B / $3.9B / $1.3B) are
+simply the **acreage** shares (81.7% / 13.8% / 4.5%) multiplied through it — so the dollar
+decomposition carries no independent information beyond the zoning acreage split, and inherits
+whichever total is chosen.
+
+This matters because **$1.3B "directly unlockable" is the single most quotable number in the
+thesis.** At $25.4B the same 4.5% share gives ~$1.14B; at $31.2B it gives ~$1.40B. The
+headline moves by ±20% depending on which total is used, and the Summary uses $25.4B and
+$28.6B **four paragraphs apart**.
+
+**Needed:** one canonical Oahu total, a stated derivation, and consistent use. The 37 → 33 → 29
+course-count ladder is well explained in the Summary and is *not* the problem — the problem is
+that the dollar totals attached to those stages aren't reconciled.
+
+**$31.197B resolved, 2026-07-28.** `VERIFIED` by direct trace of `Phase_6.R`'s `run_9_Oahu_
+Opportunity_Cost_Map` (`pool_oahu_oc()`): bbox-filters the *national* Phase 3 M=100 imputed
+datasets to Oahu (21.2-21.9°N, -158.5 to -157.6°W), no spatial deduplication, cross-language
+`full_join` on exact float `(Longitude, Latitude)` — which drops 2 of 39 courses to
+floating-point mismatch, landing on **37 courses**, matching the doc's own annotation exactly.
+Live console output for this same code path, re-run 2026-07-28 (post the X-10 RF switch, so
+Julia's contribution shifted): **$31.282B, 37 courses** — same mechanism, number moved only
+because Julia moved. This is not "R draws" as the Phase 6 Doc's annotation states — it's a
+tri-language `rowMeans`, per `Phase_6.R:1897`; the doc's annotation is itself imprecise, logged
+here rather than corrected (`CLAUDE.md` §2.2, docs are the author's to edit).
+
+**$28.6B searched, not found — retire it.** Checked: (1) the live waffle-chart module
+(`Phase_6.jl` `Mod_12_Zoning_Waffle`, the actual "Preservation Paradox" chart) reads `q_bar`
+directly from each language's own `Phase5_Oahu_Comparison.csv` and computes
+`grand_mean_oc = (oc_jl+oc_py+oc_r)/3` — currently ≈$26.82B, not $28.6B, at any point in this
+audit's history. (2) `Phase 6 Visualization/Bulk/Julia/10_Hawaii_Gap_Dumbbell.jl` and
+`12_Zoning_Waffle_Chart.jl` (the old exploratory prototypes) — the latter hardcodes "$26.67B"
+in its title, explicitly on **mock, not real, data**; neither matches $28.6B. (3) The Jun-12
+archive's own three `Phase5_Oahu_Comparison.csv` files: R $26.735B, Python $26.786B, Julia (PMM)
+$26.316B — mean $26.612B, still no match. No candidate source anywhere in the corpus produces
+$28.6B. Per author instruction: **retiring, not inheriting** — this figure should not appear in
+any future document without a fresh, stated derivation.
+
+**Which figure is authoritative, per author decision (2026-07-28):** Phase 5's own dedicated
+Oahu pipeline (`Phase5_Oahu_Comparison.csv` family) is authoritative over Script 9's map-rendering
+byproduct — but see **P5-11** and **P5-12** below: Phase 5's own $26.844B(R)-family figure turned
+out to have defects of its own, found while reconciling it against Script 9.
+
+**Final production figures (2026-07-28), superseding every number above in this entry:**
+headline $28.778B (Step 2 measured, all three languages identical), consistency check
+~$30.5B (Step 3, national-imputed/crosswalk, varies slightly by language, ~$30.49B Grand
+Mean), rural-USDA sensitivity $25.188B. Script 9 and Phase 5's own Step 3 now agree by
+construction (same crosswalk, same course set) rather than needing reconciliation — see
+**P5-11**, **P5-12**, **P5-13**, **P5-15** for the fixes and `Expected_Deltas.md` for the full
+reconciliation.
+
+### P5-02 — Summary and Documentation disagree on whether the P-1 discrepancy was resolved
+**Severity:** Major, downgraded from live discrepancy · **Status:** Resolved — Summary is correct, Documentation is stale · **Locus:** Docs
+
+- `00_-_Phase5_Summary.md`: *"A subsequent re-run with updated `sf` geometry handling resolved
+  the divergence; all three languages now report P-1 = 744.6 acres, with all zoning classes
+  agreeing across implementations to within 0.01 acres."*
+- `01_-_Phase5_Documentation.md`: R reports **523.5** acres (total ~5,845); Python/Julia report
+  744.6 (total ~6,066); *"root cause unconfirmed"*; listed under **Limitations §6**.
+
+Directly contradictory. If the Summary is right, the Documentation's limitation and cross-language
+note must be struck. If the Documentation is right, the Summary is claiming a fix that didn't
+happen — and 6,066.2 acres, the canonical denominator for every zoning share in the thesis,
+is a Python/Julia-only figure that R does not reproduce.
+
+**Resolved, `VERIFIED` (Parity Audit F-1, 2026-07-26):** read the actual current on-disk output
+of all three languages' Step 6 zoning tables (`Data/{R,python,Julia}/*Phase5_Step6_Zoning_
+Percentages.csv`). **P-1 = 744.6255827951873 (R) / 744.625582790703 (Python) /
+744.6255827939525 (Julia)** — identical to 8+ significant figures. All 19 zone classes across
+all three agree to well within the Summary's claimed 0.01-acre tolerance, not just P-1. **The
+Summary is the accurate statement; the Documentation's "root cause unconfirmed" limitation and
+cross-language note describe a state that no longer matches current data** — the same
+documentation-lag pattern already established for **P3-01**/**X-04** (a real fix landed, the
+narrative describing the *problem* was never updated to describe the *fix*). Not a code defect;
+nothing to change in either master script. `Issue_Register.md`/`PARITY_AUDIT.md` are the only
+files this audit may edit, so the actual doc correction (striking the stale limitation) is left
+for the post-freeze documentation pass, per `CLAUDE.md` §2.2.
+
+### P5-03 — The six pilot courses do not span all four counties
+**Severity:** Minor · **Status:** Open · **Locus:** Docs
+
+`00_-_Phase5_Summary.md` claims the pilot covers *"six high-profile Hawaii golf courses spanning
+all four counties (Honolulu, Maui, Hawaii, Kauai)."* The table in the Documentation:
+
+| County | Courses in pilot |
+|---|---|
+| Honolulu | 2 (Turtle Bay, Waialae) |
+| Maui | 2 (Kaanapali, Wailea) |
+| Hawaii | 2 (Hualalai, Kohala) |
+| **Kauai** | **0** |
+
+Three counties, not four. Easy fix in the prose — but note the Summary also leans on the
+urban/rural gradient across the pilot (1.16× Honolulu → 1.69× Big Island), and Kauai's absence
+removes one of the two rural counties from a six-point trend.
+
+### P5-04 — The $456.8M "average opportunity cost" is a mean over 61 courses, not 74
+**Severity:** Minor · **Status:** Open · **Locus:** Docs
+
+Phase 5 Doc §"Hawaii Course Summary (All Islands)":
+
+| Metric | Published |
+|---|---|
+| Total Courses (Hawaii state) | 74 |
+| Average Opportunity Cost | $456,829,248 |
+| Total Opportunity Cost | $27,866,584,127 |
+
+$27,866,584,127 / $456,829,248 = **61.0**, not 74. The mean silently excludes 13 courses —
+presumably those with missing BVPA or acreage. $27,866,584,127 / 74 = **$376.6M**. Either
+number can be published; the label must match the denominator. (The per-county table is
+internally consistent: counts sum to 74, totals sum to ~$27.85B.)
+
+### P5-05 — Stale hardcoded acreage constant survives in Bulk Tests daughter scripts (all three languages)
+**Severity:** Minor · **Status:** Confirmed, out of master-pipeline scope · **Locus:** Code (Bulk Tests only)
+
+`OSM_DERIVED_ACRES = 8342.28` was hardcoded in both `Phase_5.py` and
+`Bulk Tests/Julia/Step3_Final_Comparison.jl`. The Python master was corrected to compute the
+value live (**8,564.23 acres** authoritative). The Julia daughter script still carries the stale
+constant. The docs argue it's out of the master pipeline's path and therefore inert — true, but
+it's a 2.7% error sitting in a script named "Final_Comparison" that someone will eventually run.
+
+**Confirmed and widened, `VERIFIED` (Parity Audit F-2, 2026-07-26):** grepped for the literal
+constant across the whole Phase 5 directory. **All three `Bulk Tests/{R,python,Julia}/
+Step3_Final_Comparison.{R,py,jl}` scripts carry the identical stale `8342.28`** — not a
+Julia-only issue as originally scoped, it's all three Bulk Tests daughter scripts equally. The
+master pipeline is clean in all three languages: `Data/Julia/Jl_Phase5_Oahu_Comparison.csv` and
+the QA file `Data/QA/Phase5b_Acreage_QA_Results.csv` both show the live-computed **8,564.23**
+agreeing across R/Python/Julia. `01_-_Phase5_Documentation.md` already states this correctly
+("that script is not part of the master pipeline") — confirming the doc's own claim rather than
+contradicting it, unlike **P5-02**. No master-script fix needed; Bulk Tests scripts are outside
+`CLAUDE.md` §8's "Master scripts" list and this audit's scope (see **X-03**), so not edited here.
+
+### P5-06 — Parenthesis bug is real, but only in a Bulk Tests daughter script — master `Phase_5.R` is already clean
+**Severity:** Cosmetic · **Status:** Confirmed, out of master-pipeline scope · **Locus:** Code (Bulk Tests only)
+
+Parity Audit **F-3**. `01_-_Phase5_Documentation.md:328` flags: *"Step4 `else if` parenthesis
+error — `all(nchar(tmk_df$TMK_clean)) == 9` should be `all(nchar(tmk_df$TMK_clean) == 9)`."*
+`VERIFIED` by reading both locations:
+- **`Bulk Tests/R/Step4_Offical_Tax_Merge.R:88-90`: the bug is real.**
+  `all(nchar(tmk_df$TMK_clean)) == 9` — `all()` wraps only `nchar(...)`, coercing a vector of
+  positive integers to `TRUE` (all nonzero), then compares `TRUE == 9` (always `FALSE`). This
+  `else if` branch can never fire, exactly as the doc says, and the file even carries its own
+  `[REVIEW NEEDED]` comment flagging it.
+- **`Phase_5.R:313-315` (the master script): already correct.**
+  `all(nchar(tmk_df$TMK_clean) == 9) && all(nchar(na.omit(tax_data$TMK_clean)) == 8)` — properly
+  parenthesized, `nchar(...) == 9` evaluated per-element before `all()`. The master pipeline does
+  not have this bug; it only exists in the (out-of-scope) Bulk Tests sibling.
+
+No fix applied — the affected file is a Bulk Tests daughter script, outside `CLAUDE.md` §8's
+master-script list and this audit's scope, consistent with **P5-05**/**X-03**.
+
+### P5-07 — R's TMK column-name candidate list is a strict subset of Python/Julia's
+**Severity:** Minor (dormant — current data matches on all three) · **Status:** Fixed 2026-07-27 (Decision 6) · **Locus:** Code
+
+Parity Audit **F-4**. `READ`, then `VERIFIED` against the actual cadastre schema:
+- **R** (`Phase_5.R:160`): `tmk_columns <- c("TMK", "PARCEL_ID", "Parcel_ID", "parcel_id",
+  "TAX_MAP_KEY", "tmk")` — **6 candidates**.
+- **Python** (`Phase_5.py:95-98`) / **Julia** (`Phase_5.jl:96-98`): identical 10-item list —
+  `TMK, PARCEL_ID, Parcel_ID, parcel_id, TAX_MAP_KEY, Tax_Map_Key, tax_map_key, MAPKEY, mapkey,
+  tmk` — R is missing `Tax_Map_Key`, `tax_map_key`, `MAPKEY`, `mapkey`. All three use the same
+  priority-order-first selection logic (`intersect(...)[1]` in R; `next(... for col in
+  TMK_CANDIDATES ...)` in Python; a `for candidate in [...]` loop in Julia) — the divergence is
+  purely in candidate *set size*, not selection order or tie-break.
+- **Currently dormant:** `VERIFIED` — read the actual parcel GPKG schema
+  (`pyogrio.read_info(...)['fields']`); the real column is lowercase `tmk`, which is the *last*
+  candidate in all three lists (R's shorter list still contains it), so all three converge on the
+  same column today. If the county ever republishes this cadastre with one of the 4 R-missing
+  names, R hard-stops (`[FATAL] No TMK column identified`) while Python/Julia silently succeed —
+  a latent three-brothers gap, not a live one.
+
+**Fixed (Decision 6, 2026-07-27):** extended `Phase_5.R:160`'s `tmk_columns` to the identical
+10-candidate list Python/Julia already use (`TMK, PARCEL_ID, Parcel_ID, parcel_id, TAX_MAP_KEY,
+Tax_Map_Key, tax_map_key, MAPKEY, mapkey, tmk`), same priority order. Four-line change, no
+behavior change on current data (still resolves to `tmk`, last in the list either way) — removes
+the latent hard-crash risk cheaply rather than continuing to track it. Only R touched.
+
+### P5-08 — Julia's Oahu-boundary test uses a different method entirely, not just a different predicate
+**Severity:** Minor (dormant — current data agrees) · **Status:** Fixed 2026-07-27 (Decision 7 — reclassified from author-call to code-affecting, resolved by the Decision 2 vendoring) · **Locus:** Code
+
+Parity Audit **F-5**. The checklist item asked to verify predicate/CRS agreement; the actual
+divergence is a level deeper — the three languages don't test the same *thing*:
+- **R** (`Phase_5.R:99-114`): downloads the real Honolulu County polygon via `tigris::counties()`,
+  reprojects it to the OSM CRS, then `st_filter(osm_golf_sf, oahu_boundary_sf, .predicate =
+  st_intersects)` — full golf-polygon-vs-full-county-polygon intersection test.
+- **Python** (`Phase_5.py:126-137`): `pygris.counties(state="HI", cb=True).query("NAME ==
+  'Honolulu'")`, then `osm_golf_geo.geometry.intersects(boundary_union)` — same method as R
+  (real county polygon, full-geometry intersects), via Python's Tigris equivalent.
+- **Julia** (`Phase_5.jl:82-83,160-169`): **no Tigris/Census call anywhere in the file.** Instead,
+  a hardcoded rectangular lat/lon box (`in_oahu(lon,lat) = -158.5<=lon<=-157.6 && 21.2<=lat<=
+  21.9`), tested against each golf polygon's **centroid** (`ArchGDAL.centroid(g)`), not its full
+  geometry. This is a materially different methodology, not a predicate/CRS variant of the same
+  one — no Census boundary source, no polygon-vs-polygon test, a proxy rectangle standing in for
+  the county shape (which, notably, legally also includes the remote Northwestern Hawaiian
+  Islands — Julia's box would exclude any golf course there; R/Python's real county polygon would
+  not, though none currently exist to matter).
+- **Currently dormant, `VERIFIED`:** all three languages' on-disk `*_Phase5_Oahu_Comparison.csv`
+  report **identical Total Golf Courses = 39** and identical OSM-derived footprint (8,564.23
+  acres) — no golf course centroid currently falls near enough to the Oahu coastline/county
+  boundary for the two methods to disagree. A real divergence in method, producing no current
+  divergence in outcome. Originally flagged for the author as needing a Julia Tigris-equivalent
+  dependency (`Tigris.jl`/manual Census API call) — a larger lift than this audit's scope.
+
+**Reclassified and fixed (author correction + Decision 7, 2026-07-27): cheaper than logged — no
+new dependency needed.** Once **X-09** vendors `tl_2022_us_county.shp` locally, Julia can read the
+exact same file R and Python now use via `GeoDataFrames.read`/`ArchGDAL`, with no `Tigris.jl`
+equivalent required. `Phase_5.jl`'s hardcoded lat/lon bounding box + centroid test (the
+`in_oahu()` function, `OAHU_LON/LAT_MIN/MAX` constants used for the Step-1 boundary test) replaced
+with a real polygon-vs-polygon `ArchGDAL.intersects()` test against the vendored Honolulu County
+boundary (`STATEFP=="15" & NAME=="Honolulu"`, reprojected to the OSM CRS) — matching R's
+`st_filter(..., st_intersects)` and Python's `.intersects(boundary_union)` exactly, not just in
+outcome. `VERIFIED` via a standalone diagnostic: the vendored shapefile read through
+`GeoDataFrames.jl` returns `STATEFP`/`NAME` as `String` (not some other type that would silently
+fail the `==` comparison) and finds exactly 1 Honolulu County row. **Note:** a separate, unrelated
+use of the same bounding-box constants survives in Step 5 (`Phase_5.jl:281-284`, a coarse
+pre-filter over the M=100 national imputed datasets before exact polygon matching) — left alone,
+since it's a performance shortcut ahead of the real precision check, not the boundary-membership
+test this entry is about; removing it would be a `CLAUDE.md` §2.4 performance change, out of
+scope. Not executed beyond the diagnostic (§2.1).
+
+### P5-09 — Julia's Step 3 "official tax-assessor area" cross-check is silently dead; also finds 1 more TMK than R/Python
+**Severity:** Minor · **Status:** Confirmed · **Locus:** Code
+
+Parity Audit **F-6**/**F-7**. Two related, `VERIFIED` findings from the actual on-disk comparison
+tables:
+- **R doesn't attempt this diagnostic at all** — `Phase_5.R`'s Step 3 (lines 182-295) has no
+  cadastre-attribute join or "official area" computation; its `Phase5_Oahu_Comparison.csv` has no
+  such row.
+- **Python attempts it and succeeds:** `Phase_5.py:304-318` joins the Step-2 TMK list against the
+  full reprojected parcel attribute table on `tmk`, finds `dpp_approved_area_acres`, and reports
+  **"Total Official Area (acres)" = 664.77**, with **"TMKs Matched in Cadastre" = 1,072** — an
+  exact 1:1 match against "Total Unique TMKs (Step 2)" = 1,072.
+- **Julia attempts it and cannot succeed, silently:** `Phase_5.jl:201` (`select!(parcels_geo,
+  [:geometry, :tmk])`, in Step 1) drops every attribute column — including
+  `dpp_approved_area_acres`/`dpp_stated_area`/`rpa_stated_area` — before Step 3 ever runs, so
+  `area_col` (line 265-266) can never be found and no "Total Official Area" row is ever produced;
+  confirmed absent from `Jl_Phase5_Oahu_Comparison.csv`. Additionally, Julia's "TMKs Matched in
+  Cadastre" = **6,556** against only **1,073** unique TMKs from Step 2 — a real fan-out, not a
+  typo: `VERIFIED` by reading the raw cadastre (`All_Parcels_....gpkg` via `pyogrio.read_info`),
+  `tmk` is **not** a unique key at the raw-parcel-feature level (177,392 rows, only 171,900
+  distinct `tmk` values, 5,491 duplicate rows — consistent with golf-course parcels being
+  disproportionately subdivided into CPR/leasehold sub-records). Because Julia's Step 1 never
+  deduplicates by `tmk` before the Step 3 join, and golf-adjacent TMKs are apparently
+  over-represented among the duplicated keys, the inner join fans out 6× rather than the ~3%
+  county-wide average would predict. Python's matching join does not fan out (1,072 = 1,072
+  exactly), suggesting Python's parcel attribute table effectively behaves as tmk-unique for this
+  specific TMK subset — not fully root-caused beyond what's stated here.
+- **Also found: Julia's Step 2 finds 1,073 unique TMKs vs R/Python's 1,072** — a genuine off-by-one
+  at the TMK-extraction stage, despite all three computing the *same* OSM-derived acreage to two
+  decimal places (8,564.23). Likely traceable to Julia's manual double-loop
+  `ArchGDAL.intersects`/`ArchGDAL.intersection` (lines 227-238) behaving slightly differently at a
+  polygon-edge case than R's `st_intersection`/Python's `gpd.overlay` — not traced further; the
+  acreage identity suggests it's a near-zero-area sliver fragment, not a missed golf course.
+- **Impact:** all of the above is confined to a **diagnostic/QA row that feeds no published
+  number** — `official_area_acres` and `matched_parcels` are never used in `q_bar`/opportunity-cost
+  pooling in any language. Logged as a function-parity gap, not a headline-number risk. **F-7**
+  (the historical "37→33→29 course-count ladder") was already reviewed as "explained clearly and
+  correctly... not a defect" in an earlier pass; current on-disk data shows all three at **39**
+  Oahu courses today, confirming the dedup/matching *algorithm* (`Longitude`/`Latitude` group,
+  nearest-polygon + 500 m cap, max-`Holes` tie-break) reads as identical across all three even
+  though the final funnel counts aren't independently persisted anywhere to directly re-verify
+  past Step 1.
+
+### P5-10 — `Phase_5.py` crashes unconditionally on this machine's default console encoding
+**Severity:** Major (crashes every run, not an edge case) · **Status:** Fixed 2026-07-26 · **Locus:** Code
+
+Found during the dress-rehearsal cascade, `VERIFIED` by execution. `Phase_5.py`'s `run_step6()`
+prints `"Performing spatial intersection (golf courses ∩ zoning)..."` — the Unicode "∩"
+(intersection) character. Python's `print()` encodes to the console's active codepage; this
+machine's default Windows console codepage is `cp1252`, which has no mapping for `∩`, so the
+print raises `UnicodeEncodeError: 'charmap' codec can't encode character '∩'` and the whole
+script halts. **Not a rehearsal artifact** — this is unconditional on any normal invocation of
+`Phase_5.py` on this machine (`python Phase_5.py` from a plain terminal), not something the
+scratch-redirect setup caused or masked. R's equivalent print (`Phase_5.R`'s `cat()`, identical
+"∩" character) does **not** crash — `Rscript.exe`'s console output handling differs from Python's
+`print()`/`cp1252` interaction on this setup. Grepped all Python master scripts for other
+non-ASCII characters inside `print()` calls — this was the only instance.
+
+**Fixed:** replaced "∩" with ASCII "x" (`"...golf courses x zoning)..."`). Purely a print-string
+change, zero effect on any computed value. Re-ran Phase 5 end-to-end after the fix — completed
+clean, matching R's and Julia's 6,066.2-acre total exactly.
+
+### P5-11 — `Phase5_Oahu_Comparison.csv` presents an acreage figure and a dollar figure computed from unrelated course sets, side by side, unreconciled
+**Severity:** Major · **Status:** Confirmed, not fixed · **Locus:** Code / Docs (framing)
+
+`VERIFIED` by reading `Phase_5.R` directly. The output table's rows come from two independent
+computations that share nothing but a file:
+
+- **"OSM-Derived Legal Footprint (acres)": 8,564.23**, **"Total Golf Courses... 39"** — Step 2
+  (`Phase_5.R:196`), `osm_derived_acres <- sum(st_area(st_intersection(oahu_golf_sf, parcels_sf)))`
+  — genuine OSM-polygon ∩ cadastre-parcel geometry, all 39 real OSM course polygons.
+- **"Pooled Oahu Opportunity Cost - q_bar": $26.844B** — Step 3 (`Phase_5.R:213-284`), reads the
+  *national* Phase 3 M=100 imputed datasets, bbox-filters to Oahu (37 course-points), spatially
+  deduplicates against the same 39 OSM polygons (500 m cap, keep-max-`Holes`) down to **33
+  courses**, sums `final_acreage × Baseline_Value_Per_Acre` per imputation, pools via Rubin's
+  Rules. Mean acreage actually behind this figure across M=100: **5,420.26 ac** — reproduced
+  exactly (`q_bar` matches to the dollar) by re-running this logic standalone.
+
+**5,420.26 ac ≠ 8,564.23 ac, and 33 courses ≠ 39 courses — the acreage row and the dollar row in
+one output table are not the same computation and were never reconciled.** Any reader (including
+this audit, until reconciling this against Script 9 forced a closer look) will assume they're
+paired — the columns of one CSV, read top to bottom, read as a coherent derivation. They aren't.
+**Needed: either derive the dollar figure from the same 8,564.23 ac / 39-course polygon-verified
+footprint, or add an explicit note in the output that the two figures use different course sets
+and acreage sources.** Not fixed — freeze holds; this is a finding, not a patch. See **P5-12**
+for why the 33-course figure is additionally unreliable on its own terms, and **P5-13** for a
+defect in the 8,564.23 ac figure itself, found while answering the three questions below.
+
+**Follow-up diagnostic (2026-07-28), author-requested, before any fix:**
+
+1. **Why Step 3 uses `final_acreage` (national-imputed) instead of Step 2's `osm_derived_acres`
+   (polygon-verified): incidental, `VERIFIED` by reading `Phase_5.R` end to end.** No comment, no
+   variable hand-off, no code path connects the two. `osm_derived_acres` is computed at line 196,
+   printed, and written to one row of `comparison_df`; Step 3 (lines 213+) independently reloads
+   the national Phase 3 imputed datasets and never references `osm_derived_acres` or
+   `parcel_intersection_sf` again. There is no documented rationale for the omission — it reads as
+   an oversight, not a deliberate methodological choice.
+
+2. **Per-course acreage comparison, `VERIFIED` by re-running Step 2's cookie-cutter intersection
+   per-polygon and joining against Step 3's per-course `final_acreage`:** for the 23 polygons with
+   a clean 1:1 course match (no dedup collapsing involved), the gap is **not uniform** — it splits
+   sharply into two groups. 15 of 23 agree closely (ratio 0.978–1.02, i.e. within ~2%, consistent
+   with ordinary parcel-boundary clipping). The other **8 of 23 show `step3/step2` ≈ 0.500–0.533 —
+   almost exactly half** (West Loch, Navy-Marine, Hawaii Prince, Mililani, Ewa Villages, Oahu
+   Country Club, Pali, Leilehua). Tracing this down surfaced a distinct, previously-unknown defect
+   — see **P5-13**. In short: the halving is *not* a Step-3/national-imputation problem (all 8
+   courses are cleanly OSM-sourced, non-imputed, in Phase 2's output) — it is Step 2's own
+   parcel-intersection acreage that is inflated ~2× for these 8 (and a similar share of the other
+   16 polygons behind the 33→39 dedup gap), from a duplicate-parcel-geometry defect in the
+   Honolulu cadastre file itself.
+
+3. **Rubin's-Rules CI variance, `VERIFIED` by comparing `final_acreage` and
+   `Baseline_Value_Per_Acre` across a 6-point sample of the M=100 imputed datasets, bbox-filtered
+   to Oahu's 37 baseline courses:** `Baseline_Value_Per_Acre` has **zero** variance across all 37
+   — expected, since it is a deterministic flat rate (Urban→FHFA, Rural→USDA), never subject to
+   MICE. `final_acreage` varies for only **6 of 37 courses (16%)** — the ones whose OSM match
+   failed nationally in Phase 2 and fell through to MICE imputation; the other 31 (84%) are
+   OSM-observed and bit-identical across all 100 draws. **Substituting Step 2's measured acreage
+   for Step 3's would change the *level* of q_bar substantially (see P5-13) but would barely
+   change the *width* of the CI** — 84% of the course set already contributes zero imputation
+   variance under the current method; the reported SE ($1.054B) is driven almost entirely by
+   those same 6 already-imputed courses. Swapping in a measured value for them (if Step 2's own
+   acreage defect were fixed first) would be the one lever that meaningfully shrinks the CI;
+   swapping it for the other 31 would not.
+
+**Decided (2026-07-28), author's call:** report both figures; headline the measured one.
+**Implemented and run in production (2026-07-28) — numbers below are from the actual re-run of
+`Phase_5.R`, superseding the standalone-prototype figures first reported when this decision was
+made** (see the correction in `Expected_Deltas.md`: the prototype's Step 2 figure still
+double-counted the P5-15 Ko'olau duplicate; the production Step 2, with P5-13 *and* P5-15 both
+fixed in code, is materially lower).
+
+- **Headline: Step 2's P5-13/P5-15-corrected 5,810.62 ac ($28.778B at the flat FHFA rate,
+  $4,952,600/ac)** — measured, parcel-verified footprint, which is the entire purpose of running
+  a micro-case study rather than trusting the national model alone.
+- **Consistency check, reported alongside: Step 3's crosswalk-corrected figure (36 courses,
+  6,161.49 ac, q_bar = $30.515B, 99% CI $27.741B–$33.290B)**, with the **6.04% acreage
+  agreement** stated explicitly — a real, useful internal-consistency result (two independent
+  data paths within 6% of each other, not the original 58%). **6.04% is the corrected,
+  authoritative figure. An earlier 2.15% figure was reported before the P5-15 fix was actually
+  wired into Step 2's production code and is superseded — it must not be quoted anywhere as the
+  validation result.** Full mechanism, per-course breakdown, and why the gap widened: see the
+  **P5-14** addendum below and `Expected_Deltas.md`.
+- **CI note carried forward, not left implicit:** per the variance finding above, 84% of Oahu
+  courses contribute zero imputation variance — `Baseline_Value_Per_Acre` is deterministic
+  everywhere, `final_acreage` is deterministic (OSM-observed) for all but 6 courses, and those 6
+  are, as far as this audit can tell, exactly the courses affected by **P5-14**'s geocoding
+  errors. **The reported uncertainty is measurement error from six identifiable bad coordinates,
+  not general imputation-model uncertainty**, and should be stated as such wherever this figure
+  is used, not left to an unlabeled confidence interval to imply otherwise.
+
+**This raises the headline Oahu figure from $26.844B to $28.778B** (Step 2 measured basis).
+
+**Rural-USDA sensitivity, run against the corrected basis (2026-07-28), `VERIFIED` production
+run:** `run_9b_Oahu_OC_Rural_USDA_Sensitivity()` — 3 of 38 polygons fall in unambiguously rural
+Development Plan zones (15-20) and are repriced from the flat FHFA rate ($4,952,600/ac) to the
+2022 USDA agricultural rate ($29,887/ac); the other 35 stay at FHFA. Crosswalk-identified,
+Grand Mean across R/Python/Julia (M=300, 100 each): **$25.188B across the same 36 courses** —
+**$3.590B lower than the flat-rate figure ($28.778B), a 12.5% reduction.**
+
+**Decided (2026-07-28), author's final call: rural-differentiated pricing is the headline Oahu
+specification.**
+
+- **Headline: $25.188B** (Development-Plan-zone rural-USDA differentiated).
+- **Reported alongside: $28.778B**, labeled as the figure consistent with the national
+  methodology's flat within-county pricing (Urban/Rural by RUCC, no sub-county differentiation)
+  — not a rejected alternative, a stated point of comparison.
+- **12.5% stated explicitly** as the measured effect of within-county rate differentiation on
+  Oahu — see below for why this is now a measured answer, not an assumption.
+
+**Rationale, for the record:** the flat rate prices every Oahu course — including North Shore
+courses in unambiguously rural Development Plan zones — at the Honolulu urban residential
+(FHFA) rate. That is not defensible as a highest-and-best-use proxy for land the City and
+County's own planning classification treats as rural. The differentiated figure is the more
+conservative of the two, and conservatism is the right default for an opportunity-cost estimate
+feeding a policy argument. **The 12.5% gap is also, independently, a measured answer to a
+question the flat-rate national methodology never tests: how much does within-county price
+uniformity cost you, in a county with genuine urban/rural variation?** Before this fix, that
+question had no answer in this codebase — `run_9b` existed but ran against defect-laden inputs
+(P5-12/P5-13/P5-15). It now does, and the answer is 12.5%, not an untested assumption that
+uniform pricing is "close enough."
+
+**Classification basis — stated explicitly, not left implicit.** The Oahu rural/urban split
+uses the City and County of Honolulu's own **Development Plan zoning boundary** (`ZONMAP_NO`,
+parcel/sub-county resolution, zones 15-20 rural). **The national estimate's Urban/Rural split
+uses county-level RUCC** (Rural-Urban Continuum Codes, one classification per county, no
+within-county differentiation) — a coarser classification, by construction, because it has to
+work for all ~3,143 US counties with a single consistent national data source. **The Oahu
+figure uses a finer classification than the national figure not because Oahu is special, but
+because the micro-case study has access to Honolulu's own parcel-resolution planning data,
+which no county in the national dataset has.** This is a genuine methodological difference
+between the headline national spec and the headline Oahu spec, not an inconsistency to paper
+over — it should be stated plainly wherever both figures are cited together, so a reader isn't
+left to assume the two "Urban/Rural" labels mean the same classification at different scales.
+
+### P5-12 — Phase 5's Oahu spatial deduplication frequently merges distinct, adjacent golf courses, not just true duplicates — confirmed at both Oahu and national scale
+**Severity:** Critical · **Status:** Confirmed, root cause identified, not fixed · **Locus:** Code
+
+Surfaced diagnosing **P5-01**'s Script-9-vs-Phase-5 17% gap. The gap is not acreage or valuation
+divergence — `Baseline_Value_Per_Acre` is identical ($4,952,600/ac flat) in both computations.
+It is entirely the dedup step (`Phase_5.R:230-266`, `st_nearest_feature` + 500 m cap + keep-
+max-`Holes`), which Script 9 skips and Phase 5 applies. Examined all 4 groups Phase 5 collapses
+(37 → 33 course-points):
+
+| Winning course (kept) | Merged-away course (dropped) | Same-named OSM polygon exists elsewhere? |
+|---|---|---|
+| The Turtle Bay Resort & Golf Club (36 holes) → snapped to "Kulima Golf Course" polygon | **Kahuku Golf Course** (9 holes) | **Yes** — polygon 28, "Kahuku Golf Course", 58.75 ac, sits completely unmatched |
+| Ewa Beach Golf Club (18 holes) → snapped to its own polygon | **Hoakalei Country Club** (18 holes) | **Yes** — polygon 3, "Hoakalei Country Club", 244.07 ac, sits unmatched |
+| Waikele Golf Club (18 holes) → snapped to its own polygon | **Ted Makalena Golf Course** (18 holes) | **Yes** — polygon 35, "Ted Makalena Golf Course", 149.26 ac, sits unmatched |
+| Makaha Valley Country Club (18 holes) | Makaha Resort Golf Club (18 holes) | No same-named polygon found elsewhere — genuinely ambiguous, plausibly a real duplicate |
+
+**3 of 4 collapsed groups are `VERIFIED` mismatches, not duplicates.** Kahuku Golf Course,
+Hoakalei Country Club, and Ted Makalena Golf Course are real, distinct, separately-operating
+Oahu courses, each with its *own* correctly-named OSM polygon sitting unmatched elsewhere in the
+same 39-polygon set — proof that `st_nearest_feature()` is snapping the baseline point to the
+wrong (geometrically closer but wrongly-named) neighboring polygon, not correctly resolving each
+course to its own polygon. This also explains part of **P5-09**'s "39 today" note and this
+entry's predecessor conclusion in the F-7 review ("the dedup/matching algorithm... reads as
+identical across all three") — that prior assessment checked that the *algorithm* runs
+consistently across languages, not that the algorithm produces *correct* matches; it does not,
+in 3 of 4 Oahu cases. Only the Makaha pair lacks a same-named orphan polygon and remains a
+genuinely ambiguous case — possibly a real duplicate Phase 1's `(round(lat,4), round(lon,4),
+Course_Name)` key should have caught (different name strings for the same facility), possibly
+two distinct adjacent courses. Not resolved either way from available data.
+
+**Phase 1's national dedup key is not implicated** — `(round(lat,4), round(lon,4), Course_Name)`
+correctly treats all three verified-mismatched pairs as distinct (different names, different
+coordinates), which they are. The mechanism that drops these courses is Phase 5's own
+Oahu-specific, geometry-only nearest-polygon match — a different algorithm entirely, present
+**only** in `Phase_5.R`'s Step 3, nowhere in Phase 1-4's national pipeline.
+
+**National blast radius, `VERIFIED` by running the identical algorithm (500 m cap,
+keep-max-`Holes`) against the full national Phase 1 baseline (16,292 courses, post-**P1-06**
+dedup) and the national Phase 2 OSM polygon set (15,166 polygons):** 232 groups, 473 courses
+involved, net collapse of **241 courses (1.48%)** if this mechanism were ever applied nationally.
+Spot-checked 15 sample groups: the same signature — pairs/triples of clearly distinct, well-known
+courses (e.g. Grey Oaks Country Club + Bear's Paw Country Club + Naples Grande Golf Club, three
+separate Naples, FL clubs, merged into one group; Hapuna Golf Course + Mauna Kea Resort, two
+distinct, famous, adjacent Big Island resort courses). **This mechanism is not used anywhere in
+the national pipeline** — Phase 1-4's headline $935-951B figures are unaffected and safe. This
+number quantifies a hypothetical ("if this exact Oahu-only code were ever pointed at national
+data"), not a live defect in the national total — logged because the author's own hypothesis
+raised exactly this question and the evidence answers it: the mechanism would corrupt the
+national figure if applied, but is not currently applied there.
+
+**Not fixed — freeze holds.** Recommend, if pursued: replace or supplement the pure-geometric
+`st_nearest_feature` match with a name-aware step (e.g. require substring/fuzzy match on
+`Course_Name` before accepting a nearest-polygon assignment, or fall back to Phase 1's own
+`(round(lat,4), round(lon,4), Course_Name)` key first and use nearest-polygon only for points
+that key doesn't resolve). This is a Phase 5-only fix; does not touch Phase 1-4 or any
+non-Hawaii output.
+
+**Follow-up (2026-07-28), author-proposed fix tested, `VERIFIED`:** author proposed an
+intersects-first approach — match each course's point to a polygon it geometrically falls
+*inside* first, use `st_nearest_feature` only as fallback for points matching no polygon — with
+the specific test "does it resolve Kahuku, Hoakalei, and Ted Makalena; handle Makaha as
+ambiguous." **It does not resolve them.** Re-ran Step 3's matching with `st_intersects` as pass 1
+and the existing 500 m `st_nearest_feature` as pass 2 for the 26 points `st_intersects` misses:
+Kahuku, Hoakalei, and Ted Makalena all still collapse into the same three wrong polygons as
+before (Kulima/"Turtle Bay", Ewa Beach, Waikele respectively) — the 500 m fallback still fires
+for all three, because none of their baseline points intersects *any* polygon at all, including
+their own. **Root cause is upstream of Phase 5's matching algorithm entirely: Phase 1's baseline
+coordinates for these three courses are grossly mis-geocoded.** Measured directly —
+
+| Course | Distance to its own OSM polygon | Distance to the polygon it wrongly matches |
+|---|---|---|
+| Kahuku Golf Course | 4,984.6 m | 7.6 m |
+| Hoakalei Country Club At Ocean Pointe | 3,420.7 m | 8.8 m |
+| Ted Makalena Golf Course | 1,331.7 m | 260.7 m |
+| Hawaii Country Club (found building the crosswalk, see below) | 5,832 m | — (not a collapse case; correctly orphaned rather than merged, since no *other* course's baseline point lands near its polygon) |
+
+No geometric matching rule — nearest-feature, intersects-first, or any distance-based variant —
+can fix this: the baseline point sits kilometers from the course it is supposed to represent and
+meters from a different one. **This is a distinct defect class from P1-06** (dedup-key
+strictness) — it is a geocoding *accuracy* defect in Phase 1's `Course_Name` → `(Latitude,
+Longitude)` assignment, not a duplicate-detection problem. Logged separately as **P5-14** since
+its scope (how many of the national 16,292 baseline courses are similarly mis-geocoded) has not
+been tested and may extend well beyond Oahu.
+
+**A name-aware match — the fix this entry already recommended above — was prototype-tested and
+does resolve all three,** `VERIFIED`: normalizing `Course_Name` and the polygon's own OSM `name`
+attribute (lowercasing, stripping generic suffixes/diacritics) and matching by substring, 28 of
+37 Oahu baseline courses resolve to exactly one polygon, correctly including Kahuku→28,
+Hoakalei→3, and Ted Makalena→35 (all previously wrong). Makaha correctly remains ambiguous (both
+records match only polygon 27, no name-based tiebreaker available, consistent with this entry's
+original assessment). The prototype is not production-ready as-is: 3 courses over-match on
+generic substrings ("Hawaii Prince"/"Hawaii Country Club" both catch on "Hawaii"), the genuine
+"Ko'olau Golf Club" duplicate-named-polygon pair (polygons 22 and 24, two distinct OSM features
+with the identical name) needs a geometric tiebreaker, and 6 courses have no nameable polygon
+match at all (either genuinely orphaned, e.g. Luana Hills, or the polygon carries no OSM `name`
+tag, e.g. "Mid Pacific Country Club"/"Unknown" poly 6) and would still need the distance fallback.
+**Net: name-first-with-geometric-fallback is the right general shape for a fix; the specific
+geometric variant the author proposed this round does not work, for a reason (bad input
+coordinates) that no purely-geometric rule can route around.**
+
+**Resolved (2026-07-28): hand-verified crosswalk built and committed** —
+`Phase 5 The Hawaii Micro-Case Study/Data/Oahu_Course_Polygon_Crosswalk.csv`, 37 baseline
+courses → 39 OSM polygons, one row per course, with `Match_Basis` and a `Notes` column recording
+the evidence for every non-trivial call. Author's stated reason for rejecting fuzzy matching at
+this scale ("right for 16,292 courses, wrong for 39") is why this is a static, hand-verified
+table rather than code — no matching algorithm runs at Oahu scale going forward. Findings from
+building it, beyond the three already known:
+
+- **A 4th mis-geocoded course, found while building the crosswalk: Hawaii Country Club,
+  baseline point 5,832 m from its own uniquely-named polygon** — the largest offset of the four,
+  `VERIFIED` the same way as the other three (exact name match to one polygon; no name overlap
+  with anything closer). Logged as part of **P5-14**.
+- **The Ko'olau Golf Club "duplicate" is not a Phase 5 or Phase 1 defect — it's a duplicate
+  *OSM* geometry.** Polygons 22 (`osm_id` 22249545) and 24 (`osm_id` 479916082) are `VERIFIED`
+  100% geometrically identical (0 m apart, full-area overlap, both independently tagged "Ko'olau
+  Golf Club") — the same physical course digitized twice in the source OSM data itself, upstream
+  of anything this pipeline does. Crosswalk keeps 24, excludes 22. **This means Oahu's true
+  distinct-physical-course polygon count is 38, not 39** — a correction to every "39 courses"
+  figure in **P5-01**, **P5-11**, and this entry.
+  **Correction (2026-07-28): the "acreage effect is zero" claim made when this bullet was first
+  written was wrong, caught on implementing the actual production fix, not by re-derivation.**
+  `st_intersection(oahu_golf_sf, parcels_sf)` sums fragment area across *all* rows passed to it;
+  with both identical polygons present, Step 2 genuinely summed Ko'olau's ~221 ac twice. Excluding
+  osm_id 22249545 upstream in the production Step 2 fix (below) moved the headline footprint from
+  6,031.80 ac (P5-13-corrected only) to **5,810.62 ac** (P5-13 + P5-15 corrected) — a real ~221 ac,
+  ~3.7% reduction, not a zero-impact course-count-only correction as originally claimed.
+- **Makaha Valley Country Club / Makaha Resort Golf Club remain genuinely ambiguous** — both
+  baseline points sit 90 m and 106 m from the same single polygon, no second candidate polygon
+  exists within 15 km. Crosswalk records both rows pointing at polygon 27 with an explicit
+  "AMBIGUOUS, not resolved" note rather than picking one silently.
+- **Two baseline records could not be confidently matched to any polygon: Barbers Point Golf
+  Course and Luana Hills Country Club.** Nearest candidates for both are 0.9–3.3 km away and
+  carry unrelated names — left unresolved in the crosswalk rather than force-assigned.
+- **Three OSM polygons on Oahu have no baseline-course counterpart at all: 2 ("Unknown"), 12
+  ("Bellows Golf Course"), 29 ("Royal Hawaiian Golf Club").** Bellows and Royal Hawaiian are real,
+  named Oahu courses — their absence from Phase 1's 37-course Oahu baseline looks like a Phase 1
+  **coverage** gap (a course missing from the national source list entirely), a different defect
+  class from P5-14's geocoding-accuracy issue and from P1-06's dedup-key issue. Not investigated
+  further here — flagging, not scoping.
+
+**Net effect on course/polygon counts once the crosswalk is applied:** 35 of 37 baseline courses
+resolve to a polygon (Barbers Point and Luana Hills unresolved), using 34 distinct polygons
+(Makaha's 2 records share 1 polygon) — plus 1 duplicate (Ko'olau's poly 22) excluded and 3
+polygons (2, 12, 29) with no baseline match. 34 + 1(dup) + 3(unmatched) + 1(Kealohi/Mamala's
+own count already included) — reconciles to the reported 39 once the duplicate and the two
+Phase-1-coverage-gap courses are accounted for as separate, already-understood categories rather
+than unexplained residual.
+
+**Confirms author's flat-rate observation:** $26.844B ÷ 5,420.26 ac = $4,952,530/ac, matching
+the flat Honolulu Urban FHFA rate ($4,952,600/ac) to within rounding — `VERIFIED`. Every course
+in the headline Oahu figure, including North Shore/rural-feeling courses, is priced at the same
+flat urban-residential rate. The Rural-USDA sensitivity (`run_9b_...`, Phase 6 only, Development
+Plan zones 15-20) addresses a differentiation the headline computation does not apply at all —
+not a variant of a partially-applied adjustment, but the only place in the codebase where Oahu
+courses are ever priced at anything other than the single flat FHFA rate.
+
+### P5-13 — Step 2's own 8,564.23 ac "OSM-Derived Legal Footprint" is inflated ~2× for roughly half of Oahu's 39 courses by a duplicate-parcel-geometry defect in the Honolulu cadastre file
+**Severity:** Critical · **Status:** Confirmed, root cause identified, not fixed · **Locus:** Data / Code
+
+Surfaced answering **P5-11**'s per-course diagnostic question. `Honolulu_Parcels_Reprojected.gpkg`
+(from `All_Parcels_6378200148342636690.gpkg`, 177,392 rows) contains a `type` column with three
+values: `type==1` (167,298 rows, all TMK-present), `type==2` (4,610 rows, all TMK-present), and
+**`type==3` (5,484 rows, all TMK-`NA`)**. `VERIFIED` by direct inspection: `type==3` rows are not
+incidental slivers — for a specific subset of golf-course land, a `type==3` polygon sits
+**almost exactly on top of** a `type==1`/`type==2` polygon that already has a TMK, sharing the
+same `in_file_num` source-ingestion batch (e.g. polygon 17/Navy-Marine's largest fragment: TMK
+`11010066`, 150.49 ac, `in_file_num="TAXBNDY11010_2016GAM"`, paired with a TMK-`NA` twin at
+149.92 ac, same centroid, same `in_file_num`). This looks like an unreconciled tax-boundary
+("TAXBNDY") layer duplicating the TMK-assessed parcel layer for large single-ownership tracts
+that have been re-surveyed.
+
+Step 2's `osm_derived_acres` (`Phase_5.R:196`, `sum(st_area(st_intersection(oahu_golf_sf,
+parcels_sf)))`) sums fragment area **without deduplicating parcels_sf first**, so every course
+whose land sits on a duplicated tract gets counted twice. Re-ran the same intersection per
+polygon, splitting fragment area by TMK presence, `VERIFIED` for all 39 Oahu polygons:
+
+| Pattern | Count | Example |
+|---|---|---|
+| Ratio ≈ 1.00 (no duplication) | 22 of 39 | Honolulu CC, Hoakalei CC, Moanalua, Fort Shafter, Kahuku |
+| Ratio ≈ 2.00 (near-total duplication) | 17 of 39 | Navy-Marine, Hawaii Prince, Mililani, Ewa Villages, Oʻahu CC, Pali, Leilehua, West Loch, Kealohi, Mamala Bay, Royal Hawaiian, Bellows, Klipper, Ted Makalena, Waikele, + 2 "Unknown" |
+| Partial (1.13–1.99) | 3 of 39 | Makaha Valley (1.883), Ewa Beach (1.130), Waikele's neighbor (1.468) |
+
+Sum across all 39, TMK-present fragments only: **6,031.80 ac** — vs. the reported **8,564.23 ac**
+(TMK-present + TMK-`NA` combined). The TMK-`NA` ("shadow") share is **29.6% of the reported
+total, 2,532.44 ac**, concentrated almost entirely in the 17+3 affected polygons.
+
+**Not the final figure — see P5-15.** This 6,031.80 ac is P5-13-corrected *only*; it still
+includes both copies of the P5-15 Ko'olau duplicate polygon (~221 ac counted twice). The
+P5-13-*and*-P5-15-corrected production figure is **5,810.62 ac** (below).
+
+**This means the 8,564.23 ac headline figure — which stands as the polygon-verified basis for
+the entire micro-case study — is itself overstated, independent of and prior to the P5-11/P5-12
+Step 3 reconciliation question.** At the flat FHFA rate ($4,952,600/ac), the reported 8,564.23 ac
+implies ~$42.4B; the TMK-deduplicated 6,031.80 ac implies **~$29.9B** — much closer to Step 3's
+$26.844B (5,420.26 ac) than the reported acreage suggested. Once this defect is corrected, the
+two independently-computed Phase 5 figures (Step 2 measured footprint, Step 3 national-imputed +
+deduplicated estimate) converge to within ~10%, not the ~58% gap the unreconciled headline
+implied.
+
+**Not fixed — freeze holds.** Candidate fix: filter `parcels_sf` to `type != 3` (equivalently
+`!is.na(tmk)`) before `st_intersection` in Step 2. Not a clean fix for the 3 partial-ratio cases
+(Makaha 1.883, Ewa Beach 1.130, Waikele-neighbor 1.468), which suggests the duplication is not
+purely `type==3` in every case and needs a closer look before implementing — flagging rather than
+prescribing, per audit scope. This is a Phase-5-Hawaii-only defect (`Honolulu_Parcels_
+Reprojected.gpkg` is Oahu-specific input data); does not touch Phase 1-4 or the national figure.
+
+### P5-14 — Phase 1 baseline coordinates for at least 4 Oahu courses are mis-geocoded by 1.3–5.8 km; national impact measured and closed
+**Severity:** Major (Oahu evidence) / Minor (national impact, measured) · **Status:** Closed —
+quantified, accepted limitation, not pursued as a fix · **Locus:** Data (Phase 1)
+
+Surfaced testing a fix for **P5-12**. Kahuku Golf Course, Hoakalei Country Club At Ocean Pointe,
+Ted Makalena Golf Course, and (found while building **P5-12**'s crosswalk) Hawaii Country Club
+each have a baseline `(Latitude, Longitude)` that sits kilometers from their own named OSM
+polygon (see table in the P5-12 follow-up above: 4,984.6 m / 3,420.7 m / 1,331.7 m / 5,832 m).
+The first three sit meters from a *different* golf course's polygon, which is why P5-12's spatial
+dedup merges them — not a flaw in the matching algorithm's logic, but bad input coordinates that
+place these courses right on top of a different, adjacent course. Hawaii Country Club's
+mis-geocoding doesn't happen to land near another named course, so it doesn't produce a P5-12
+collapse, but it is the same underlying defect and the largest offset of the four.
+
+**This is a distinct defect class from P1-06** (which is about the dedup *key* being too strict
+to catch genuine duplicates) — this is a geocoding *accuracy* defect: the coordinate itself is
+wrong, for reasons not yet investigated (address geocoder ambiguity, wrong source record, etc.).
+
+**National scope, `VERIFIED` (2026-07-28), author-requested, read-only:** two diagnostics, both
+run against the full national dataset rather than the Oahu sample.
+
+1. **Of the 4,687 national `MICE_Target` courses (Phase 2's own count — `VERIFIED` this is
+   exactly the set with no OSM polygon match within the 500 m cap), 2,440 (52.1%) have a golf
+   polygon somewhere within 5 km that the 500 m cap excluded.** Distances to the nearest polygon
+   for this group: median 4,681 m, mean 8,623 m, up to 118.9 km at the extreme (genuinely no
+   nearby course). This does not prove all 2,440 are the *same* course as their nearest polygon
+   the way the four Oahu cases were individually verified by name — it shows the 500 m cap is
+   excluding a large, non-trivial share of otherwise-plausible matches, consistent with the
+   mechanism found on Oahu. **Material by the author's own stated criterion** (2,440 of 16,292
+   national baseline courses, 15.0%, currently priced on imputed rather than measured acreage
+   for a reason that traces to a fixed matching-radius choice, not missing data).
+2. **County-boundary/FIPS disagreement check, `VERIFIED`:** of the 16,292 national baseline
+   courses, 5,831 (35.8%) sit within 5 km of their own county's boundary; of those, **1,101
+   (18.9% of boundary-proximate, 6.76% of the entire national baseline) have a bordering county
+   within that same 5 km with a *different* Urban/Rural `county_type`** — a plausible geocoding
+   error of the same magnitude as the four confirmed Oahu cases would flip `FHFA_Res_Value_Per_
+   Acre` ↔ `USDA_Ag_Value_Per_Acre` for these courses (a ~60× per-acre swing, not a rounding
+   difference). Concentrated in Florida and Texas coastal/county-line clusters in the sample
+   (e.g. Charlotte/DeSoto/Highlands FL, Nueces/San Patricio-area TX) — county geography in these
+   states runs unusually granular near golf-course-dense coastal regions. **This does not mean
+   1,101 courses are actually mis-priced** — it means 1,101 courses are *exposed* to the same
+   coordinate-accuracy risk the four Oahu cases demonstrated is real; whether any given one of
+   the 1,101 is actually on the wrong side of its true line has not been checked. Materiality
+   judgment (6.76% of the national baseline, with a ~60× per-acre consequence if wrong) belongs
+   with the author, per the same decision rule as item 1.
+
+**Per the author's own decision rule stated when this diagnostic was requested: item 1 is
+material, so this is a Phase 1/2 finding, not a Hawaii-local one, and the freeze scope should be
+understood to cover Phase 1/2 as well as Phase 5/6 pending a decision on whether/how to widen
+the national matching radius.** Not fixed — freeze holds. Testing whether the 2,440 candidate
+matches are individually correct (not just "something is within 5km") would require the same
+name-aware verification approach P5-12's crosswalk used, at a scale (thousands, not 39) — see
+the follow-up below, which runs exactly that as a national diagnostic (not a hand-verified
+crosswalk; author has already ruled that tool out at this scale).
+
+**Follow-up (2026-07-28), author-requested: "polygon within 5km" is a ceiling, not a
+measurement, `VERIFIED`.** Applied the crosswalk's name-token-match method (not hand
+verification — same tokenize-and-Jaccard approach used to screen the Oahu crosswalk, run here as
+an automated national diagnostic, not a hand-verified one) to all 4,687 `MICE_Target` courses
+against *every* polygon within 5 km, not just the nearest one:
+
+| Category | Count | % of 4,687 |
+|---|---|---|
+| No polygon within 5 km at all | 2,247 | 47.9% |
+| Polygon(s) within 5 km, but zero name-token overlap with any | 1,504 | 32.1% |
+| **Plausible name match (Jaccard > 0) — the real mis-geocode count** | **936** | **20.0%** |
+| Strong name match (Jaccard ≥ 0.5) | 801 | 17.1% |
+| Exact/near-exact name match (Jaccard ≥ 0.9) | 687 | 14.7% |
+
+**The naive "within 5 km" ceiling (2,440) overstates the confirmed count by 2.6×; the real
+number is 936 (5.7% of the entire 16,292-course national baseline), not 2,440 (15.0%).** Your
+caution was right: a course near several nearby unrelated golf-dense-region polygons will show
+"within 5km" without being an actual match. Distance to the matched polygon for the 936:
+median 1,657 m, mean 1,989 m, 3rd quartile 2,856 m — all comfortably beyond the 500 m cap that
+excluded them, consistent with a real, systematic radius problem rather than noise. **936 is
+likely still a lower bound**, not a precise count: on Oahu, 4 of 6 baseline courses with zero
+name-token overlap to their true polygon (Walter J. Nagorski/Fort Shafter, Barbers Point-area,
+Mid Pacific, Olomana) were nonetheless confidently resolved by a human checking distance and
+real-world naming conventions — if a similar fraction of the 1,504 zero-overlap national
+candidates would resolve the same way under manual review, the true count sits somewhere between
+936 and roughly 1,700-1,900, not measured further here.
+
+**Impact test, `VERIFIED`, all 936 confirmed mis-geocodes, mean MICE-imputed acreage across the
+full M=100 vs. the matched polygon's measured acreage:**
+
+- **Individual-course error is large: mean absolute percentage error 58.9%, median 24.8%.** Not
+  "close to measured" — a golf course's imputed acreage is frequently off by a quarter to more
+  than half against what its own (now-identified) polygon actually measures.
+- **The error is not symmetric or small-tailed.** Median *signed* error is +3.7% (imputed
+  slightly high, typical case) but mean signed error is +34.7% — the gap between median and mean
+  is a handful of extreme outliers, not a broad bias. Worst cases are almost all **small
+  specialty courses** (par-3s, driving ranges, RV-resort golf, 6-30 measured acres) imputed at
+  regular-18-hole-scale acreage (70-300 ac) — e.g. Raritan Valley (NJ, 6.45 ac measured, 149 ac
+  imputed, +2,213%), Concord Park (TN, +1,220%), Panhandle State Park (OK, +708%). This looks
+  like the MICE model defaulting toward the dominant course-size mode when its predictors don't
+  distinguish an executive/par-3/RV course from a standard 18-hole one — a modeling-bias
+  candidate worth a note for whoever revisits Phase 3's predictor set, not chased further here.
+- **Aggregate effect on the total is small.** Summed across all 936: measured = 129,400.4 ac,
+  MICE-imputed (mean across M) = 123,686.2 ac — a **net +5,714.2 ac (4.62%) if all 936 were
+  replaced with measured acreage.** Individual errors partly cancel in the sum; the large
+  per-course swings do not compound into a large aggregate swing.
+- **National $ impact: small.** 5,714.2 ac is 0.247% of the entire national imputed baseline's
+  total acreage (2,309,532.7 ac, imputation 1). At the national average implied rate
+  (~$404,645/ac), that's a **rough $2.3B shift, ~0.25% of the $942B headline** — using only the
+  936 confirmed subset; even doubling that for the unconfirmed-but-plausible remainder (per the
+  936-to-~1,900 range above) stays under 1% of the headline.
+
+**Answering the question directly, per the author's own framing: the defect is real, not
+close-to-measured, and would materially degrade any course-level or regional analysis built on
+these 936+ courses' acreage — but it does not move the $942B national total by an amount that
+would change the headline finding.** This is a considered conclusion from a completed
+measurement, not a freeze-protecting assumption: the freeze was set when a full cascade re-run
+looked like ~10 hours; the actual post-optimization runtime is 26 minutes (see the X-10
+implementation record). That cost basis no longer justifies narrowing what gets measured here —
+this diagnostic was run to completion rather than scoped down, and the national total's
+insensitivity to the fix is a measured result, not an assumption made to protect the freeze.
+
+**Closed (2026-07-28), author's decision: no national re-run.** A ~0.25% ($2.3B) exposure on a
+figure whose own cross-language spread is 1.65% is below this project's own measurement
+resolution — fixing it nationally would move the headline by less than the noise floor already
+present between R/Python/Julia. Logged as a **quantified, accepted limitation**, not carried
+forward as an open defect. The Oahu-scale finding (4 confirmed mis-geocoded courses, fixed via
+the **P5-12** crosswalk) stands on its own and is unaffected by this closure — only the national
+generalization is closed.
+
+**Promoted to a substantive limitations finding, in the author's own analytical terms, for the
+paper's limitations section: MICE's random-forest acreage imputation is upward-biased for
+atypical course formats because `Holes` is a predictor and those formats are outliers on it.**
+Par-3 courses, driving ranges, and RV-resort golf courses are legitimately small (6-30 acres)
+but are not distinguishable from a standard 18-hole course by the predictors MICE has available
+in the same way a course-type/format flag would distinguish them — the imputation model appears
+to regress atypical-format courses toward the acreage scale of the dominant (18-hole) mode in
+the training data. This produced the worst individual-course errors found in the impact test
+above (up to +2,213%, e.g. Raritan Valley, NJ) while barely moving the national total, because
+the affected courses are numerically few and their format is not correlated with any systematic
+regional or valuation pattern that would compound at scale. **This is a mechanistically
+explained limitation of the imputation approach, not a data-quality accident** — it says
+something specific and citable about what the model can and cannot represent, and belongs in the
+paper's limitations discussion rather than only in this audit log.
+
+**Also log the county-boundary/FIPS exposure as a bound, explicitly not an error count.** 1,101
+of 16,292 national baseline courses (6.76%) sit within 5 km of a county line where the
+neighboring county carries a different Urban/Rural classification. This measures *exposure* to
+a geocoding-driven FHFA↔USDA misclassification risk, not confirmed misclassification — none of
+the 1,101 has been individually checked against its true location the way the four Oahu cases
+were. Worth stating in the paper's limitations section as an untested residual risk alongside
+the MICE small-course finding above; not investigated further, not a blocker for anything else
+in this entry's closure.
+
+**Addendum (2026-07-28), author-requested, read-only: full per-course Step 2 (measured) vs.
+Step 3 (national-imputed) acreage comparison, and a correction to how P5-14's 6 flagged courses
+actually behave.** Surfaced diagnosing why the P5-13/P5-15-corrected Step 2 vs. Step 3 agreement
+widened to 6.04% (see **P5-11**, `Expected_Deltas.md`). `VERIFIED` against the real production
+Step 2/Step 3 outputs, all 36 crosswalk-identified courses:
+
+| Course | Step 2 (ac) | Step 3 (ac) | Diff | Note |
+|---|---:|---:|---:|---|
+| Kahuku Golf Course | 58.75 | 458.71 | **+399.96** | P5-14; deterministic, see below |
+| Kealohi Golf Course | 27.77 | 198.95 | **+171.18** | `MICE_Target`, not P5-14-flagged |
+| Hoakalei Country Club | 244.07 | 149.74 | **−94.34** | P5-14; deterministic, see below |
+| Hawaii Country Club | 123.30 | 165.13 | +41.83 | P5-14; genuinely `MICE_Target` |
+| Mamala Bay Golf Course | 183.83 | 159.60 | −24.23 | `MICE_Target`, not P5-14-flagged |
+| Ted Makalena Golf Course | 149.26 | 132.79 | −16.47 | P5-14; deterministic, see below |
+| West Loch Golf Course | 157.03 | 165.70 | +8.67 | — |
+| Coral Creek Golf Course | 190.58 | 195.03 | +4.45 | — |
+| Ewa Villages Golf Course | 178.55 | 182.03 | +3.48 | — |
+| Hawaii Kai Golf Course | 126.97 | 130.44 | +3.47 | — |
+| Waialae Country Club | 143.10 | 145.11 | +2.01 | — |
+| Waikele Golf Club | 131.05 | 132.79 | +1.74 | — |
+| Mililani Golf Club | 154.97 | 156.44 | +1.47 | — |
+| Bayview Golf Park | 88.32 | 89.59 | +1.27 | — |
+| Ko Olina Golf Club | 186.96 | 188.15 | +1.19 | — |
+| Pearl Country Club | 190.76 | 191.85 | +1.09 | — |
+| Turtle Bay / Kulima | 457.84 | 458.71 | +0.86 | — |
+| Leilehua Golf Course | 191.33 | 192.19 | +0.86 | — |
+| Moanalua Golf Club | 57.26 | 57.86 | +0.60 | — |
+| Ala Wai Golf Course | 130.93 | 131.44 | +0.51 | — |
+| Hawaii Prince Golf Club | 268.54 | 268.94 | +0.40 | — |
+| Kaneohe Klipper Marine | 140.57 | 140.36 | −0.21 | — |
+| Ewa Beach Golf Club | 149.56 | 149.74 | +0.17 | — |
+| Olomana Golf Links | 123.94 | 124.09 | +0.16 | — |
+| Pali Golf Course | 162.83 | 162.97 | +0.14 | — |
+| Mid Pacific Country Club | 151.83 | 151.96 | +0.13 | — |
+| Ko'olau Golf Club | 221.17 | 221.18 | +0.01 | — |
+| Honolulu CC, Kapolei, Makaha Valley, Navy-Marine, Royal Kunia, Oʻahu CC, Fort Shafter (7 courses) | — | — | 0.00 | exact matches |
+| Barbers Point Golf Course (solo, no Step 2 polygon) | — | 151.55 | n/a | P5-14; genuinely `MICE_Target` |
+| Luana Hills Country Club (solo, no Step 2 polygon) | — | 151.02 | n/a | P5-14; genuinely `MICE_Target` |
+
+**Decomposition of the 350.87 ac net gap:** (a) 4 Step-2-only polygons with no matching Step 3
+course (Bellows, Royal Hawaiian, poly 2 "Unknown", Executive Course) sum to 462.11 ac, pulling
+the *Step 2* total up relative to Step 3; (b) the 2 solo Step-3-only courses above sum to
+302.57 ac, pulling the *Step 3* total up relative to Step 2; (c) the 34 matched courses'
+per-course differences sum to +510.41 ac net. **The 6 P5-14-flagged courses alone (4 matched-
+course diffs + the 2 solo courses) total 633.56 ac of gap — 180.6% of the entire net 350.87 ac
+gap.** They more than fully explain it; the 4 Step-2-only orphan polygons are the main
+offsetting factor pulling the net figure back down. Outside 8 courses total (the 6 flagged, plus
+Kealohi and Mamala Bay, both independently confirmed `MICE_Target`), the remaining 28 matched
+courses differ by under 2 ac each, several by exactly zero — **the gap is concentrated, not
+spread evenly.**
+
+**Correction to this entry's own earlier framing: not all 6 flagged courses are "imputed."**
+`VERIFIED` directly against `R_Phase2_Acreage_Matched_v2.csv` and a 6-draw variance check across
+M=100: **Kahuku, Hoakalei, and Ted Makalena are `acreage_source == "OSM"` with zero variance —
+not MICE-imputed at all.** Their national `final_acreage` is a confident, deterministic, *wrong*
+number: Phase 2's own Pass-2 nearest-feature fallback (`Phase_2.R:321-338`) — the identical
+"accept the nearest match without verifying it belongs to this course" pattern already found in
+**P5-12** — assigned each of them their mis-geocoded point's nearest *neighboring* course's
+polygon area, at the *national* level, independent of and prior to anything Phase 5 does.
+Kahuku's Phase 2 row shows 459 ac (Turtle Bay's polygon) identically across all 6 sampled
+imputations; Hoakalei's shows ~150 ac (Ewa Beach's); Ted Makalena's shows ~133 ac (Waikele's).
+Only **Hawaii Country Club, Barbers Point, and Luana Hills** are genuinely `MICE_Target` with
+real cross-imputation variance (SD 21.6–44.3 ac in the sample). **This is a materially worse
+defect than "imputation uncertainty" for half the set** — a wrong-but-confident measurement
+inherited from Phase 2's national matching, not an honestly-uncertain guess from Phase 3's
+imputation model. Not fixed here (read-only diagnostic, no code changes); the candidate fix
+belongs wherever P5-12's is implemented for Phase 5, applied instead to Phase 2's own Pass-2
+matching — out of scope to design or implement without further direction.
+
+### P5-15 — Ko'olau's duplicate OSM polygon suggests golf courses may be double-digitized in OpenStreetMap nationally, not just on Oahu
+**Severity:** Minor · **Status:** Confirmed (1 instance, Oahu), national scope not tested · **Locus:** Data (OSM source)
+
+Found building **P5-12**'s crosswalk: OSM polygons 22 and 24 on Oahu are two different `osm_id`s
+with 100% identical geometry, both independently tagged "Ko'olau Golf Club" — the same physical
+course digitized twice in the source OSM data, upstream of anything this pipeline computes. Zero
+acreage impact locally (both carry the same area, so nothing was double-counted; only the
+*course count* was overstated by one, corrected in the P5-12 crosswalk). **Not tested at
+national scale** — if this pattern recurs elsewhere in the 15,166-polygon national OSM set, it
+would inflate Phase 1's national dedup-eligible course count the same way (a duplicate polygon
+feature, not a duplicate baseline record, so **P1-06**'s dedup key wouldn't catch it — a
+different mechanism from anything else logged so far). Low priority, flagging only: one
+confirmed instance out of 15,166 national polygons is not evidence of a systemic problem, just a
+reason not to assume Oahu's polygon count is otherwise clean.
+
+### P5-16 — Three Oahu OSM golf polygons have no corresponding Phase 1 baseline course; possible national coverage gap in Phase 1's source list
+**Severity:** Minor · **Status:** Confirmed (Oahu sample), national scope not tested · **Locus:** Data (Phase 1)
+
+Found building **P5-12**'s crosswalk: polygons 12 ("Bellows Golf Course") and 29 ("Royal
+Hawaiian Golf Club") are real, named, presumably-operating Oahu golf courses with no matching
+record anywhere in Phase 1's 37-course Oahu baseline (polygon 2, unnamed in OSM, is a third,
+unidentifiable case). This is neither a dedup problem (**P1-06**) nor a geocoding-accuracy
+problem (**P5-14**) — it looks like Phase 1's source course list is simply missing these
+courses entirely, a **coverage** gap. **Not tested at national scale** — if Phase 1's national
+16,292-course list has a similar miss rate, the national total is undercounting real golf
+acreage, not just misallocating it. Low priority, flagging only: 2-3 courses out of 39 Oahu OSM
+polygons is not, by itself, evidence of a systemic national gap, but it is a defect class this
+audit had not previously identified (prior work assumed Phase 1's course list was complete and
+only checked its accuracy/dedup, not its coverage).
+
+### P5-17 — Python and Julia's Phase 1 `Course_Name` field has a different format than R's; broke the crosswalk join during implementation
+**Severity:** Major · **Status:** `VERIFIED`, worked around, not fixed at the source · **Locus:** Code (Phase 1, Python/Julia)
+
+Found implementing the **P5-12** crosswalk in `Phase_5.py`/`Phase_5.jl`: joining the crosswalk
+(`Course_Name` built from R's Phase 1 output, e.g. `"Pearl Country Club"`) against Python's or
+Julia's own Phase 1 baseline by `Course_Name` matched **zero of 37 Oahu courses** — not a partial
+mismatch, a complete one. Python's and Julia's `Course_Name` field carries a `"-City,State"`
+suffix R's does not: `"Pearl Country Club-Aiea,HI"` vs. R's `"Pearl Country Club"`, `VERIFIED`
+identically in both languages' Phase 1 output. This is a real cross-language parity gap in
+Phase 1's `Course_Name` extraction, not a Phase 5 defect — it just happened to surface here
+because Phase 5 was the first place in this audit that joined on `Course_Name` across languages.
+
+**Coordinates are unaffected and were used as the workaround.** `VERIFIED`: Oahu's 37 courses'
+`(Longitude, Latitude)`, rounded to 6 decimals, match 37-of-37 exactly across all three
+languages' independent Phase 1 outputs. `Phase_5.py`/`Phase_5.jl` now resolve the crosswalk's
+`Course_Name` against **R's** baseline for canonical coordinates, then match those coordinates
+into each language's own Phase 3 imputed datasets — sidesteps the `Course_Name` format
+difference entirely rather than fixing it, since the fix required is in Phase 1's
+`extract_course_name()`-equivalent logic (or whichever step appends the city/state suffix in
+Python/Julia but not R), which is out of scope for a Phase 5 implementation task. Logged here so
+it isn't rediscovered by the next thing that tries to join on `Course_Name` across languages.
+
+**Not investigated further:** whether this suffix appears in Python/Julia's *national* baseline
+(not just the Oahu subset), whether it's cosmetic-only or affects any join used in the national
+pipeline (Phase 1-4 don't appear to join on `Course_Name` after Phase 1 itself, based on this
+audit's review so far, but that has not been exhaustively re-checked against this specific
+finding), and whether R is the "correct" format or Python/Julia are. Flagging, not fixing.
+
+### P5-18 — Step 2's 5,810.62 ac footprint and Step 6's 5,845.05 ac zoning intersection are two independently computed figures, unreconciled — same class as P5-11
+**Severity:** Minor · **Status:** Confirmed, not fixed · **Locus:** Code
+
+`VERIFIED` by summing `Jl_Phase5_Step6_Zoning_Percentages.csv` (byte-identical across R/Python/
+Julia to 8+ significant figures): the 19 zone-class rows sum to **5,845.045 ac**, not Step 2's
+P5-13/P5-15-corrected headline of **5,810.62 ac** — a **34.4 ac (0.59%) gap**. Both are real,
+current, production-run numbers (not a stale-vs-fresh mismatch like P5-01/P5-11's other entries)
+— they simply come from two different geometry passes over Oahu golf land that were never checked
+against each other: Step 2 intersects OSM golf polygons against Honolulu cadastral **parcels**;
+Step 6 intersects the same polygons against the City & County's **zoning district boundaries**
+(`ZONMAP_NO`, the same layer P5-11's rural-USDA sensitivity analysis uses for its Urban/Rural
+split). Different boundary layers over approximately the same footprint will not, in general,
+produce identical total areas — slivers, boundary-snapping differences, and zoning-district edges
+that don't coincide with parcel edges are all plausible, unexamined causes.
+
+This is the same failure pattern as **P5-11**'s original finding: two numbers that live side by
+side in the same output family (both feed Script 12's waffle chart — the acreage list sums to
+5,845.05 while the chart's own headline dollar figure is anchored to 5,810.62 via
+`Phase5_Oahu_Comparison.csv`) and read as paired without actually being the same computation.
+Not fixed — no reconciliation attempted, since it's not clear which (if either) is "more correct"
+without inspecting both intersections directly; flagged for the author to decide whether this
+needs a note, a reconciliation, or is small enough (0.59%) to leave as stated uncertainty.
+
+### P5-19 — Oahu observed-only aggregate and coverage ratio ($25.728B, 30 courses, 84.38% of $30.491B): computed once in an audit scratchpad, not reproducible from the repo — same reproducibility gap as Table 3
+**Severity:** Minor (numbers verified correct) / Major (provenance) · **Status:** `VERIFIED`, logged 2026-07-29 · **Locus:** Docs / missing artifact
+
+Cited in Section 4.4.2 and the Figure 8 (`9.101_Oahu_Opportunity_Cost_Map_ObservedOnly.png`)
+caption, but until this entry the number existed only as this audit's own scratchpad-run console
+output — not in `Issue_Register.md`, not as a committed CSV, not as any script's saved output. A
+separate LaTeX review pass grepped this register for the figure, found nothing, and concluded it
+had never been computed; this audit's own session had the number in its own (uncommitted)
+scratchpad. Both were right about what they checked — the number is real, but had no durable,
+reproducible home in the repo. **Same defect class as the Table 3 hand-typed assessed values**
+(found earlier this audit): a figure that ends up in the manuscript without a script, a CSV, or a
+register entry a reader could use to regenerate it.
+
+**Computation basis, stated explicitly so this is reproducible without re-deriving it:**
+- **Numerator ($25.728B):** `R_Phase2_Acreage_Matched_v2.csv`, filtered to `acreage_source !=
+  "MICE_Target"` (directly measured OSM polygon acreage, no MICE) and the Oahu bounding box
+  (lat 21.2-21.9, lon -158.5 to -157.6), joined to the P5-12 hand-verified crosswalk
+  (`Oahu_Course_Polygon_Crosswalk.csv`) on rounded `(Longitude, Latitude)` to resolve courses to
+  crosswalk `group_id` — replicates `Phase_6.R` Script 9 Step 6's `obs_oahu` exactly. Per-course
+  `final_acreage × Baseline_Value_Per_Acre`, summed. No MICE pooling needed (values are directly
+  observed, not drawn) — this is why it's 30 courses, not 30×M.
+- **Denominator ($30.491B):** the same crosswalk's full 36-course group_id set, but from the
+  **imputed** datasets — `final_acreage`(R)/`osm_acreage`(Python/Julia) × `Baseline_Value_Per_Acre`
+  per course per imputation, Rubin-pooled per language (M=100 each), then Grand Mean = arithmetic
+  mean of the three language pools. Independently reproduces the $30.491B already cited for Script
+  9 in `Expected_Deltas.md` (line 338) and matches Phase 5b's own Step 3 "Consistency Check" Grand
+  Mean (R $30.700B / Python $30.256B / Julia $30.515B → mean $30.490B) to the dollar — cross-
+  validated two ways, not just a one-off script output.
+- **Coverage ratio: 84.38%** = $25.728B / $30.491B.
+
+**Not "substantially" above the national 83.9% floor, contrary to the manuscript's current
+framing (§4.4.2, "The coverage ratio substantially exceeds the 83.9% national observed-only
+share").** 84.38% vs. the (also-revised, see the open question on the national floor) national
+figure is a 0.6-point gap, not a substantial one under either the old 82.5% or the newly-verified
+~83.8% national figure — flagged for the author's text pass, not corrected here.
+
+### P5-20 — `Phase5_Oahu_Comparison.csv`'s Step 3 q_bar (R: $30.700B) does not reproduce from a fresh, verbatim run of the current, committed `Phase_5.R`
+**Severity:** ~~Major~~ **RETRACTED (2026-08-07) — not a defect.** · **Status:** Closed, no code or data
+issue found · **Locus:** N/A — the "discrepancy" was a transcription error in this register's own
+prior reporting. See the closing addendum at the end of this entry before reading anything above
+it as current.
+
+Found while resolving the **P3-09** Phase 5 blocker (author-requested: diff course counts/IDs
+between the audit's scratchpad replication and production before applying the pooling fix). Two
+independent scratchpad replications of `Phase_5.R`'s Step 3 (`master_keep_list` construction +
+per-imputation crosswalk join + sum) agreed with each other exactly: **q_bar = $30.5154B**, not
+the frozen CSV's **$30.700B** — a $184.6M (0.6%) gap, close to one mid-sized Oahu course's value.
+
+**This is not a bug in the replication.** `VERIFIED` by executing `Phase_5.R`'s own Step 1-3 code
+**verbatim** (copied unchanged, only output paths redirected to scratchpad so no committed file
+was touched) against the real, current, on-disk inputs — same result: **q_bar = $30.5154B**,
+SE = $1.0772B, 99% CI $27.7405B-$33.2902B. The SE and CI match the frozen CSV's stated $1.077B and
+$27.741B-$33.290B almost to the decimal; **only q_bar diverges.** In the actual code, `q_bar` is
+a single variable computed once (`mean(oahu_agg_dedup)`, `Phase_5.R:328`) and used identically for
+both the SE calculation and the `comparison_df` write (`Phase_5.R:392`) — there is no code path
+in the current file that could produce two different values for it. Ruled out: stale inputs
+(crosswalk, R's Phase 1 baseline, and all 100 `R_Imputed_Dataset_*.csv` files all predate both
+`Phase_5.R`'s last edit and the CSV's write time); uncommitted local edits (`git diff HEAD` on
+`Phase_5.R` is empty — the on-disk file exactly matches the last commit); join-collision or
+Holes-mismatch bugs in the replication (checked directly — zero collisions, zero mismatches, all
+36 crosswalk courses matched in every one of the 100 imputations).
+
+**Most likely explanation, not provable from what's on disk:** an interactive-session artifact —
+e.g. `q_bar` bound in an R environment from an earlier partial run, with only later steps
+(SE/CI/`comparison_df`) re-executed after an edit, rather than a clean `Rscript` batch run
+top-to-bottom. Not asserted as fact; flagging as the leading hypothesis only.
+
+**Practical implication:** the frozen `$30.700B` "Consistency Check" figure for R should be
+treated as unverified pending a clean re-run. Python's ($30.256B) and Julia's ($30.515B) own
+Step 3 q_bar figures were **not** independently verbatim-checked here — same class of risk,
+not yet ruled in or out. **Do not trust any of the three Step 3 q_bar figures in
+`Phase5_Oahu_Comparison.csv` as reproducible until a fresh, clean run confirms them** — the
+**P3-09** pooling fix has been applied to the Step 3 *code* in all three languages regardless
+(it's correct independent of this q_bar mystery, since it operates on whatever `oahu_agg_dedup`
+the code actually computes), but the *committed CSV* will not reflect either fix until the
+scripts are actually re-run. That re-run was not performed here — it would also regenerate
+`Target_Golf_Polygons.gpkg`, `Honolulu_Parcels_Reprojected.gpkg`, and the Step 4-6 outputs
+(`Phase5_Geographic_Breakdown.csv`, zoning tables), a larger and riskier action than a text fix,
+left for the author to run deliberately.
+
+*(2026-08-07: author-directed clean-room re-test, ruling out the "interactive-session artifact"
+hypothesis and narrowing the remaining candidates. Executed against a frozen data archive
+(`E:\My_UH\_ARCHIVE\frozen_2026-08-07\`, SHA256-manifested) and a disposable `git worktree` at
+tag `frozen-pre-P309` (7b274f7) — no writes to the live `Data` tree at any point.*
+
+*Step 0: `git diff --stat thesis-submitted frozen-pre-P309 -- "2 - Work/Phase 5.../"` is empty —
+the two tagged commits are code-identical for Phase 5, so only one worktree state needed testing.*
+
+*Step 4 (input integrity, checked before the run to scope it correctly): SHA256-compared, against
+the archive manifest, every file Step 1-3 reads — `All_Parcels_6378200148342636690.gpkg`,
+`All_Parcels_-4613852522541990741.csv`, `Zoning_-2205419429161838665.gpkg`,
+`tl_2022_us_county.shp`, `R_Phase1_Baseline_Golf_Valuation.csv`,
+`R_Phase2_OSM_Golf_Polygons.gpkg` — all `MATCH` between the live tree and the archive. The 100
+`R_Imputed_Dataset_*.csv` files carry identical mtimes (2026-07-26 21:56:48-21:57:09) in both
+locations, predating the frozen comparison CSV's write time (2026-07-27 23:14:51) by roughly a
+day — they have not been regenerated since, ruling out a Phase 3 re-imputation (stochastic reseed
+or otherwise) as the cause. The crosswalk's last git-tracked change (`63237dd`, 2026-07-27
+23:04:46) also predates the frozen file and is unchanged since.*
+
+*Step 1-2: ran `Phase_5.R`'s Steps 1-3 as a byte-verbatim copy, saved inside the worktree (so
+`this.path::this.dir()` resolves paths identically to production), executed via
+`Rscript --vanilla` — a fresh, non-interactive process with no `.Rprofile`/`.RData`, directly
+testing the leading hypothesis from the prior pass. Data paths were satisfied via directory
+junctions/hardlinks into the archive (git-ignored data directories aren't part of the worktree
+checkout). Steps 1-2 reproduced already-known figures exactly: 38 OSM polygons, 37 Phase 1
+baseline points, 5,810.62-acre Step 2 footprint (matches **P5-18**'s citation).*
+
+*Step 3 result: **q_bar = $30,515,380,108.08** — i.e. $30.5154B, matching the prior pass's scratchpad
+figure to the dollar. 36/36 courses matched via the crosswalk in imputation 1 (full course-level
+and `master_keep_list` dumps retained), so this is also a clean pass on the "Step 3 — set diff"
+hypothesis: no membership difference, because there is nothing to diff against — the two
+independent reproductions (interactive-adjacent scratchpad run, and this fresh isolated
+`--vanilla` run) now agree exactly with each other and disagree only with the frozen CSV.*
+
+*Attempted the strictest version of this test — restoring the exact package versions pinned in
+`renv.lock` as of `frozen-pre-P309`, so the isolated run would match the historical environment
+as closely as possible — but `renv::restore()` failed on this machine's Windows toolchain: `Rcpp`,
+`s2`, and `units` could not build from source in the fresh project library, which cascaded to `sf`
+and everything downstream. Not pursued further (out of scope to debug a compiler toolchain for a
+diagnostic re-run); worked around by junctioning the worktree's `renv/library` to the live tree's
+already-built one, which sacrifices exact historical-version fidelity but keeps every other
+isolation property (fresh process, archived data, no interactive state) intact.*
+
+*Conclusion: the "interactive-session artifact" hypothesis from the prior pass is now considered
+ruled out — a completely fresh, non-interactive process reproduces $30.5154B, not $30.700B. Code,
+every Step 1-3 input, and a second independent execution environment are all confirmed
+identical/unchanged since before the frozen file was written; none of them explain the gap. Root
+cause remains unidentified. The most plausible remaining candidate — untested, unprovable without
+the actual historical environment — is that the 2026-07-27 23:14 production run executed under a
+different ambient package environment than any available today: it predates **P0-01**'s
+lockfile-restore fix (`b280ab1`, 2026-07-28 19:46) by roughly 20 hours, from an era the same entry
+already documents as "two disconnected dependency universes." $30.5154B stands, confirmed twice
+independently; $30.700B remains unreproduced. Python's and Julia's own Step 3 q_bar figures are
+still not independently checked — same open risk as before, not extended to this pass given the
+R result was already conclusive and the toolchain friction encountered.)*
+
+*(2026-08-07, recorded before extending this check to Python/Julia and before any full pipeline
+re-run: author-agreed tolerance bands for comparing a fresh Step 3 q_bar (or any other
+Monte-Carlo-pooled Phase 3/5 figure) against its currently-frozen counterpart —*
+
+| Deviation | Interpretation | Action |
+|---|---|---|
+| **< 0.1%** | Expected Monte Carlo variation (M=100 draws, floating-point/platform noise) | Accept, no action |
+| **0.1% – 1%** | Larger than expected MC noise alone should produce | Investigate before trusting either figure |
+| **> 1%** | Not explainable by MC variation | Stop; diagnose before proceeding (do not treat as a re-run artifact) |
+
+*For scale: this entry's originally-cited R gap — $30.5154B reproduced vs. a supposed $30.700B
+frozen figure — was later found to be a false comparison (see the closing addendum below): the
+real frozen R figure is $30.515B, a <0.01% deviation, squarely in the "accept" band. These bands
+apply to point estimates (q_bar, pooled aggregates); they are not a substitute for the exact-match
+checks already used elsewhere in this entry for course counts/IDs, which tolerate no deviation
+at all.)*
+
+*(2026-08-07, RETRACTION AND CLOSURE — read this before anything above it in this entry.
+Extending the check to Python and Julia (author-requested, before any full pipeline re-run) first
+required an environment restore for each language in a scratch location, attempted clean-room per
+the author's request:*
+
+- *R: `renv::restore()` against `renv.lock` failed — `Rcpp`, `s2`, and `units` could not build from
+  source on this machine's Windows toolchain, cascading to `sf` and everything downstream (already
+  reported in the addendum above). Worked around via a junction to the live tree's already-built
+  library; exact lockfile-version fidelity was not achieved for R.*
+- *Python: a fresh venv (`python -m pip install -r requirements.txt`, exact-pinned Python 3.13.13)
+  installed all 34 packages cleanly — every dependency, including `geopandas`/`pyogrio`/`shapely`/
+  `pyproj`, resolved to a prebuilt Windows wheel; no compilation needed. Full clean-room success.*
+- *Julia: `Pkg.instantiate()` against the pinned `Manifest.toml` in a fresh project directory
+  succeeded completely — all packages (`ArchGDAL`, `GeoDataFrames`, `Mice`, `BetaML`, etc.)
+  resolved and loaded (`Pkg.status()` clean, explicit `using` load test passed). Full clean-room
+  success.*
+
+*With working Python and Julia environments in hand, ran the same isolated verbatim Step 1-3
+methodology already validated for R against both languages' `frozen-pre-P309`-tagged code, in the
+same archive-linked worktree, comparing against each language's own frozen
+`Phase5_Oahu_Comparison.csv`:*
+
+| Language | Frozen q_bar | Fresh isolated q_bar | Deviation | Band |
+|---|---|---|---|---|
+| R | $30.515B | $30,515,380,108.08 | ~0.001% | Accept |
+| Python | $30.256B | $30,255,804,357.44 | ~0.001% | Accept |
+| Julia | $30.700B | $30,700,465,681.03 | ~0.002% | Accept |
+
+*SE, CI, and mean-acreage figures matched each language's frozen file too, not just q_bar. **All
+three languages reproduce their own frozen Step 3 figure exactly**, well inside the "accept" band
+just recorded above.*
+
+*This directly contradicts this entry's original claim that R's frozen figure was $30.700B. It
+was not. Re-reading `Phase5_Oahu_Comparison.csv` directly from both the archive and the live tree
+(`2 - Work/Phase 5.../Data_stale_2026-08-07/R/Phase5_Oahu_Comparison.csv` — the live `Data` folder
+has since been renamed aside, presumably in preparation for a full pipeline re-run) shows R's real
+frozen q_bar is, and has always been, **$30.515B** — matching every "fresh reproduction" this
+entry ever produced, including the very first one. **$30.700B is Julia's frozen figure, not
+R's.** The two got swapped somewhere in this register's own reporting (most likely when the
+original finding was first drafted, in the session before this one, without re-reading the actual
+CSV directly) — an internal transcription error, not a pipeline defect. A supporting data point:
+an earlier, independent entry in this register (**P5-11**'s 2026-07-28 addendum, written before
+P5-20 existed) already states R's production q_bar as "$30.515B... 99% CI $27.741B–$33.290B" —
+the exact figure this investigation kept re-deriving and mistaking for a mismatch against a
+number that was never actually R's.*
+
+*Net effect: no code changed, no data changed, nothing was actually broken. The multi-session
+diagnostic effort (isolated worktrees, archive hash-verification, input-integrity checks, three
+environment-restore attempts) was not wasted — it now stands as strong, independently-gathered
+evidence that all three languages' Phase 5 Step 3 pipelines are cleanly reproducible from their
+committed code and data, which is exactly the confidence check worth having in hand before a full
+pipeline re-run. Closing P5-20 with no further action. `git worktree remove` cleanup deferred per
+the author's explicit instruction not to delete anything before the re-run; nothing was written to
+the live tree in any case.)*
+
+---
+
+## Phase 6 — Visualization
+
+### P6-01 — Two different national Grand Means inside the same document
+**Severity:** Major · **Status:** Open · **Locus:** Docs
+
+`01_-_Phase6_Documentation.md` line 33: **$0.944T**, in the "Last Verified Run" table.
+Line 420 (§Scripts 10–14): *"actively routing and plotting the global Tri-Language Grand Mean
+(**$0.938T**)"*.
+
+Scripts 10–14 produce the Lorenz curve, the waffle chart, and the counterfactual area chart —
+i.e. the figures that go in the thesis. If they are rendering $0.938T while the maps render
+$0.944T, two thesis figures disagree by $6B. Also note neither matches the Phase 3 Summary's
+Grand Mean of "approximately $943 billion", which is the mean of three M=5 estimates
+(**P3-01**) and will move on re-run.
+
+### P6-02 — `grand_mean_se` averages standard errors arithmetically
+**Severity:** Major · **Status:** Open · **Locus:** Code
+
+`Phase_6.jl:561`:
+```julia
+grand_mean_se(p_py, p_r, p_jl) = mean([lookup_se(reg_py, p_py), lookup_se(reg_r, p_r), lookup_se(reg_jl, p_jl)])
+```
+
+The Grand Mean **point estimate** is the arithmetic mean of three Rubin-pooled estimates —
+which is a deliberate, well-argued choice (Phase 6 Summary §What was solved defends it
+correctly against pooling all 300 draws). But the Grand Mean **SE** is then the arithmetic
+mean of three SEs, which is not the uncertainty of that quantity in any framework:
+
+- It ignores the **between-implementation** spread of the three point estimates entirely.
+- It is neither the SE of a mean of three estimates (which would shrink) nor a conservative
+  envelope (which would widen).
+- It quietly asserts the three implementations agree perfectly, which is the very thing the
+  Grand Mean exists to demonstrate rather than assume.
+
+Feeds `6.141_Marginal_Effects` (delta-method CIs built from `se_b0`, `se_holes`, `se_urban`) and
+any Grand Mean interval on the Forest Plot. If the Grand Mean is framed as descriptive — "here
+are three estimates, here is their centre" — the honest move is to plot the three intervals and
+the spread, and not attach an interval to the mean at all.
+
+### P6-03 — Meta `.qmd` wrappers include a Phase 7 file that isn't in the project
+**Severity:** Minor · **Status:** Question · **Locus:** Code
+
+`Meta_Summary.qmd:42` and `Meta_Documentation.qmd:42` both `include` from
+`../Phase 7 Documentation, Discussion and Write Up/other/Phase7_{Summary,Documentation}.md`.
+No Phase 7 files were supplied, and `00_-_Phase6_Summary.md` states that Phase 6 output feeds
+the manuscript *"bypassing Phase 7's traditional role as a separate 'documentation' stage."*
+
+If Phase 7 was folded into the thesis proper, both `.qmd` files will fail to render. If it still
+exists, it's outside the review scope and should be added.
+
+### P6-04 — Phase 6's "function parity" question doesn't apply the way it does in Phases 1-5: R and Julia implement disjoint script sets, by design
+**Severity:** Cosmetic (clarifying, not a defect) · **Status:** Confirmed, documented already · **Locus:** —
+
+Surfaced while working Parity Audit Part G. Unlike Phases 1-5, where each language independently
+implements the *same* pipeline stage, **master `Phase_6.R` and master `Phase_6.jl` implement
+completely non-overlapping sets of visualizations.** `VERIFIED` by reading every `run_*`/`module`
+definition in both master files:
+- **R** (`Phase_6.R`): Scripts 1, 2, 3, 4, 7, 8, 9, 9b, 15, 16 — spatial maps, LaTeX tables,
+  Oahu/zoning figures, residual maps.
+- **Julia** (`Phase_6.jl`): Modules 5, 6, 10, 11, 12, 13, 14 — econometric/statistical plots
+  (Forest Plot, Marginal Effects, MICE diagnostics, Hawaii Gap Dumbbell, Lorenz Curve, Zoning
+  Waffle, Urban/Rural Bifurcation).
+- **Zero overlap** in script/module numbers between the two master files.
+
+This is deliberate, not a silent gap: `01_-_Phase6_Documentation.md:370` states outright
+*"Spatial map scripts are not translated to Julia — those outputs are consolidated into
+`Phase_6.R`. Script 8 (LaTeX tables) and Advanced Plots (10-14) are fully executed by
+`Phase_6.jl`."* Recorded here only to make explicit, for whoever reads **G-3**/**G-4** next, that
+"does R do the same thing as Julia" in Phase 6 is a question about *shared methodology*
+(Grand Mean = arithmetic mean of independently-pooled per-language estimates, used in both
+files' respective disjoint scripts) rather than *shared figures* — the two master scripts were
+never meant to be checked against each other function-by-function the way Phases 1-5 are.
+
+### P6-05 — `rubin_pool` (Phase_6.jl) verified clean: matches Phase 3's simple-total pooling formula, not a drifted copy
+**Severity:** N/A (verified clean) · **Status:** Verified sound · **Locus:** Code
+
+Parity Audit **G-4**. `Phase_6.jl:729-736`:
+```julia
+q_bar = mean(vals); B = var(vals); T = B * (1 + 1/M); se = sqrt(max(T, 0))
+```
+This omits the within-imputation variance term (`V_W`) that Phase 3/4's full Rubin's Rules
+formula (`V_T = V_W + V_B·(1+1/M)`) carries — at first read this looks like exactly the "second,
+drifted copy of a pooling formula" the checklist item warns about. **It isn't.** `rubin_pool`
+pools **scalar per-course/per-imputation totals** (e.g. one dollar total per imputation, no
+individual model SE attached to each draw) — for that quantity, there is no within-imputation
+variance component to add, because each pooled value isn't itself an estimate-with-a-SE. This is
+exactly the same simplified formula Phase 3's own `pool_acreage()` (`Phase_3.R` etc.) uses for
+the national acreage total — `se = sqrt(v_b·(1+1/m))`, algebraically identical to `rubin_pool`.
+**Verified as a correct reuse of the appropriate formula for this quantity, not a drift from the
+regression-coefficient formula** (which legitimately needs `V_W`, since each per-imputation
+coefficient has its own model SE). No action needed.
+
+### P6-06 — `log(Opportunity_Cost)` labels/comments corrected to `log(1 + Opportunity_Cost)`; one residual-calculation `log`/`log1p` mismatch found and left as-is
+**Severity:** Cosmetic · **Status:** Fixed (labels), noted (residual calc) · **Locus:** Code
+
+Parity Audit **G-6**. Phase 4's actual DV is `log1p(Total_Opportunity_Cost)` in all three
+languages (confirmed under **X-02**/**E-1**), but several Phase 6 figure labels/captions in both
+R and Julia said plain `log(Opportunity_Cost)`. **Fixed, text-only, zero numeric impact** — all
+instances describing Phase 4's fitted model specifically:
+- `Phase_6.jl:96,151,450,480,481,572,573` (Marginal Effects axis/caption, MICE Imputation
+  Diagnostic axis/title, code comments).
+- `Phase_6.R:2894` (Script 15 Residual Map caption) and the adjacent `2888` residual-definition
+  caption line.
+- **Not changed:** `Phase_6.jl`'s Urban/Rural Bifurcation scatter (module 14, lines
+  1919/1925/1962/1994/2025) — checked the underlying fit (`Phase_6.jl:1892`,
+  `ols(log.(ac), log.(ac .* bv))`) and confirmed it's a genuinely separate, strictly-positive-
+  filtered log-log OLS fit, unrelated to Phase 4's model — its "log(Acreage)"/"log(Opportunity
+  Cost)" labels were already accurate and left alone.
+- **Found, not fixed — a real (if numerically dead) inconsistency in `Phase_6.R`'s Script 15
+  residual calculation** (`Phase_6.R:2738`): `log_residual = log(acreage * Baseline_Value_Per_Acre)
+  - predicted_log`, where `predicted_log`'s coefficients were fit on `log1p(OC)`. The "actual"
+  side uses plain `log()`, the "predicted" side implicitly represents `log1p`-scale fitted values
+  — a genuine "+1" mismatch between the two terms being differenced. Not fixed, since it changes
+  a computed value (residuals feeding a published figure) rather than just a label — flagged in
+  a code comment at the site instead, per `CLAUDE.md` §2.3/§5 (don't silently change a number
+  that feeds a published figure). Negligible in practice: real OC values are $10K+, so `log(x)`
+  vs `log(1+x)` differ by <1e-4 — far below any visible residual-map color-scale threshold.
+
+### P6-07 — Script 9's `get_acreage()`/`pick(everything())` column-agnostic fix verified: genuinely produces tri-language output
+**Severity:** N/A (verified clean) · **Status:** Verified sound · **Locus:** Code
+
+Parity Audit **G-5**. `Phase_6.R`'s `get_acreage(df)` helper (three instances: lines 1701, 2116,
+2707 — Scripts 9, 9b, 15) returns `osm_acreage` if present, else `final_acreage`, called via
+`pick(everything())` inside `mutate()` so the whole current data frame is visible to the closure
+— the correct modern-`dplyr` idiom for this (`cur_data()`'s replacement). `VERIFIED` each call
+site actually invokes the enclosing pooling function **three times, once per language**
+(`pool_oahu_oc(R_IMPUTED_PATHS,"R")` / `(...,"Py")` / `(...,"Jl")` at `Phase_6.R:1849-1851`; same
+pattern at `2827-2829` for Script 15). Confirms the fix does what the checklist expected — the
+bug it replaced (a bare `df$final_acreage` reference, which would silently return `NULL`/error
+for Python/Julia's `osm_acreage`-named frames and degrade the Grand Mean to R-only) is fully
+closed, not just patched in one call site.
+
+### P6-08 — `Phase_6.jl`'s end-of-run provenance call has silently failed on every past run
+**Severity:** Minor (instrumentation only, no analysis-output impact) · **Status:** `VERIFIED`, fixed · **Locus:** Code
+
+Found while re-running `Phase_6.jl` for the P5-12/P5-13/P5-15 fixes (2026-07-28): the run
+completed with a caught warning, `UndefVarError: record_provenance not defined in Main`, and no
+row appeared in `Run_Provenance_Julia.csv`. Root cause: `include(joinpath(SCRIPT_DIR, "..",
+"provenance.jl"))` was only ever called *inside* `module Mod_5_Econometric_Plots` (the first of
+seven `module ... end` blocks in the file) — this defines `record_provenance` in
+`Mod_5_Econometric_Plots`'s own namespace, not `Main`. The actual end-of-run call,
+`record_provenance("Phase 6", "Phase_6.jl", SCRIPT_DIR, PROV_START)`, sits at top-level/`Main`
+scope near the bottom of the file, where that name was never defined — every historical run of
+this file has silently failed to record provenance, caught by the call site's own `try`/`catch`
+(so it never surfaced as a hard error, only as a warning easy to miss in a long console log).
+Not a Hawaii-specific or P5-1x-family defect — a standalone Phase 6 instrumentation bug,
+unrelated to any analysis output (`provenance.R`'s own header: "Not part of the analysis
+pipeline itself - instrumentation only").
+
+**Fixed:** moved `const SCRIPT_DIR`, `const PROV_START`, and the `include(provenance.jl)` call
+to true top-level scope, before any `module` block opens — `record_provenance` is now defined
+in `Main` where the final call site needs it. `Mod_5`'s own redundant local copy left in place
+(harmless — a second `include` into a different module's namespace, no conflict). `VERIFIED` by
+re-running: a `Phase 6 / Julia / Phase_6.jl` row now appears in `Run_Provenance_Julia.csv`.
+
+**Also note, not fixed:** the same re-run showed `Julia threads available: 1` — invoked without
+`--threads=auto`, so the file's own documented parallel-module execution (`Threads.@spawn` across
+7 modules) ran fully sequentially instead. Purely a performance concern for this run, not a
+correctness one (all modules still executed, just one after another) — flagging so a future run
+remembers the flag, not logging as a defect.
+
+### P6-09 — `Phase_6.R` Script 15's `get_coef()` silently degraded "Grand Mean" `b_urban` to R-only and `b0` to a 2-language mean, excluding Python — same failure mode as G-5
+**Severity:** Major (found), no manuscript impact (see below) · **Status:** `VERIFIED`, fixed 2026-07-29 · **Locus:** Code
+
+Found auditing a reported `Grand Mean b_urban = 4.00504`. `VERIFIED` by direct trace: Script 15's
+Step 1 (`Phase_6.R:2873-2896`) computed `b0`/`b_holes`/`b_urban` via
+`get_coef <- function(df, param) df$Coef[df$Parameter == param]`, called with **one hardcoded,
+R-spelled parameter string** for all three languages — `"factor(county_type)Urban"` for `b_urban`,
+`"(Intercept)"` for `b0`. Each language's regression CSV encodes these differently by construction
+(formula-encoding artifact, already documented correctly in `Phase_6.jl`'s own `grand_mean_coef`,
+lines 571-584): Python uses `"Intercept"` / `"C(county_type)[T.Urban]"`, Julia uses
+`"(Intercept)"` / `"county_type: Urban"`. Matching against the wrong string returns
+`character(0)`/`numeric(0)`, and R's `c()` silently drops zero-length vectors rather than
+erroring — `mean(c(numeric(0), numeric(0), 4.00503613338094))` returns `4.00503613338094`, R's
+own value, not a 3-language mean. Confirmed against the three source CSVs directly:
+- **`b_urban` degraded to R-only**: reported `4.00504` = R's raw `Coef` for
+  `factor(county_type)Urban`, to 6 significant figures. Correct grand mean (Py `4.169274` + R
+  `4.005036` + Jl `4.195171`) / 3 = **4.12316**.
+- **`b0` degraded to a 2-language mean, silently excluding Python**: Python's own CSV spells the
+  intercept row `"Intercept"` (no parens), unlike R/Julia's `"(Intercept)"`, so `b0` averaged only
+  R and Julia. `Holes` unaffected — spelled identically (`"Holes"`) in all three CSVs by
+  coincidence.
+
+**No published-figure impact, confirmed before fixing.** This `b0`/`b_urban` pair feeds only
+Script 15's own `predicted_log` (`Phase_6.R:2822`, the OLS residual-map fitted values) — i.e.
+`15.141_Log_Residual_Map_GrandMean.png` and `15.241_Dollar_Residual_Map_GrandMean.png`. Neither
+file, nor `6.141_Marginal_Effects_Dollar_Value_Combined.png` (which uses the *correct*
+`Phase_6.jl` `grand_mean_coef`, independently verified sound), appears in the thesis. The
+manuscript's Forest Plot (`5.141_Forest_Plot_Combined.png`, `Phase_6.jl` `Mod_5_Econometric_Plots`,
+`Phase_6.jl:100-178`) was checked specifically as the one thesis figure that touches Phase 4's
+regression output: it reads `py_reg`/`r_reg`/`jl_reg` directly and plots each language's own
+`Coef`/`Std_Error` independently, dodged side by side (Python/R/Julia as three separate dot-and-CI
+rows) — no averaging, no `get_coef`, no Grand Mean path of any kind. Not exposed to this bug.
+(Incidental, non-numeric observation made while checking: the Forest Plot's `PARAM_LABELS` dict
+keys the Urban row as `"county_type: Urban"` — Julia's own spelling — but the plot sorts/labels off
+`r_reg`'s rows, whose Parameter is `"factor(county_type)Urban"`; the dict lookup misses and falls
+back to the raw string, so the Urban row's y-axis tick likely reads `factor(county_type)Urban`
+instead of "Urban County." Cosmetic label mismatch only, doesn't touch any plotted value — not
+logged as its own issue, noted here since it was seen in the same file while verifying no numeric
+exposure.)
+
+**Fixed** (`Phase_6.R:2882-2896`): `get_coef()` calls now use each language's own parameter
+spelling for all three coefficients, matching `Phase_6.jl`'s existing correct mapping. Re-derived
+by hand from the three source CSVs: `b0 = 12.28533`, `b_holes = 0.04865`, `b_urban = 4.12316`.
+
+Recorded so the register isn't read as a list of everything that was looked at.
+
+- **Rubin's Rules implementation.** Correct in all six places it appears
+  (`Phase_3.{py,R,jl}`, `Phase_4.{py,R,jl}`). `V_T = V_W + (1+1/M)·V_B`, FMI, and
+  Barnard–Rubin adjusted df all match the literature. **P3-01 is a provenance problem, not a
+  formula problem** — this distinction is worth keeping crisp at defence.
+- **Dependent variable.** `log1p(acreage × BVPA)` consistently in all three languages
+  (`Phase_4.R:99`, `Phase_4.py:89`, `Phase_4.jl:92`). The Phase 6 audit's grep for `log(acreage)`
+  confirms the Script 15 offset bug did not survive anywhere else.
+- **Grand Mean point estimate.** Arithmetic mean of three independently pooled estimates rather
+  than a 300-draw single pool. Correct, and the Phase 6 Summary's defence of it is the sharpest
+  methodological writing in the corpus. (The **SE** is the problem — **P6-02**.)
+- **EPSG:5070 reprojection before area computation**, in all three languages, with the reasoning
+  explained. Correct and well justified.
+- **FIPS zero-padding fix.** The highest-value catch in the project.
+- **Script 15 residual fixes.** Both the log-unit offset (`log(acreage)` → `log(acreage × BVPA)`)
+  and the dollars-minus-acres units error were caught and corrected; the `Holes ∈ [9,72]` guard
+  against the 252-hole aggregate record is a good catch.
+- **37 → 33 → 29 course-count ladder.** Explained clearly and correctly in the Phase 5 Summary.
+  Not a defect — the dollar totals attached to it are (**P5-01**).
+- **M = 100 justification.** The Phase 3 Summary's argument for M=100 over M=5 — Monte Carlo
+  error scaling as 1/√M, and the M vs. chain-iteration distinction — is correct and unusually
+  well written. It just doesn't describe the run that got published.
+
+---
+
+## Open questions for the author
+
+1. **P3-01 / P4-01** — Do M=100 Phase 3 and Phase 4 outputs exist anywhere, or is the M=5 pilot
+   the only completed run? This determines whether the fix is "regenerate the tables" or
+   "re-run the pipeline."
+2. **P5-01** — Where does $28.6B come from? It is the denominator for the thesis's headline
+   $1.3B.
+3. **P5-02** — Was the `sf` P-1 re-run actually performed? The Summary says yes; the
+   Documentation says no.
+4. ~~**P2-02** — Does R's Phase 3 input include the 500 m nearest-neighbour tier?~~ **Answered
+   2026-07-24: yes**, confirmed against the live on-disk data. See P2-02.
+5. ~~**X-02** — Is R's `final_acreage` (OSM+Tigris) intended as the R arm's permanent input, or
+   should the parity comparison run on `osm_acreage` across all three?~~ **Answered 2026-07-27:**
+   Tigris Tier 2 removed (Decision 3); R now runs `osm_acreage` unconditionally, identical
+   construction to Python/Julia. See **X-02**/**P2-03**.
+6. **X-03** — Which tier (`Bulk Tests/` vs `Data/`) produced the currently published tables?
+7. **P1-01 / P1-05** — Should R's `futuremice(method="rf")` call explicitly exclude `Holes` and
+   `Ownership_Type` from imputation (via `predictorMatrix`), so R's MICE predictor set is
+   structurally identical to Python/Julia's instead of incidentally different because R's regexes
+   happen to leave a few real NAs where Py/Jl fabricate values? Small row counts (9 and 1) but a
+   real structural difference in the imputation model, not just a value.
+8. **P1-05** — Should `Phase_1.py`'s `extract_ownership()` be fixed to recognize `"Semi Private"`
+   as its own category (currently collapsed into `"Private"` for ~1,662 of 16,297 courses, 10.2%)?
+   If yes, Python's Phase 3 (already run at M=100 per **P3-01**'s resolution) would need
+   re-running with the corrected predictor.
+9. **P1-06** — Should Python gain the same (lat, lon, Course_Name) row-level dedup that R and
+   Julia already have? And separately: R and Julia currently use different tie-break rules on
+   ties (Holes-descending vs first-encountered) that happen not to have collided yet — worth
+   picking one explicit rule for all three before that changes.
+10. **X-04** — Does the thesis manuscript currently cite the M=5 Phase 3 Summary tables, or the
+    2026-06-12 M=100 output files (`Final_Thesis_Figures/`, `Data/*_Rubins_Rules_Summary.csv`)?
+    Evidence points to the former: the Jun-12 run's actual pooled National OC
+    (R $935.521B / Python $938.309B / Julia $950.637B, Grand Mean ≈$941.5B) doesn't match the
+    published $936.0B/$943.0B/$951.4B (Grand Mean $943.5B) closely enough to be the same run,
+    read to the same precision. If the manuscript does cite the M=5 pilot, **a closer-to-final
+    version of the headline number is already sitting on disk** — worth knowing before deciding
+    whether the next step is "wait for the frozen re-run" or "reconcile this existing run once
+    P1-01/P1-05/P1-06 are addressed."
