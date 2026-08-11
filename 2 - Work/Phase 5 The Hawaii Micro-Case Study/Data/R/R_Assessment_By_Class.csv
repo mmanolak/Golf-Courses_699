@@ -1,2 +1,2 @@
 Class,Parcel_Count,Data_Available,Reason
-ALL,1072,FALSE,assessed_land_value column not present -- retrieval not yet completed.
+ALL,205,FALSE,assessed_land_value not present/entirely blank -- retrieval not started.

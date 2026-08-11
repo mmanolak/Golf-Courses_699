@@ -1,0 +1,42 @@
+TMK,dominant_zone_class,course_name,golf_clipped_acres,expected_taxable,assessed_land_value,assessed_building_value,tax_class,exempt_value,retrieval_date,notes,sample_type
+35042004,R-10,Waiʻalae Country Club,0.095157828209031,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+35044029,R-10,Waiʻalae Country Club,0.00993979240631423,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+84002007,R-20,Makaha Valley Country Club,3.0750370413262615,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91071047,R-3.5,Kapolei Golf Course,0.00418431098593097,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91072071,R-3.5,Kapolei Golf Course,0.00852846716675864,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91081085,R-3.5,Kapolei Golf Course,0.02375165127542494,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91081094,R-3.5,Kapolei Golf Course,0.02699610925358898,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+39093043,R-5,Championship Course,0.14882052870152915,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+39093124,R-5,Championship Course,0.0585850552963138,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+39094034,R-5,Championship Course,0.03944717857779131,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+39094047,R-5,Championship Course,0.04406524659778717,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+39094076,R-5,Championship Course,0.04451616136799932,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91082027,R-5,Coral Creek Golf Course,1.3717092885067624e-4,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91171006,R-5,Coral Creek Golf Course,0.01834881136077744,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91171016,R-5,Coral Creek Golf Course,0.0116939379548449,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91171019,R-5,Coral Creek Golf Course,0.0121928740871355,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91038151,R-5,Ewa Beach Golf Club,0.00649400135867399,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91132118,R-5,Hawaii Prince Golf Club,0.026260840269727848,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91136024,R-5,Hawaii Prince Golf Club,0.01213051462983761,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91136030,R-5,Hawaii Prince Golf Club,0.03139026038472911,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+42054042,R-5,Unknown,0.07732941666333308,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+94142101,R-5,Waikele Golf Club,4.1147702175990784e-5,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+94147106,R-5,Waikele Golf Club,0.00963109492262509,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+94150056,R-5,Waikele Golf Club,1.5899921193371434e-4,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+94150065,R-5,Waikele Golf Club,1.0901039782103344e-4,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+94151010,R-5,Waikele Golf Club,0.01175253501207251,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+94158007,R-5,Waikele Golf Club,0.01110647845907132,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+95015019,R-7.5,Mililani Golf Course,0.00187278029499266,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+35058028,R-7.5,Waiʻalae Country Club,9.1931835255109e-4,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+35058032,R-7.5,Waiʻalae Country Club,0.09725142205935072,TRUE,NA,NA,NA,NA,NA,NA,stratified_sample_seed5122
+91134070,Resort,Hoakalei Country Club,7.102666274944694,TRUE,NA,NA,NA,NA,NA,NA,full_census
+91134071,Resort,Hoakalei Country Club,0.25372358601753886,TRUE,NA,NA,NA,NA,NA,NA,full_census
+56003056,Resort,Kulima Golf Course,29.274628198421414,TRUE,NA,NA,NA,NA,NA,NA,full_census
+56003059,Resort,Kulima Golf Course,34.00646191523371,TRUE,NA,NA,NA,NA,NA,NA,full_census
+57001044,Resort,Kulima Golf Course,13.830062281203782,TRUE,NA,NA,NA,NA,NA,NA,full_census
+57001046,Resort,Kulima Golf Course,0.4871515567232214,TRUE,NA,NA,NA,NA,NA,NA,full_census
+57001048,Resort,Kulima Golf Course,7.185065504217794,TRUE,NA,NA,NA,NA,NA,NA,full_census
+57001050,Resort,Kulima Golf Course,29.458517549882405,TRUE,NA,NA,NA,NA,NA,NA,full_census
+57006027,Resort,Kulima Golf Course,0.7275561133553166,TRUE,NA,NA,NA,NA,NA,NA,full_census
+57006029,Resort,Kulima Golf Course,7.182484468465829,TRUE,NA,NA,NA,NA,NA,NA,full_census
+84002054,Resort,Makaha Valley Country Club,2.5604476397201035,TRUE,NA,NA,NA,NA,NA,NA,full_census

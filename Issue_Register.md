@@ -158,6 +158,17 @@ figure silently undercounted** — the source field is blank for 94.7% of all ta
 77.8% of the golf-footprint subset, not disclosed when first reported. Both corrected in this
 entry's addendum text above rather than left standing.)*
 
+*(2026-08-10, same day: **P5-22 addendum, +0 net** — retrieval worksheets prepared:
+`Phase_5_Assessment_Worksheet_Prep.R` (new) splits the target list into a 164-row full-census
+Preservation worksheet and a 41-row Resort-census-plus-30-parcel-stratified-Residential-sample
+comparison worksheet (seed 5122, allocation method documented in-file). `Phase_5_Assessment_By_
+Class.R` rewritten again: golf-clipped acreage is now the sole denominator (`recorded_area_acres`
+dropped per this entry's own Finding 2), and a three-way $0/blank/not-on-roll value-status split
+added. Manuscript's 105-parcel and $26,079/acre figures explicitly recorded as **superseded by
+this retrieval, not reconciled toward** — the $26,079 figure traces to a three-course computation
+per the author, consistent with this entry's standing finding that it isn't derivable from
+anything committed to this repo.)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -4002,6 +4013,42 @@ set was `sum(..., na.rm = TRUE)` over a field populated for only ~22% of those p
 undercounting true cadastral acreage rather than measuring it — a gap this entry did not disclose
 when the figure was first reported. Flagged now rather than left standing uncorrected: that
 70,816-acre figure should not be cited as the footprint's recorded acreage without this caveat.
+
+**Retrieval prepared (2026-08-10) — the manuscript's original figures are being superseded, not
+explained.** Two new committed scripts complete the manual-retrieval pipeline:
+
+- `Phase_5_Assessment_Worksheet_Prep.R` — splits the 1,072-parcel target list into
+  `Data/R/Assessment_Retrieval_Worksheet.csv` (164 rows: the full census of 142 P-1/P-2 +
+  22 F-1 Preservation parcels, load-bearing, sorted by course then TMK for retrieval
+  efficiency) and `Data/R/Assessment_Retrieval_Comparison.csv` (41 rows: all 11 Resort parcels,
+  full census, plus a 30-parcel stratified random sample of the 712-parcel R-3.5/R-5/R-7.5/
+  R-10/R-20 population — proportional allocation, floor of 1 per stratum, seed 5122, documented
+  in the script's own header and the file's `sample_type` column — context figures only, not
+  load-bearing). Zero duplicate TMKs, confirmed. Distribution across courses printed at run
+  time so the author can gauge retrieval effort per course before starting (heaviest: Bayview 18,
+  Ko Olina 17, Kulima 12; 75 of 1,072 target-list parcels carry `course_name = "Unknown"` where
+  the underlying OSM golf polygon has no `name` tag — a pre-existing Phase 2 data-quality gap,
+  not something this script introduced, noted for awareness).
+- `Phase_5_Assessment_By_Class.R` — rewritten again to read the two completed worksheets
+  (still stubs `Data_Available = FALSE` correctly if retrieval hasn't started — verified).
+  golf-clipped acreage is now the sole denominator (`recorded_area_acres` dropped from the
+  computation entirely, per Finding 2 above — stated in the script's own header, not silently
+  changed). Adds a three-way value-status split ($0 / blank-unspecified / not-on-roll, the last
+  inferred from a `notes` keyword scan — a heuristic on free text, documented as such) so only
+  genuine $0 assessments enter a mean. Preservation and Hotel/Resort are reported as full
+  censuses; Residential is explicitly flagged `Is_Sample = TRUE`, `Population_N = 712` so it
+  isn't presented with the same standing as the other two.
+
+**Two figures recorded as not reproducing, not as explained — this retrieval exists to replace
+them, not to account for them:**
+- The manuscript's **105 Preservation-classified parcels** matches neither definition computed
+  from this footprint's own geometry: **142** (P-1+P-2) or **164** (P-1+P-2+F-1).
+- The manuscript's **$26,079/acre Preservation figure traces to a three-course computation**
+  (author-relayed, not independently verified in this repo — no such computation exists in any
+  committed script or data file, consistent with this entry's earlier finding that the figure
+  isn't derivable from anything in the tree) against this retrieval's full 142/164-parcel census.
+  Once the author's qPublic retrieval is complete, the resulting figure supersedes $26,079
+  rather than reconciling with it.
 
 ---
 

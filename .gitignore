@@ -144,6 +144,8 @@ venv/
 !**/Run_Provenance_*.csvg
 !**/Oahu_Course_Polygon_Crosswalk.csv
 !**/Assessment_Retrieval_Targets.csv
+!**/Assessment_Retrieval_Worksheet.csv
+!**/Assessment_Retrieval_Comparison.csv
 !**/MANIFEST.csv
 
 # --- but NOT the large re-obtainable extracts (record in DATA_PROVENANCE.md) ---
