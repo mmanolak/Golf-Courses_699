@@ -143,6 +143,7 @@ venv/
 # --- provenance and hand-verified crosswalks ---
 !**/Run_Provenance_*.csvg
 !**/Oahu_Course_Polygon_Crosswalk.csv
+!**/Assessment_Retrieval_Targets.csv
 !**/MANIFEST.csv
 
 # --- but NOT the large re-obtainable extracts (record in DATA_PROVENANCE.md) ---

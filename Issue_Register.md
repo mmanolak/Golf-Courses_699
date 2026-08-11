@@ -148,6 +148,16 @@ pointing to a hand lookup rather than a committed bulk source. Also reproduces t
 parcels' total *cadastral* (unclipped) acreage — 70,816 ac, ~12× the golf-clipped footprint —
 which quantifies the mixed-use-parcel denominator concern raised alongside this request.)*
 
+*(2026-08-10, same day: **P5-22 addendum, +0 net** — manual-retrieval workflow built:
+`Phase_5_Assessment_Target_List.R` (new) and `Phase_5_Assessment_By_Class.R` (rewritten from the
+`Data_Available = FALSE` stub to a real per-category computation, still stubs correctly if run
+before the author's retrieval is complete). Two findings while building it: (1) **105 does not
+reproduce as a Preservation-parcel count under either plausible definition** — P-1+P-2 = 142,
+P-1+P-2+F-1 = 164, neither matches; (2) **this entry's own earlier 70,816-acre recorded-acreage
+figure silently undercounted** — the source field is blank for 94.7% of all tax-roll rows and
+77.8% of the golf-footprint subset, not disclosed when first reported. Both corrected in this
+entry's addendum text above rather than left standing.)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -3953,6 +3963,45 @@ source (most plausibly qPublic/RPAD), not as reproducible from the committed pip
 the author locates and commits the actual source data. Output: `Data/R/R_Assessment_By_Class.csv`
 — one row, `Data_Available = FALSE`, with the search results and reasoning in a `Reason` column
 so a future reader doesn't have to re-run the search to see why.
+
+**Addendum (2026-08-10) — retrieval workflow built; two findings from building it.** The author
+requested a manual-retrieval path: a per-parcel target list for qPublic lookups, plus a
+computation script to run once assessed values are filled in. Two new committed scripts:
+
+- `Phase_5_Assessment_Target_List.R` — re-derives per-parcel geometry (golf-clipped fragments
+  and their dominant Development Plan zoning class) that neither Step 2 nor Step 6 of `Phase_5.R`
+  keeps at the parcel level on their own, restricted to exactly the 1,072 TMKs already committed
+  in `Target_Golf_Parcels_List.csv` (not this run's own fresh `st_intersection()` output —
+  see **P5-21**'s cross-run sensitivity finding; this run's fresh geometry happened to reproduce
+  all 1,072 exactly, reported explicitly rather than assumed). Writes
+  `Data/R/Assessment_Retrieval_Targets.csv` (1,072 rows: TMK, dominant_zone_class,
+  golf_clipped_acres, recorded_area_acres, dominant course_name, expected_taxable).
+- `Phase_5_Assessment_By_Class.R` — rewritten from the `Data_Available = FALSE` stub above to
+  read that target list once the author adds an `assessed_land_value` column, and compute
+  per-category (Preservation/Residential/Hotel-Resort/Other) parcel count, total value,
+  acreage-weighted and unweighted mean $/acre against both golf-clipped and recorded acreage,
+  zero-or-missing-value share, and Preservation with vs. without F-1 federal/military parcels.
+  Still emits the `Data_Available = FALSE` stub if run before the retrieval column exists
+  (verified — this run, before any manual retrieval, correctly stubs; a synthetic test retrieval
+  verified the full computation path produces internally consistent category totals before this
+  was committed, then was discarded, not committed).
+
+**Finding 1 — 105 does not reproduce under either plausible Preservation definition.** Per-parcel
+dominant-zone classification of the 1,072-TMK footprint: **P-1+P-2 (excl. F-1) = 142 parcels;
+P-1+P-2+F-1 (incl. F-1) = 164 parcels; neither equals the manuscript's cited 105.** Full
+zoning-class breakdown: R-5 536, P-2 129, AG-1 104, R-3.5 82, R-7.5 55, R-10 38, C 26, **F-1 22**,
+A-1 15, AG-2 15, A-2 13, P-1 13, Resort 11, B-1 6, B-2 3, IMX-1 2, I-2 1, R-20 1 (sums to 1,072).
+22 of the 142/164 Preservation parcels are F-1. This doesn't resolve which definition (if either)
+the manuscript used — flagged for the author, not guessed at here.
+
+**Finding 2 — the tax roll's `Recorded Area Acres` field is blank for 94.7% of all 177,392
+parcels (168,036 rows), and for 77.8% of the golf-footprint's 1,072 parcels (834 rows) —
+confirmed against the raw CSV directly, not a parsing artifact.** This corrects this entry's own
+earlier reported figure: the "70,816.49 total recorded acres" cited above for the matched-parcel
+set was `sum(..., na.rm = TRUE)` over a field populated for only ~22% of those parcels, silently
+undercounting true cadastral acreage rather than measuring it — a gap this entry did not disclose
+when the figure was first reported. Flagged now rather than left standing uncorrected: that
+70,816-acre figure should not be cited as the footprint's recorded acreage without this caveat.
 
 ---
 

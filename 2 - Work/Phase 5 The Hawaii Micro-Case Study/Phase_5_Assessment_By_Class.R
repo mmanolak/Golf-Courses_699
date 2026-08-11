@@ -1,135 +1,179 @@
-# Purpose: Reproduce Section 5.1's per-class assessed-value figures for parcels
-#          intersecting Oahu's golf footprint (Issue_Register.md P5-22):
-#            - Preservation-class mean assessed land value: $26,079/acre
-#            - Residential-class mean assessed land value:  $630,049/acre
-#            - Hotel/Resort-class mean assessed land value: $962,922/acre
-#            - 105 Preservation-classified parcels in the golf footprint
-#            - Exemption rate: 27.5% (Preservation class) vs. 47.2% (matched set)
+# Purpose: Compute Section 5.1's per-class assessed-value figures for parcels
+#          intersecting Oahu's golf footprint (Issue_Register.md P5-22), from
+#          a manually-completed retrieval sheet, not from anything scripted
+#          end-to-end -- no assessed-value/exemption field exists anywhere in
+#          this repository's committed data (verified, P5-22).
 #
-# Method (as far as the source data supports it): join the 1,072-TMK golf
-# footprint (Phase_5.R Step 2's Target_Golf_Parcels_List.csv) against the
-# Honolulu parcel tax roll (All_Parcels_-4613852522541990741.csv, the same
-# file Phase_5.R Step 4 already joins on TMK for its own Zone lookup) and
-# group by tax classification, summing assessed land value and exemption
-# amount per class.
+# Workflow:
+#   1. Phase_5_Assessment_Target_List.R emits Data/R/Assessment_Retrieval_Targets.csv
+#      (1,072 rows: TMK, dominant_zone_class, golf_clipped_acres,
+#      recorded_area_acres, course_name, expected_taxable, ...).
+#   2. The author retrieves each parcel's assessed LAND value from qPublic
+#      (see the bookmark under '00 - Data Sources/Data Sources - Via HTML/')
+#      and adds it to that same file as a new column named exactly
+#      'assessed_land_value' (numeric, USD, blank/NA if the parcel is absent
+#      from qPublic or shows no value -- do not write 0 for "not found",
+#      only for a genuine $0 assessment; the two are counted separately below).
+#   3. This script reads that completed file and computes the figures.
 #
-# Reads:  Phase 5.../Data/R/Target_Golf_Parcels_List.csv (1,072 TMKs)
-#         00 - Data Sources/Honolulu/All_Parcels_-4613852522541990741.csv
+# Zoning-class -> manuscript-category mapping (a methodological choice made
+# here, not given by the manuscript -- stated explicitly so it can be
+# checked or overridden):
+#   Preservation = P-1, P-2, F-1 (broad, matches how the manuscript's
+#     original "Preservation" figure appears to have been scoped -- see
+#     the with/without-federal split below, which exists precisely because
+#     lumping F-1 in here is contested).
+#   Residential  = R-3.5, R-5, R-7.5, R-10, R-20 (Residential Districts) and
+#     A-1, A-2 (Apartment Districts) -- grouped together as "Residential"
+#     for this 3-category exercise; Apartment districts are a distinct
+#     zoning family from Residential Districts in Honolulu's own code and
+#     this grouping is a simplification, flagged as such.
+#   Hotel/Resort = Resort (the only zoning code of that kind that appears in
+#     the golf footprint; there is no separate "Hotel" zoning code here).
+#   Other        = everything else present in the footprint (AG-1, AG-2,
+#     C, B-1, B-2, IMX-1, I-2 -- Agriculture/Country/Business/Industrial).
+#     Not one of the manuscript's three cited categories; reported for
+#     completeness, not compared against a manuscript figure.
+#
+# Acreage basis: BOTH golf_clipped_acres and recorded_area_acres are used,
+# every figure computed against each, because they differ by roughly 12x
+# across this footprint (Issue_Register.md P5-22) and the manuscript's
+# original figures never stated which basis they used. Neither is called
+# "the" answer here.
+#
+# Reads:  Data/R/Assessment_Retrieval_Targets.csv (must have assessed_land_value added)
 # Writes: Data/R/R_Assessment_By_Class.csv
 
 suppressPackageStartupMessages({
+  library(dplyr)
+  library(readr)
   library(this.path)
 })
 
 SCRIPT_DIR <- this.path::this.dir()
-WORK_DIR   <- normalizePath(file.path(SCRIPT_DIR, ".."), mustWork = FALSE)
-
-TMK_LIST_CSV <- file.path(SCRIPT_DIR, "Data", "R", "Target_Golf_Parcels_List.csv")
-TAX_ROLL_CSV <- file.path(
-  WORK_DIR, "00 - Data Sources", "Honolulu", "All_Parcels_-4613852522541990741.csv"
-)
+TARGETS_CSV <- file.path(SCRIPT_DIR, "Data", "R", "Assessment_Retrieval_Targets.csv")
 OUT_DIR <- file.path(SCRIPT_DIR, "Data", "R")
 OUT_CSV <- file.path(OUT_DIR, "R_Assessment_By_Class.csv")
 dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
-if (!file.exists(TMK_LIST_CSV)) {
-  stop(sprintf("[FATAL] Golf-footprint TMK list not found:\n  %s\nRun Phase_5.R Step 2 first.", TMK_LIST_CSV))
+if (!file.exists(TARGETS_CSV)) {
+  stop(sprintf(
+    "[FATAL] %s not found.\nRun Phase_5_Assessment_Target_List.R first.",
+    TARGETS_CSV
+  ))
 }
-if (!file.exists(TAX_ROLL_CSV)) {
-  stop(sprintf("[FATAL] Honolulu tax roll not found:\n  %s", TAX_ROLL_CSV))
-}
 
-tmk_list <- read.csv(TMK_LIST_CSV, colClasses = "character", stringsAsFactors = FALSE)
-cat(sprintf("[1] Golf-footprint TMK list: %d parcels (%s)\n", nrow(tmk_list), basename(TMK_LIST_CSV)))
+targets <- read_csv(TARGETS_CSV, show_col_types = FALSE)
+cat(sprintf("[1] Loaded %s: %d parcels.\n", basename(TARGETS_CSV), nrow(targets)))
 
-tax_roll <- read.csv(TAX_ROLL_CSV, stringsAsFactors = FALSE)
-cat(sprintf("[2] Tax roll loaded: %d rows, %d columns (%s)\n", nrow(tax_roll), ncol(tax_roll), basename(TAX_ROLL_CSV)))
-
-# === Join golf-footprint TMKs against the tax roll (same TMK column both files use elsewhere) ===
-tmk_list$TMK <- trimws(as.character(tmk_list$TMK))
-tax_roll$TMK <- trimws(as.character(tax_roll$TMK))
-matched <- merge(tmk_list, tax_roll, by = "TMK", all.x = TRUE)
-n_matched <- sum(!is.na(matched$objectid))
-cat(sprintf(
-  "[3] Joined on TMK: %d of %d golf-footprint parcels matched a tax-roll row.\n",
-  n_matched, nrow(tmk_list)
-))
-cat("    Acreage basis: 'Recorded.Area.Acres' (cadastral parcel area) — this is NOT the\n")
-cat("    golf-clipped area Phase_5.R Step 2 computes via st_intersection(); a mixed-use\n")
-cat("    parcel's full recorded acreage is counted here even where only part of it overlaps\n")
-cat("    the golf polygon. This is a stated limitation, not a bug: the tax roll has no\n")
-cat("    golf-clipped acreage field, only whole-parcel 'Recorded Area Acres'.\n")
-total_acres_cadastral <- sum(matched$Recorded.Area.Acres, na.rm = TRUE)
-cat(sprintf("    Total recorded (cadastral, unclipped) acreage of matched parcels: %.2f ac\n", total_acres_cadastral))
-
-# === Search for the fields Section 5.1's figures require ===
-cat("\n[4] Searching tax-roll columns for assessed value / tax class / exemption fields...\n")
-all_cols <- names(tax_roll)
-value_cols     <- grep("valu|assess", all_cols, ignore.case = TRUE, value = TRUE)
-class_cols     <- grep("class|use|land.?use", all_cols, ignore.case = TRUE, value = TRUE)
-exemption_cols <- grep("exempt", all_cols, ignore.case = TRUE, value = TRUE)
-
-cat(sprintf("    Columns matching /valu|assess/i  (assessed value candidates): %s\n",
-            if (length(value_cols) == 0) "NONE" else paste(value_cols, collapse = ", ")))
-cat(sprintf("    Columns matching /class|use/i    (tax-classification candidates): %s\n",
-            if (length(class_cols) == 0) "NONE" else paste(class_cols, collapse = ", ")))
-cat(sprintf("    Columns matching /exempt/i       (exemption candidates): %s\n",
-            if (length(exemption_cols) == 0) "NONE" else paste(exemption_cols, collapse = ", ")))
-
-fields_missing <- length(value_cols) == 0 || length(class_cols) == 0 || length(exemption_cols) == 0
-
-# === What's actually derivable from this file, regardless of the fields above ===
-cat("\n[5] What this tax roll DOES carry for the matched parcels (for the record):\n")
-zone_tbl <- table(substr(matched$TMK, 1, 1), useNA = "always")
-print(zone_tbl)
-cch_tbl <- table(matched$CCH.Parcel.Type, useNA = "always")
-cat("  'CCH Parcel Type' (parcel-fabric type — 1/2/3; NOT a land-use or tax class):\n")
-print(cch_tbl)
-
-# === Denominator/filter details, stated explicitly per the request ===
-cat("\n[6] Filters used, stated explicitly:\n")
-cat(sprintf("    - TMK join key: exact string match, 8-digit TMK, no padding needed (both files agree on format).\n"))
-cat(sprintf("    - Denominator: all %d golf-footprint TMKs from Phase_5.R Step 2 (Target_Golf_Parcels_List.csv),\n", nrow(tmk_list)))
-cat(sprintf("      not a subset — %d of these matched a tax-roll row (%d did not).\n",
-            n_matched, nrow(tmk_list) - n_matched))
-cat(sprintf("    - No tax-class field exists to filter to 'Preservation'/'Residential'/'Hotel-Resort' by.\n"))
-cat(sprintf("    - No 'exempted' field exists in this schema; the concept cannot be defined from this file.\n"))
-
-# === Result: what can and cannot be written ===
-result_df <- data.frame(
-  Class                    = "ALL_MATCHED_GOLF_FOOTPRINT_PARCELS",
-  Parcel_Count             = nrow(tmk_list),
-  Parcel_Count_Tax_Roll_Matched = n_matched,
-  Total_Acres_Cadastral    = total_acres_cadastral,
-  Total_Assessed_Land_Value = NA_real_,
-  Mean_Value_Per_Acre      = NA_real_,
-  Exemption_Share          = NA_real_,
-  Data_Available           = FALSE,
-  Reason = paste(
-    "Tax roll (All_Parcels_-4613852522541990741.csv) carries only parcel-fabric/geometry",
-    "fields (TMK, Zone, Recorded Area, parcel type, subdivision/plat metadata) -- no",
-    "assessed land value, no Preservation/Residential/Hotel-Resort tax classification,",
-    "and no exemption field exists anywhere in this repository (checked: the CSV export,",
-    "the equivalent .gpkg's field list, and the source .zip's raw .dbf schema, all",
-    "identical). The 6 target figures cannot be derived from data in this tree.",
-    "A qPublic (Schneider Corp) parcel-lookup bookmark exists at",
-    "'00 - Data Sources/Data Sources - Via HTML/qPublic - City and County of Honolulu,",
-    "HI - GIS Map (1,000 max results).url', consistent with these figures having been",
-    "hand-looked-up per parcel rather than derived from any bulk file in this repo."
+if (!"assessed_land_value" %in% names(targets)) {
+  cat("\n[STOP] No 'assessed_land_value' column found in the retrieval sheet.\n")
+  cat("This file is still the un-retrieved target list, not a completed retrieval.\n")
+  cat("Add a numeric 'assessed_land_value' column (USD, blank/NA where a parcel has no\n")
+  cat("qPublic record) before running this script. See this script's header for the\n")
+  cat("expected retrieval workflow.\n\n")
+  result_df <- data.frame(
+    Class = "ALL", Parcel_Count = nrow(targets), Data_Available = FALSE,
+    Reason = "assessed_land_value column not present -- retrieval not yet completed."
   )
-)
-write.csv(result_df, OUT_CSV, row.names = FALSE)
+  write_csv(result_df, OUT_CSV)
+  cat(sprintf("Saved (stub): %s\n", OUT_CSV))
+  quit(save = "no", status = 0)
+}
 
-cat("\n=== RESULT ===\n")
-cat("[FATAL for 5 of 6 target figures] No assessed-value, tax-classification, or exemption\n")
-cat("field exists in any Honolulu source file committed to this repository. Verified against:\n")
-cat(sprintf("  - %s (CSV export, %d columns)\n", basename(TAX_ROLL_CSV), ncol(tax_roll)))
-cat("  - the equivalent All_Parcels_*.gpkg layer (same field set, different names)\n")
-cat("  - the source All_Parcels_*.zip's raw shapefile .dbf (same field set again)\n")
-cat("These figures cannot be reproduced from committed code; they require a source not\n")
-cat("currently in this repository (most likely a hand qPublic/RPAD lookup -- see Reason\n")
-cat("column above).\n\n")
-cat("[Reproduced] Golf-footprint parcel count and cadastral (unclipped) acreage only:\n")
-cat(sprintf("  %d parcels, %d tax-roll-matched, %.2f total recorded acres.\n",
-            nrow(tmk_list), n_matched, total_acres_cadastral))
+n_have_value <- sum(!is.na(targets$assessed_land_value))
+cat(sprintf(
+  "    assessed_land_value populated for %d of %d parcels (%.1f%%).\n",
+  n_have_value, nrow(targets), n_have_value / nrow(targets) * 100
+))
+
+# === Zoning-class -> manuscript-category mapping (see header) ===
+preservation_codes <- c("P-1", "P-2", "F-1")
+residential_codes  <- c("R-3.5", "R-5", "R-7.5", "R-10", "R-20", "A-1", "A-2")
+resort_codes       <- c("Resort")
+
+targets <- targets |>
+  mutate(
+    manuscript_category = case_when(
+      dominant_zone_class %in% preservation_codes ~ "Preservation",
+      dominant_zone_class %in% residential_codes  ~ "Residential",
+      dominant_zone_class %in% resort_codes       ~ "Hotel/Resort",
+      TRUE                                        ~ "Other"
+    ),
+    value_status = case_when(
+      is.na(assessed_land_value)        ~ "missing",
+      assessed_land_value == 0          ~ "zero",
+      TRUE                              ~ "valued"
+    ),
+    per_acre_golf_clipped = if_else(
+      value_status == "valued" & !is.na(golf_clipped_acres) & golf_clipped_acres > 0,
+      assessed_land_value / golf_clipped_acres, NA_real_
+    ),
+    per_acre_recorded = if_else(
+      value_status == "valued" & !is.na(recorded_area_acres) & recorded_area_acres > 0,
+      assessed_land_value / recorded_area_acres, NA_real_
+    )
+  )
+
+summarise_class <- function(df, label) {
+  n <- nrow(df)
+  n_missing <- sum(df$value_status == "missing")
+  n_zero    <- sum(df$value_status == "zero")
+  n_valued  <- sum(df$value_status == "valued")
+  tot_value <- sum(df$assessed_land_value, na.rm = TRUE)
+  tot_golf_ac  <- sum(df$golf_clipped_acres, na.rm = TRUE)
+  tot_rec_ac   <- sum(df$recorded_area_acres, na.rm = TRUE)
+  n_na_golf_ac <- sum(is.na(df$golf_clipped_acres))
+  n_na_rec_ac  <- sum(is.na(df$recorded_area_acres))
+  data.frame(
+    Class                              = label,
+    Parcel_Count                       = n,
+    N_Missing_Value                    = n_missing,
+    N_Zero_Value                       = n_zero,
+    N_Zero_Or_Missing                  = n_missing + n_zero,
+    Share_Zero_Or_Missing              = (n_missing + n_zero) / n,
+    N_Valued                           = n_valued,
+    Total_Golf_Clipped_Acres           = tot_golf_ac,
+    N_Missing_Golf_Clipped_Acres       = n_na_golf_ac,
+    Total_Recorded_Acres               = tot_rec_ac,
+    N_Missing_Recorded_Acres           = n_na_rec_ac,
+    Total_Assessed_Land_Value          = tot_value,
+    Mean_Value_Per_Acre_GolfClipped_Weighted   = if (tot_golf_ac > 0) tot_value / tot_golf_ac else NA_real_,
+    Mean_Value_Per_Acre_Recorded_Weighted      = if (tot_rec_ac > 0) tot_value / tot_rec_ac else NA_real_,
+    Mean_Value_Per_Acre_GolfClipped_Unweighted = mean(df$per_acre_golf_clipped, na.rm = TRUE),
+    Mean_Value_Per_Acre_Recorded_Unweighted    = mean(df$per_acre_recorded, na.rm = TRUE),
+    stringsAsFactors = FALSE
+  )
+}
+
+cat("\n[2] Computing per-category figures...\n")
+categories <- c("Preservation", "Residential", "Hotel/Resort", "Other")
+rows <- lapply(categories, function(cat_name) {
+  summarise_class(targets |> filter(manuscript_category == cat_name), cat_name)
+})
+
+# Preservation, with vs. without federal parcels (the requested split)
+pres_all <- targets |> filter(manuscript_category == "Preservation")
+pres_incl_fed <- summarise_class(pres_all, "Preservation (incl. F-1 federal/military)")
+pres_excl_fed <- summarise_class(pres_all |> filter(expected_taxable), "Preservation (excl. F-1 federal/military)")
+n_f1_in_pres <- sum(pres_all$dominant_zone_class == "F-1")
+
+result_df <- bind_rows(rows, list(pres_incl_fed, pres_excl_fed))
+write_csv(result_df, OUT_CSV)
+
+cat("\n=== RESULT (per manuscript category) ===\n")
+print(result_df |> select(Class, Parcel_Count, Total_Assessed_Land_Value,
+                           Mean_Value_Per_Acre_GolfClipped_Weighted,
+                           Mean_Value_Per_Acre_Recorded_Weighted,
+                           Share_Zero_Or_Missing))
+
+cat(sprintf(
+  "\n%d of the %d Preservation-class (P-1+P-2+F-1) parcels are F-1 (federal/military, expected untaxed).\n",
+  n_f1_in_pres, nrow(pres_all)
+))
+cat("Preservation figures reported both including and excluding F-1 above -- the manuscript\n")
+cat("should cite the excl.-F-1 (taxable-only) row, per the concern that averaging in\n")
+cat("constitutionally tax-exempt federal parcels as $0/low-value would manufacture part of\n")
+cat("the reported assessment gap rather than reflect a genuine one.\n")
+
 cat(sprintf("\nSaved: %s\n", OUT_CSV))

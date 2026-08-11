@@ -1,0 +1,1073 @@
+TMK,dominant_zone_class,golf_clipped_acres,recorded_area_acres,course_name,expected_taxable,dominant_zone_description,geometry_reproduced_this_run
+91056004,A-1,1.029906057472687,29.861,Ko Olina Golf Club,TRUE,A-1 Low-density Apartment District,TRUE
+91061039,A-1,0.45344630438476424,1.739,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+91061031,A-1,0.3462401328082908,2.441,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+91061029,A-1,0.3027945995135852,2.059,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+98011041,A-1,0.2531957335357768,NA,Pearl Country Club,TRUE,A-1 Low-density Apartment District,TRUE
+91061030,A-1,0.24012442201769787,1.838,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+57001027,A-1,0.14402473761560206,14.865,Kulima Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+91061038,A-1,0.09963645535582763,1.585,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+91164030,A-1,0.08771445931198392,0.947,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+91056014,A-1,0.01931236501701694,19.621,Ko Olina Golf Club,TRUE,A-1 Low-density Apartment District,TRUE
+98011052,A-1,0.016002230716973195,NA,Pearl Country Club,TRUE,A-1 Low-density Apartment District,TRUE
+98040002,A-1,0.012731639531688526,NA,Pearl Country Club,TRUE,A-1 Low-density Apartment District,TRUE
+91164028,A-1,0.011985770760784453,6.741,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+91164029,A-1,0.0028818111392748193,6.804,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+91116004,A-1,7.034812155437578e-6,1.037,Coral Creek Golf Course,TRUE,A-1 Low-density Apartment District,TRUE
+91134042,A-2,4.1349100795136,5.055,Hoakalei Country Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91015083,A-2,1.5709669021035062,376.912,Ko Olina Golf Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91134068,A-2,1.0582167247924825,9.213,Hoakalei Country Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91014048,A-2,0.8754435418549462,75.563,Ko Olina Golf Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91056009,A-2,0.4943337970655973,19.377,Ko Olina Golf Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91056022,A-2,0.2716025212797118,14.564,Ko Olina Golf Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91017115,A-2,0.11527833161329831,3.703,Ewa Villages Golf Course,TRUE,A-2 Medium-density Apartment District,TRUE
+91057033,A-2,0.03413084467768141,2.871,Ko Olina Golf Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91134065,A-2,0.034117514377704584,1.309,Hoakalei Country Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91057023,A-2,0.031646403310308414,3.521,Ko Olina Golf Club,TRUE,A-2 Medium-density Apartment District,TRUE
+91017117,A-2,0.02373031796539242,2.938,Ewa Villages Golf Course,TRUE,A-2 Medium-density Apartment District,TRUE
+98011042,A-2,0.01605065183359022,NA,Pearl Country Club,TRUE,A-2 Medium-density Apartment District,TRUE
+95001007,A-2,0.0025336393725403487,NA,Mililani Golf Course,TRUE,A-2 Medium-density Apartment District,TRUE
+91182009,AG-1,176.64638474099465,210.699,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+94004004,AG-1,1.4895635828497822,564.683,Hawaii Country Club,TRUE,AG-1 Restricted Agriculture District,TRUE
+94004009,AG-1,1.0800633688025054,203.175,Hawaii Country Club,TRUE,AG-1 Restricted Agriculture District,TRUE
+91181035,AG-1,0.7481759334391308,16.058,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91181034,AG-1,0.6355364971314024,4.388,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91056027,AG-1,0.5096976256894798,NA,Ko Olina Golf Club,TRUE,AG-1 Restricted Agriculture District,TRUE
+91181032,AG-1,0.1213207957754436,1.3,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91182007,AG-1,0.07020320210775886,18.808,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91017159,AG-1,0.04878061587804432,32.695,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91182001,AG-1,0.04485954280550084,7.758,Coral Creek Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+94002052,AG-1,0.042244051160799045,161.023,Royal Kunia Country Club,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063029,AG-1,0.03987397450129744,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063028,AG-1,0.03536530897385382,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063027,AG-1,0.033762226939679896,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063026,AG-1,0.03217957497135013,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089049,AG-1,0.030786866736611497,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063025,AG-1,0.027343994534000916,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91010013,AG-1,0.026906141391374,20.524,Hawaii Prince Golf Club,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090024,AG-1,0.021846962474643152,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089029,AG-1,0.021654783939556218,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089030,AG-1,0.02016292261283104,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090022,AG-1,0.018990684048365937,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089031,AG-1,0.01867872818897458,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089048,AG-1,0.018497432333697907,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91017109,AG-1,0.017406881674387975,19.72,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089032,AG-1,0.017190835922927847,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090158,AG-1,0.016875682005019946,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063112,AG-1,0.016323275838420255,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089033,AG-1,0.01569862566210629,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089060,AG-1,0.015464380224487378,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090001,AG-1,0.015349165022780411,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089028,AG-1,0.014454887778084433,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089034,AG-1,0.014204806016017089,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91055098,AG-1,0.014186494700892605,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91095001,AG-1,0.013559319855389383,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090023,AG-1,0.013554532804973509,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089047,AG-1,0.012646247015732822,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089035,AG-1,0.012614636234439912,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090025,AG-1,0.012179340806521345,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089039,AG-1,0.012092102519555923,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090026,AG-1,0.011991493376529667,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090027,AG-1,0.01181190733275343,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090028,AG-1,0.011632084937755341,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089040,AG-1,0.011493332083323756,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91055099,AG-1,0.011455594183835592,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090029,AG-1,0.011450762111598295,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090043,AG-1,0.011430869689482457,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090030,AG-1,0.01126859211682368,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090031,AG-1,0.011088903081271678,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089038,AG-1,0.01108282525381246,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090002,AG-1,0.010911181153472208,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090032,AG-1,0.010906980482349202,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090033,AG-1,0.010725099778089917,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089036,AG-1,0.010703343788638723,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090042,AG-1,0.010655616433918866,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090034,AG-1,0.010552674115046071,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089037,AG-1,0.01037948308802835,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090035,AG-1,0.010367533559345036,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090041,AG-1,0.010361117054438098,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090036,AG-1,0.010185635978839121,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91055100,AG-1,0.010022632749668327,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089041,AG-1,0.010011959151024276,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090037,AG-1,0.010003418585496962,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090038,AG-1,0.0098234536284216,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089042,AG-1,0.009667213674986816,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090039,AG-1,0.009643700878663846,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090040,AG-1,0.009461190967395642,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090003,AG-1,0.009336700822460202,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089043,AG-1,0.009334516192196258,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089044,AG-1,0.008998195070966278,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089050,AG-1,0.008766743595256627,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089051,AG-1,0.008643665129526508,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089052,AG-1,0.00852038454835091,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089053,AG-1,0.008397021993152396,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089054,AG-1,0.008273551891349758,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089046,AG-1,0.008218759396444866,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089055,AG-1,0.008150132695369324,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089056,AG-1,0.008026659218869683,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089045,AG-1,0.007891272455318196,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090004,AG-1,0.007764548614454627,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089001,AG-1,0.007757442023594006,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089059,AG-1,0.0076799700269033445,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089062,AG-1,0.007368893331198254,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089063,AG-1,0.007367993027212347,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089057,AG-1,0.007119192600590919,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91089058,AG-1,0.007018290495018147,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063008,AG-1,0.006698579307480812,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090005,AG-1,0.006191078201563879,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090006,AG-1,0.004617018166694347,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090099,AG-1,0.0032435138420098997,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090007,AG-1,0.0030586585699468372,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91062042,AG-1,0.001974810617189614,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91062054,AG-1,0.0017154224248477129,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91062055,AG-1,0.0016764770498430626,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91062056,AG-1,0.0016528083905707586,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090008,AG-1,0.0014976475126117464,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91017156,AG-1,0.0013209085964909072,8.965,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090044,AG-1,0.001123407896355154,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063007,AG-1,9.257430732711042e-4,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91062057,AG-1,7.126792757918036e-4,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91062041,AG-1,5.912847332359361e-4,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91090009,AG-1,1.6076833193890463e-4,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91063009,AG-1,6.845033133019344e-5,NA,West Loch Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91095002,AG-1,2.8315045791667114e-6,NA,Ewa Villages Golf Course,TRUE,AG-1 Restricted Agriculture District,TRUE
+91010121,AG-2,265.8082191643475,270.594,Hawaii Prince Golf Club,TRUE,AG-2 General Agriculture District,TRUE
+91001030,AG-2,126.38991147440258,126.786,Ewa Beach Golf Club,TRUE,AG-2 General Agriculture District,TRUE
+42008005,AG-2,107.65221532093149,572.872,Royal Hawaiian Golf Club,TRUE,AG-2 General Agriculture District,TRUE
+42009001,AG-2,82.23725169675295,312.945,Royal Hawaiian Golf Club,TRUE,AG-2 General Agriculture District,TRUE
+56002055,AG-2,58.55397137696694,114.05,Kahuku Golf Course,TRUE,AG-2 General Agriculture District,TRUE
+91001001,AG-2,19.008863625963663,701.5288,Ewa Beach Golf Club,TRUE,AG-2 General Agriculture District,TRUE
+41013012,AG-2,4.157505854028845,4.774,Unknown,TRUE,AG-2 General Agriculture District,TRUE
+56003057,AG-2,3.7859856143965875,3.783,Kulima Golf Course,TRUE,AG-2 General Agriculture District,TRUE
+57001025,AG-2,0.21119716414012468,0.25,Kulima Golf Course,TRUE,AG-2 General Agriculture District,TRUE
+84020013,AG-2,0.13381225189820603,2.481,Makaha Valley Country Club,TRUE,AG-2 General Agriculture District,TRUE
+56003053,AG-2,0.13170742555210307,95.583,Kulima Golf Course,TRUE,AG-2 General Agriculture District,TRUE
+42008001,AG-2,0.12665228583976304,51.088,Royal Hawaiian Golf Club,TRUE,AG-2 General Agriculture District,TRUE
+84020014,AG-2,0.12296639923946563,4.838,Makaha Valley Country Club,TRUE,AG-2 General Agriculture District,TRUE
+84023025,AG-2,0.08933155654289336,10.46,Makaha Valley Country Club,TRUE,AG-2 General Agriculture District,TRUE
+41013020,AG-2,0.028583153441616837,1.5,Unknown,TRUE,AG-2 General Agriculture District,TRUE
+57001055,B-1,5.146408113451885,10.823,Kulima Golf Course,TRUE,B-1 Neighborhood Business District,TRUE
+57001051,B-1,3.3647060665445756,3.371,Kulima Golf Course,TRUE,B-1 Neighborhood Business District,TRUE
+57001047,B-1,1.4355021283487186,1.454,Kulima Golf Course,TRUE,B-1 Neighborhood Business District,TRUE
+91056007,B-1,1.4049361821732214,1.43,Ko Olina Golf Club,TRUE,B-1 Neighborhood Business District,TRUE
+91056016,B-1,0.9837285963250962,1,Ko Olina Golf Club,TRUE,B-1 Neighborhood Business District,TRUE
+91056028,B-1,0.9784341202748705,1,Ko Olina Golf Club,TRUE,B-1 Neighborhood Business District,TRUE
+91056006,B-2,1.7976222641226003,1.882,Ko Olina Golf Club,TRUE,B-2 Community Business District,TRUE
+91056018,B-2,0.605924973083643,0.604,Ko Olina Golf Club,TRUE,B-2 Community Business District,TRUE
+95021017,B-2,0.5437891919414477,0.526,Mililani Golf Course,TRUE,B-2 Community Business District,TRUE
+91001006,C,3.45326636566831,6.6585,Ewa Beach Golf Club,TRUE,Country District,TRUE
+84024001,C,2.86406649191327,2.925,Makaha Valley Country Club,TRUE,Country District,TRUE
+84023015,C,1.4464773206026873,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029002,C,1.0082829985113813,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029147,C,0.5723979578028543,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84023014,C,0.5279856856590942,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029148,C,0.45463570640813916,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84002076,C,0.4029455363666989,0.446,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029001,C,0.2772831073674138,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+41013006,C,0.12958500966961592,NA,Unknown,TRUE,Country District,TRUE
+41013008,C,0.10319483261863324,2.077,Unknown,TRUE,Country District,TRUE
+84029003,C,0.09157354608623759,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84024102,C,0.07313433373984808,1.001,Makaha Valley Country Club,TRUE,Country District,TRUE
+84024095,C,0.06961389292350559,1.256,Makaha Valley Country Club,TRUE,Country District,TRUE
+41013036,C,0.0685507308012974,0.69,Unknown,TRUE,Country District,TRUE
+84029140,C,0.03804938549429608,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029009,C,0.03065704713873214,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029005,C,0.029771221585163727,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84024094,C,0.026809488350594744,1.441,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029010,C,0.01951763761949335,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029008,C,0.019185055029152843,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029007,C,0.006485760442490536,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029149,C,0.0010572778579242715,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029006,C,6.254921396522721e-4,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+84029011,C,3.1160459552512443e-4,NA,Makaha Valley Country Club,TRUE,Country District,TRUE
+41013034,C,7.324590930552375e-6,NA,Unknown,TRUE,Country District,TRUE
+91013163,F-1,221.68021916651364,252.374,Unknown,FALSE,F-1 Federal and Military Preservation District,TRUE
+76001001,F-1,191.42504983874377,5112.44,Leilehua Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+11001001,F-1,174.8082211044549,301.813,Mamala Bay Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+11010066,F-1,150.51160928393722,281.267,Navy Marine Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+44008001,F-1,128.9940907300373,1748.35,Klipper Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+11008005,F-1,58.14798366245424,NA,Fort Shafter Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+11002002,F-1,30.217177935841082,615.745,Kealohi Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+41015001,F-1,18.94443608841587,899.1597,Bellows Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+44009015,F-1,11.576726075907326,480.59,Klipper Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+11003001,F-1,4.109456653853258,2474.8031,Mamala Bay Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+11010012,F-1,3.7783966306272667,95.879,Navy Marine Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+11002015,F-1,2.468563483830161,309.568,Mamala Bay Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+94172001,F-1,1.4056597979876926,479.118,Royal Kunia Country Club,FALSE,F-1 Federal and Military Preservation District,TRUE
+91013096,F-1,0.45085214360514264,70.726,Unknown,FALSE,F-1 Federal and Military Preservation District,TRUE
+11010052,F-1,0.4092941757963511,73.496,Navy Marine Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+91013039,F-1,0.28890002912967216,145.785,Unknown,FALSE,F-1 Federal and Military Preservation District,TRUE
+11010022,F-1,0.27776920977463154,15.24,Navy Marine Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+91010122,F-1,0.27548070827746685,416.479,Hawaii Prince Golf Club,FALSE,F-1 Federal and Military Preservation District,TRUE
+93002001,F-1,0.13200801442779897,211.659,Ted Makalena Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+91001032,F-1,0.07149962067435817,65.816,Ewa Beach Golf Club,FALSE,F-1 Federal and Military Preservation District,TRUE
+11010040,F-1,0.049072257161644164,NA,Navy Marine Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+11010069,F-1,0.003924730841242458,96.59,Navy Marine Golf Course,FALSE,F-1 Federal and Military Preservation District,TRUE
+91069003,I-2,1.3253999473969953,48.395,Coral Creek Golf Course,TRUE,I-2 Intensive Industrial District,TRUE
+91069045,IMX-1,0.3111365106831935,11.686,Coral Creek Golf Course,TRUE,IMX-1 Industrial Mixed Use District,TRUE
+91069049,IMX-1,0.05223086031889997,0.131,Coral Creek Golf Course,TRUE,IMX-1 Industrial Mixed Use District,TRUE
+45042017,P-1,220.55064040324604,245.64,Ko'olau Golf Club,TRUE,P-1 Restricted Preservation District,TRUE
+45035001,P-1,162.29203682719688,215.062,Pali Golf Course,TRUE,P-1 Restricted Preservation District,TRUE
+11063017,P-1,132.67197918431282,176.961,Honolulu Country Club,TRUE,P-1 Restricted Preservation District,TRUE
+19006002,P-1,2.15078552964434,NA,Oʻahu Country Club,TRUE,P-1 Restricted Preservation District,TRUE
+42002032,P-1,1.4404104280177346,NA,Unknown,TRUE,P-1 Restricted Preservation District,TRUE
+41013011,P-1,0.6902532728522878,56.35,Unknown,TRUE,P-1 Restricted Preservation District,TRUE
+45042018,P-1,0.5528032355919443,422.4,Ko'olau Golf Club,TRUE,P-1 Restricted Preservation District,TRUE
+45035009,P-1,0.4714373225901603,0.462,Pali Golf Course,TRUE,P-1 Restricted Preservation District,TRUE
+39012001,P-1,0.1622235717883563,699.062,Championship Course,TRUE,P-1 Restricted Preservation District,TRUE
+45041001,P-1,0.044180709736623386,93.149,Ko'olau Golf Club,TRUE,P-1 Restricted Preservation District,TRUE
+42010001,P-1,0.02969413560189166,1744.538,Royal Hawaiian Golf Club,TRUE,P-1 Restricted Preservation District,TRUE
+43011075,P-1,0.002279166582067819,NA,Unknown,TRUE,P-1 Restricted Preservation District,TRUE
+45042011,P-1,9.373145392335898e-4,NA,Ko'olau Golf Club,TRUE,P-1 Restricted Preservation District,TRUE
+91016227,P-2,188.03824497762056,190.691,Kapolei Golf Course,TRUE,P-2 General Preservation District,TRUE
+98011034,P-2,174.84486880745618,NA,Pearl Country Club,TRUE,P-2 General Preservation District,TRUE
+94002046,P-2,152.18683001673008,163.381,Royal Kunia Country Club,TRUE,P-2 General Preservation District,TRUE
+95001035,P-2,149.2406067580917,165.223,Mililani Golf Course,TRUE,P-2 General Preservation District,TRUE
+56003062,P-2,149.00886035865236,157.885,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+42002002,P-2,148.38576948329518,163.133,Unknown,TRUE,P-2 General Preservation District,TRUE
+93002034,P-2,147.81633533574612,150.528,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+35023001,P-2,139.62936002678939,144.911,Waiʻalae Country Club,TRUE,P-2 General Preservation District,TRUE
+84002005,P-2,135.49288500852452,145.395,Makaha Valley Country Club,TRUE,P-2 General Preservation District,TRUE
+27036002,P-2,123.61059496747737,137.883,Ala Wai Golf Course,TRUE,P-2 General Preservation District,TRUE
+94004020,P-2,120.73509105945722,136.045,Hawaii Country Club,TRUE,P-2 General Preservation District,TRUE
+41013010,P-2,115.63452011019531,129.859,Unknown,TRUE,P-2 General Preservation District,TRUE
+91134056,P-2,111.14042139471564,112.84,Hoakalei Country Club,TRUE,P-2 General Preservation District,TRUE
+19006001,P-2,105.43060150259961,187.055,Oʻahu Country Club,TRUE,P-2 General Preservation District,TRUE
+91069011,P-2,101.03918353553547,102.101,Coral Creek Golf Course,TRUE,P-2 General Preservation District,TRUE
+91134043,P-2,96.07335694040383,113.982,Hoakalei Country Club,TRUE,P-2 General Preservation District,TRUE
+91181022,P-2,80.79992984928349,101.131,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+57001052,P-2,68.69571588078628,69.072,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+91181001,P-2,63.828989724392024,80.269,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+94007010,P-2,63.61334220154738,68.756,Waikele Golf Club,TRUE,P-2 General Preservation District,TRUE
+11012013,P-2,55.761463116589205,NA,Moanalua Golf Club,TRUE,P-2 General Preservation District,TRUE
+91069010,P-2,54.751246369907726,57.85,Coral Creek Golf Course,TRUE,P-2 General Preservation District,TRUE
+91056008,P-2,54.0697876480643,55.025,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+39010023,P-2,53.242481775598165,62.329,Championship Course,TRUE,P-2 General Preservation District,TRUE
+57001043,P-2,48.404198035236874,50.825,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+45030051,P-2,41.62899022083978,45.32,Bayview,TRUE,P-2 General Preservation District,TRUE
+91056003,P-2,35.97546626173378,36.906,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+91056015,P-2,34.55161695613708,37.512,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+45030037,P-2,33.230963648499724,39.558,Bayview,TRUE,P-2 General Preservation District,TRUE
+39010006,P-2,32.04382028965634,54.862,Executive Course,TRUE,P-2 General Preservation District,TRUE
+91061002,P-2,30.030297185221166,31.358,Coral Creek Golf Course,TRUE,P-2 General Preservation District,TRUE
+39010005,P-2,26.36403669008205,30.955,Championship Course,TRUE,P-2 General Preservation District,TRUE
+56003055,P-2,22.978212371295108,25.664,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+94007055,P-2,22.50021568835465,23.471,Waikele Golf Club,TRUE,P-2 General Preservation District,TRUE
+91134009,P-2,20.85648669355896,21.638,Hoakalei Country Club,TRUE,P-2 General Preservation District,TRUE
+91056020,P-2,17.106169060280454,17.47,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+39010036,P-2,16.603576235794794,19.762,Championship Course,TRUE,P-2 General Preservation District,TRUE
+94007036,P-2,15.349388875037743,18.006,Waikele Golf Club,TRUE,P-2 General Preservation District,TRUE
+91056023,P-2,15.108389913806919,15.67,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+39010025,P-2,14.015560167379897,16.062,Championship Course,TRUE,P-2 General Preservation District,TRUE
+98011035,P-2,13.5381540981756,NA,Pearl Country Club,TRUE,P-2 General Preservation District,TRUE
+94007048,P-2,12.108764537272677,12.186,Waikele Golf Club,TRUE,P-2 General Preservation District,TRUE
+94007057,P-2,11.697551165690019,12.316,Waikele Golf Club,TRUE,P-2 General Preservation District,TRUE
+56003058,P-2,9.194004330602418,12.053,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+84002057,P-2,8.279943900927375,40.257,Makaha Valley Country Club,TRUE,P-2 General Preservation District,TRUE
+57001049,P-2,8.072464712389916,9.304,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+27036078,P-2,7.013475652356228,7.26,Ala Wai Golf Course,TRUE,P-2 General Preservation District,TRUE
+57006030,P-2,6.96723258518014,9.103,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+91056025,P-2,6.3799310458389655,6.439,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+91181026,P-2,6.256310806204303,NA,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+56003060,P-2,5.004492898415474,99.91,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+91057024,P-2,4.946106698006681,5.069,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+39010051,P-2,4.2958114255030475,4.424,Championship Course,TRUE,P-2 General Preservation District,TRUE
+45030020,P-2,4.087015624556298,4.513,Bayview,TRUE,P-2 General Preservation District,TRUE
+45008038,P-2,3.9781704782739244,5.461,Bayview,TRUE,P-2 General Preservation District,TRUE
+91015002,P-2,3.738463239499373,14.45,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+94007035,P-2,3.4685997998146036,0.331,Waikele Golf Club,TRUE,P-2 General Preservation District,TRUE
+95001076,P-2,2.9621224536588406,6.876,Mililani Golf Course,TRUE,P-2 General Preservation District,TRUE
+39010050,P-2,2.5714556469622627,83.142,Executive Course,TRUE,P-2 General Preservation District,TRUE
+91134010,P-2,2.2547793530855245,2.278,Hoakalei Country Club,TRUE,P-2 General Preservation District,TRUE
+98011001,P-2,2.1829635504923512,119.387,Pearl Country Club,TRUE,P-2 General Preservation District,TRUE
+84002056,P-2,1.5434986150533356,44.513,Makaha Valley Country Club,TRUE,P-2 General Preservation District,TRUE
+91056005,P-2,1.4604035680447653,33.913,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+91021029,P-2,1.4153752354974156,1.608,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+56003054,P-2,1.269550830680719,37.031,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+57001054,P-2,1.2075308358521208,1.166,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+91057038,P-2,1.171358633927732,14.419,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+57001053,P-2,0.8915791448444548,3.471,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+91134028,P-2,0.839892676936011,10.819,Hoakalei Country Club,TRUE,P-2 General Preservation District,TRUE
+45030003,P-2,0.8064277118149465,2.611,Bayview,TRUE,P-2 General Preservation District,TRUE
+39010038,P-2,0.751155876488092,NA,Championship Course,TRUE,P-2 General Preservation District,TRUE
+45030006,P-2,0.72237244357977215,0.788,Bayview,TRUE,P-2 General Preservation District,TRUE
+91020019,P-2,0.6105506806600473,1.565,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+91021028,P-2,0.5921837182676393,0.579,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+45030041,P-2,0.5221669809342078,NA,Bayview,TRUE,P-2 General Preservation District,TRUE
+11039025,P-2,0.48125535035087086,NA,Moanalua Golf Club,TRUE,P-2 General Preservation District,TRUE
+93002023,P-2,0.46700427056412835,NA,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+91056017,P-2,0.4454466204759051,1.648,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+39109071,P-2,0.4338936780420752,NA,Championship Course,TRUE,P-2 General Preservation District,TRUE
+91056030,P-2,0.42929728466474004,4.129,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+45059036,P-2,0.4280703523630679,NA,Bayview,TRUE,P-2 General Preservation District,TRUE
+91056024,P-2,0.34536650774623245,0.368,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+93002009,P-2,0.33981435140412575,57.874,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+45030052,P-2,0.32992122605323776,17.113,Bayview,TRUE,P-2 General Preservation District,TRUE
+45030009,P-2,0.32880209247120556,0.35,Bayview,TRUE,P-2 General Preservation District,TRUE
+45059035,P-2,0.3222900371631599,NA,Bayview,TRUE,P-2 General Preservation District,TRUE
+45059034,P-2,0.31928680781702595,NA,Bayview,TRUE,P-2 General Preservation District,TRUE
+91016126,P-2,0.31329847294628294,51.571,Kapolei Golf Course,TRUE,P-2 General Preservation District,TRUE
+91171110,P-2,0.3062884150305843,NA,Coral Creek Golf Course,TRUE,P-2 General Preservation District,TRUE
+84002073,P-2,0.30050144191107764,NA,Makaha Valley Country Club,TRUE,P-2 General Preservation District,TRUE
+45059033,P-2,0.27958471336156293,NA,Bayview,TRUE,P-2 General Preservation District,TRUE
+39010041,P-2,0.26576954170643474,13.928,Championship Course,TRUE,P-2 General Preservation District,TRUE
+39010045,P-2,0.2386510059254613,NA,Championship Course,TRUE,P-2 General Preservation District,TRUE
+84002051,P-2,0.19402027958051676,19.431,Makaha Valley Country Club,TRUE,P-2 General Preservation District,TRUE
+56003043,P-2,0.17454460316815576,2,Kulima Golf Course,TRUE,P-2 General Preservation District,TRUE
+93002021,P-2,0.14681486377645211,NA,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+91057045,P-2,0.14542983707563353,0.168,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+91181025,P-2,0.13162424851230178,NA,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+45030036,P-2,0.13023988836292963,15.895,Bayview,TRUE,P-2 General Preservation District,TRUE
+93002031,P-2,0.11352028082323642,NA,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+93002035,P-2,0.09964307925087013,1.842,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+45109028,P-2,0.09701374961508535,NA,Bayview,TRUE,P-2 General Preservation District,TRUE
+35023002,P-2,0.07981348520481815,6.681,Waiʻalae Country Club,TRUE,P-2 General Preservation District,TRUE
+93002030,P-2,0.06154808476525695,NA,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+91056026,P-2,0.0554988797758767,NA,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+94007060,P-2,0.04395744165962387,5.285,Waikele Golf Club,TRUE,P-2 General Preservation District,TRUE
+91181030,P-2,0.04094131341687531,0.008,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+45030047,P-2,0.03786642908610805,5.779,Bayview,TRUE,P-2 General Preservation District,TRUE
+94008024,P-2,0.03769153423332465,NA,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+91055068,P-2,0.03272168470058851,NA,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+93002033,P-2,0.019339279652442424,NA,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+91056029,P-2,0.01899004186831201,8.244,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+43010083,P-2,0.018884257043811543,0.72,Unknown,TRUE,P-2 General Preservation District,TRUE
+91071083,P-2,0.018826354848755666,1.3,Kapolei Golf Course,TRUE,P-2 General Preservation District,TRUE
+84002053,P-2,0.015728700628091112,167.09,Makaha Valley Country Club,TRUE,P-2 General Preservation District,TRUE
+91057019,P-2,0.014897232635394478,43.971,Ko Olina Golf Club,TRUE,P-2 General Preservation District,TRUE
+93002024,P-2,0.014727294169269666,NA,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+94005053,P-2,0.007529643797656008,NA,Mililani Golf Course,TRUE,P-2 General Preservation District,TRUE
+93002019,P-2,0.0067797863771126695,0,Ted Makalena Golf Course,TRUE,P-2 General Preservation District,TRUE
+39105068,P-2,0.006706985560803883,NA,Championship Course,TRUE,P-2 General Preservation District,TRUE
+94007046,P-2,0.005455991293468353,5.54,Waikele Golf Club,TRUE,P-2 General Preservation District,TRUE
+45109027,P-2,0.004693310364342256,NA,Bayview,TRUE,P-2 General Preservation District,TRUE
+91055069,P-2,0.004553079538989614,NA,West Loch Golf Course,TRUE,P-2 General Preservation District,TRUE
+27036009,P-2,0.0032622152262620613,NA,Ala Wai Golf Course,TRUE,P-2 General Preservation District,TRUE
+43009002,P-2,0.0022744307815257066,10.441,Unknown,TRUE,P-2 General Preservation District,TRUE
+39010001,P-2,0.001878414800400121,638.355,Executive Course,TRUE,P-2 General Preservation District,TRUE
+91143063,P-2,0.0014448826299460367,NA,Hoakalei Country Club,TRUE,P-2 General Preservation District,TRUE
+45030038,P-2,1.5840243184148722e-4,NA,Bayview,TRUE,P-2 General Preservation District,TRUE
+95015021,P-2,7.90143676336157e-5,NA,Mililani Golf Course,TRUE,P-2 General Preservation District,TRUE
+35042001,R-10,0.12012407386075004,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044031,R-10,0.11523067030082805,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044028,R-10,0.10681643367265027,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044027,R-10,0.10570269944282804,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35042004,R-10,0.09515782820903101,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043010,R-10,0.0916306668483859,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35042005,R-10,0.09051431893782869,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043014,R-10,0.08904883501612282,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044020,R-10,0.0879354968909009,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044022,R-10,0.08146393497583666,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044021,R-10,0.0813704501799532,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043006,R-10,0.08030992313434435,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043009,R-10,0.07794938932618506,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043013,R-10,0.07742733222051348,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35042002,R-10,0.07710772003237305,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043012,R-10,0.076544889430647,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043005,R-10,0.06539679426338146,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043007,R-10,0.05991683525734613,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043004,R-10,0.05723551195390351,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35042069,R-10,0.055712804625662055,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044018,R-10,0.05460578486607905,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043008,R-10,0.0532279183480769,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044023,R-10,0.044230301259790744,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043011,R-10,0.04380192208926957,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043015,R-10,0.039792638356754506,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043002,R-10,0.039777192367886724,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043003,R-10,0.0389854717349544,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35043001,R-10,0.03775863221397601,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35042067,R-10,0.03664528049699161,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044016,R-10,0.03544772016731864,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35042068,R-10,0.03491526058207294,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044026,R-10,0.03358224029654017,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35042070,R-10,0.02924659543478634,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044017,R-10,0.0190359503837796,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+35044029,R-10,0.009939792406314233,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+45104054,R-10,0.0025856848962470917,NA,Bayview,TRUE,R-10 Residential District,TRUE
+35044019,R-10,0.0013665066257961093,NA,Waiʻalae Country Club,TRUE,R-10 Residential District,TRUE
+45104053,R-10,2.4752020836499633e-5,NA,Bayview,TRUE,R-10 Residential District,TRUE
+84002007,R-20,3.0750370413262615,66.898,Makaha Valley Country Club,TRUE,R-20 Residential District,TRUE
+91017200,R-3.5,0.4316474164121706,53.478,Ewa Villages Golf Course,TRUE,R-3.5 Residential District,TRUE
+91178009,R-3.5,0.15016243316760827,6.838,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91178018,R-3.5,0.0853055688960689,3.81,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91178006,R-3.5,0.05948985664959793,2.922,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081095,R-3.5,0.05416692981218154,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072077,R-3.5,0.045965297169350904,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072103,R-3.5,0.03976692681461827,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081005,R-3.5,0.03851322257951985,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072088,R-3.5,0.03474288566099531,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081096,R-3.5,0.03325852757169857,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071010,R-3.5,0.03280956965443138,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081023,R-3.5,0.03245490071432189,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072079,R-3.5,0.03222147038017579,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072078,R-3.5,0.03219412446289206,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072087,R-3.5,0.030994003608794733,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072085,R-3.5,0.030340729213618457,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072082,R-3.5,0.03014033049473373,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072086,R-3.5,0.029955193850404096,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072081,R-3.5,0.02928802634869652,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081021,R-3.5,0.02925635567320574,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072102,R-3.5,0.028139230110625923,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072104,R-3.5,0.027772761673166113,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081004,R-3.5,0.027702145905506372,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072083,R-3.5,0.027087200987482747,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072084,R-3.5,0.027049023248112786,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081094,R-3.5,0.026996109253588987,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081093,R-3.5,0.026636532255327302,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081092,R-3.5,0.026278605676292224,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081091,R-3.5,0.02590136755798043,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081090,R-3.5,0.025553728956780812,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081089,R-3.5,0.025192558287777538,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081097,R-3.5,0.024890253442173414,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081088,R-3.5,0.02483246795815047,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081028,R-3.5,0.024700578328848338,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081082,R-3.5,0.02457061353153229,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081087,R-3.5,0.02448933599369798,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081086,R-3.5,0.02411451975669913,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081085,R-3.5,0.023751651275424942,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081084,R-3.5,0.023376713630801755,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081027,R-3.5,0.023340857314523202,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081080,R-3.5,0.023169132174507404,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081083,R-3.5,0.02302874169266305,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081026,R-3.5,0.02293685999200234,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072106,R-3.5,0.022661526423986427,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072105,R-3.5,0.022636908338911136,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081025,R-3.5,0.022529309970100348,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081001,R-3.5,0.02252596201568515,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081002,R-3.5,0.022200474544502285,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081024,R-3.5,0.022122083662280075,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081003,R-3.5,0.021707865702133726,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91081006,R-3.5,0.019471907243105137,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072076,R-3.5,0.018613807118484493,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071052,R-3.5,0.015066349644268614,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099028,R-3.5,0.01285695186594789,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099029,R-3.5,0.011541035837257543,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099030,R-3.5,0.009443126148986555,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099033,R-3.5,0.008858813640095184,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072071,R-3.5,0.008528467166758643,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099034,R-3.5,0.00847795861064503,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072070,R-3.5,0.00814871411303994,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071050,R-3.5,0.008082073619698791,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099031,R-3.5,0.00804641440975122,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072075,R-3.5,0.008027397607360489,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072072,R-3.5,0.007986846646153805,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91072074,R-3.5,0.00797860838112347,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071051,R-3.5,0.0077427685446163986,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099035,R-3.5,0.007660175357774229,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099036,R-3.5,0.0064751157773166035,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099045,R-3.5,0.006317589177844794,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099044,R-3.5,0.006024723982039342,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099046,R-3.5,0.005051402312275549,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071047,R-3.5,0.004184310985930978,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071046,R-3.5,0.003240458884431308,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91172015,R-3.5,0.0023131657622436296,NA,Ewa Villages Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099075,R-3.5,0.00223785158303916,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071045,R-3.5,0.0010787907713840348,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099076,R-3.5,8.258989987256168e-4,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071044,R-3.5,7.352074697442663e-4,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071033,R-3.5,4.531567868948284e-4,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91099077,R-3.5,3.2083280849756827e-4,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91071035,R-3.5,5.187796323463841e-5,NA,Kapolei Golf Course,TRUE,R-3.5 Residential District,TRUE
+91172016,R-3.5,9.690831469285847e-6,NA,Ewa Villages Golf Course,TRUE,R-3.5 Residential District,TRUE
+95001058,R-5,1.6468598713673546,7.193,Mililani Golf Course,TRUE,R-5 Residential District,TRUE
+39010054,R-5,0.79803191097756,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+45030030,R-5,0.7663132596840295,NA,Bayview,TRUE,R-5 Residential District,TRUE
+94007012,R-5,0.7635066263748316,18.418,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91001031,R-5,0.6114690572260055,940.1346,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+91021016,R-5,0.5654735095076979,0.565,West Loch Golf Course,TRUE,R-5 Residential District,TRUE
+11040064,R-5,0.5594522316829741,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+91021017,R-5,0.47198669813110583,0.671,West Loch Golf Course,TRUE,R-5 Residential District,TRUE
+94007047,R-5,0.37345364655404284,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+39082062,R-5,0.31923778849578216,7.214,Championship Course,TRUE,R-5 Residential District,TRUE
+91016179,R-5,0.30514330875005485,156.982,Kapolei Golf Course,TRUE,R-5 Residential District,TRUE
+91181031,R-5,0.2649877757219932,3.389,West Loch Golf Course,TRUE,R-5 Residential District,TRUE
+39093048,R-5,0.23645255987199953,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91141054,R-5,0.23579688646446767,42218,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39082064,R-5,0.22264425530815074,1.039,Championship Course,TRUE,R-5 Residential District,TRUE
+39093063,R-5,0.21448430293168866,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093062,R-5,0.21194501782247124,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093068,R-5,0.19265082633679076,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093051,R-5,0.19156356682127462,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91181037,R-5,0.1896606759155347,19.345,West Loch Golf Course,TRUE,R-5 Residential District,TRUE
+39093112,R-5,0.1869124260603497,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093106,R-5,0.1853932951842795,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093105,R-5,0.18326863099069218,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093056,R-5,0.18283873212626733,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093111,R-5,0.1828017475662087,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093069,R-5,0.17606126526649965,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093019,R-5,0.17371140796312692,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093057,R-5,0.17368589627006845,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093036,R-5,0.1725778025664408,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093030,R-5,0.17064310176410072,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093037,R-5,0.17046585450685794,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093117,R-5,0.16914897269622267,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093025,R-5,0.16802201656832377,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093018,R-5,0.16728013573651773,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093042,R-5,0.16720100402683588,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093031,R-5,0.16559420851050932,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093024,R-5,0.16310673351940075,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+95027045,R-5,0.16013575591725795,NA,Mililani Golf Course,TRUE,R-5 Residential District,TRUE
+39093043,R-5,0.14882052870152915,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42054016,R-5,0.14245056763221128,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39093102,R-5,0.13404561512872076,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094046,R-5,0.1244474412958878,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39010052,R-5,0.1235942695756388,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91096127,R-5,0.12355826081678968,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+42054013,R-5,0.11625701018281959,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39093097,R-5,0.1137926286216362,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093098,R-5,0.11093904225138362,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105041,R-5,0.11031689851620036,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42054015,R-5,0.10855084524228605,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39093100,R-5,0.107911194114581,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093101,R-5,0.10530561689471578,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093099,R-5,0.10368348867729892,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91162008,R-5,0.10066185197134452,1.079,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+42054014,R-5,0.09330510704581786,NA,Unknown,TRUE,R-5 Residential District,TRUE
+42046016,R-5,0.09051917375705187,NA,Unknown,TRUE,R-5 Residential District,TRUE
+45110027,R-5,0.08775887514447168,NA,Bayview,TRUE,R-5 Residential District,TRUE
+39105010,R-5,0.08760099562588894,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42054038,R-5,0.08735534726741148,NA,Unknown,TRUE,R-5 Residential District,TRUE
+42054042,R-5,0.07732941666333308,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91163010,R-5,0.07698006045032837,7.984,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+56002011,R-5,0.07696618698269715,21.219,Kahuku Golf Course,TRUE,R-5 Residential District,TRUE
+39093126,R-5,0.07595352444295551,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105009,R-5,0.07559681003706394,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42048028,R-5,0.07514889025486336,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39094030,R-5,0.07436232793697145,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105011,R-5,0.07342324197270231,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105032,R-5,0.07141167064655796,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093125,R-5,0.07114091073181451,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+45110016,R-5,0.07065265930240318,NA,Bayview,TRUE,R-5 Residential District,TRUE
+91136095,R-5,0.068286847338337,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39105037,R-5,0.06701057843982117,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093050,R-5,0.06544239258104559,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42047010,R-5,0.06472895231476203,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39105036,R-5,0.06463997780142153,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105017,R-5,0.06447060496145582,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+45110017,R-5,0.06446612489193258,NA,Bayview,TRUE,R-5 Residential District,TRUE
+39105016,R-5,0.06434983362767491,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105015,R-5,0.06378798262058567,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105018,R-5,0.06330596921110926,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105012,R-5,0.06321140785098119,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105013,R-5,0.06313887720788822,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+94151032,R-5,0.06284401407731081,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+39105014,R-5,0.0626413309849695,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094031,R-5,0.062520925790739465,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42054040,R-5,0.06006055884622763,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39093123,R-5,0.05979940201624312,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105040,R-5,0.05946563968399083,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105030,R-5,0.05890987194198634,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093124,R-5,0.0585850552963138,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105031,R-5,0.058531353855229465,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105038,R-5,0.05828972367660097,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91093001,R-5,0.05768876043019282,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+39094043,R-5,0.057633160621936304,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105039,R-5,0.05615803285157575,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094032,R-5,0.05543826550835993,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91033001,R-5,0.05464537150715719,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+56002051,R-5,0.052361147927248705,34.287,Kahuku Golf Course,TRUE,R-5 Residential District,TRUE
+39094044,R-5,0.04797583312699438,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39105008,R-5,0.047718174906279595,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91093023,R-5,0.04757140984206657,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91136096,R-5,0.047560029703749736,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39094050,R-5,0.04731262807200559,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094042,R-5,0.0473105149165538,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42046015,R-5,0.04728404166498463,NA,Unknown,TRUE,R-5 Residential District,TRUE
+45030035,R-5,0.047246235461481864,NA,Bayview,TRUE,R-5 Residential District,TRUE
+39094049,R-5,0.046870280061265986,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094077,R-5,0.0462772291454657,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42054039,R-5,0.04603858630459202,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39094041,R-5,0.0460342388699354,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094048,R-5,0.04581026213739637,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094033,R-5,0.04538133072005694,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094076,R-5,0.044516161367999324,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094047,R-5,0.044065246597787176,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094045,R-5,0.04403242396887647,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+42048026,R-5,0.04378445437222092,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91096082,R-5,0.04285644664850758,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91096081,R-5,0.04174364224819196,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91136078,R-5,0.0413200302393177,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+56002056,R-5,0.04117992938904848,8.066,Kahuku Golf Course,TRUE,R-5 Residential District,TRUE
+39094036,R-5,0.04107216610148319,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91136079,R-5,0.04104955371316706,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39094037,R-5,0.04089495603207119,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094038,R-5,0.04087722908932011,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094040,R-5,0.04080963450430756,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91136080,R-5,0.040778660079161755,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39094035,R-5,0.04071628467237016,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094039,R-5,0.04061436474193412,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91136033,R-5,0.04057237206398019,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136081,R-5,0.04050762516124796,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136082,R-5,0.040236166104860735,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136083,R-5,0.039964889429397896,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136084,R-5,0.03969341752780556,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136032,R-5,0.03962002188248755,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39094034,R-5,0.039447178577791314,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91136085,R-5,0.03942162830435626,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+42046014,R-5,0.039296362167130554,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91136086,R-5,0.039150042496153906,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136087,R-5,0.0388782311461622,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136060,R-5,0.03874514408021279,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136088,R-5,0.0386042839682965,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150030,R-5,0.03855592440468913,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136089,R-5,0.03833442184089965,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+45030031,R-5,0.03813561127642487,1.875,Bayview,TRUE,R-5 Residential District,TRUE
+91136090,R-5,0.03804414010222325,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+42054041,R-5,0.03792669688477578,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91136091,R-5,0.0377885437736272,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150029,R-5,0.03748215872007627,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150072,R-5,0.03730614820551559,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39093049,R-5,0.03683676895003715,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91136031,R-5,0.036491406775508654,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+42047018,R-5,0.03615313394783871,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39105001,R-5,0.03601385984356285,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91150036,R-5,0.035955564563505626,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150035,R-5,0.035610803739546885,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150020,R-5,0.035603643946808955,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150034,R-5,0.035532616126436004,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150031,R-5,0.03541956256866688,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150028,R-5,0.0350693460197658,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39094097,R-5,0.03440535411806288,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91150037,R-5,0.0338179012837718,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91132114,R-5,0.03337193239206819,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91096080,R-5,0.03333875484624618,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91132107,R-5,0.03322773895027233,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150047,R-5,0.032998613787328615,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91132115,R-5,0.032874049941026634,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91132113,R-5,0.03281558059435581,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91093022,R-5,0.032791717987352934,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91096083,R-5,0.032570141973964406,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91132112,R-5,0.032302099715443,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91132116,R-5,0.03205474796145128,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150027,R-5,0.03198228670193536,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91132111,R-5,0.031789005174438875,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91096051,R-5,0.03162204792136864,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91136030,R-5,0.03139026038472911,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39105066,R-5,0.0312768643933668,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91132110,R-5,0.03127558827714847,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+42047017,R-5,0.03100593688443651,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91132109,R-5,0.030761581672499268,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94158086,R-5,0.030644386469506336,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91150038,R-5,0.030563125669607626,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91096050,R-5,0.030400625773364824,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91132108,R-5,0.030240457944178994,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91132117,R-5,0.029709688764775297,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39094096,R-5,0.029392172697967543,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39093122,R-5,0.028317089487367234,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+45110018,R-5,0.02831620392996033,NA,Bayview,TRUE,R-5 Residential District,TRUE
+91150046,R-5,0.02800326887441059,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150026,R-5,0.027773562517485473,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94158087,R-5,0.027620394893356173,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91162001,R-5,0.027590194697437783,0.841,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+91093024,R-5,0.02731387591719409,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093002,R-5,0.02729787842219697,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91150021,R-5,0.027130331349462144,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91093003,R-5,0.026818258797793846,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91167013,R-5,0.02677996806613951,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+39094095,R-5,0.026619370059742572,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91132118,R-5,0.026260840269727852,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150039,R-5,0.026245394774038987,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91093021,R-5,0.026216717077934073,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093004,R-5,0.026191247869268255,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91136029,R-5,0.02606587574874425,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+42046010,R-5,0.02594003752811439,NA,Unknown,TRUE,R-5 Residential District,TRUE
+42048027,R-5,0.0258711000068933,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91093005,R-5,0.025346461141567102,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093025,R-5,0.02505342301371271,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91171029,R-5,0.0250253460998686,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91132119,R-5,0.02448483367865264,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150025,R-5,0.023125350965481687,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91093006,R-5,0.02309592401473422,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+39094082,R-5,0.02305016867078924,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094079,R-5,0.023032840854538803,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094083,R-5,0.023022738237873642,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094081,R-5,0.02285896909884918,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094080,R-5,0.022781061580296347,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094085,R-5,0.022778151138869787,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094088,R-5,0.02269340206468216,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094078,R-5,0.02262824266289023,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094089,R-5,0.02252356383411625,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91150024,R-5,0.022340058054917827,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39094086,R-5,0.022206789623470773,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094084,R-5,0.022043697646949037,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+39094087,R-5,0.021931952568107323,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+94151002,R-5,0.021730585074144205,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91093020,R-5,0.021706683044334662,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91150023,R-5,0.021681683178041696,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91132120,R-5,0.021514922014796947,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91093016,R-5,0.021309927473277868,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+42046009,R-5,0.021199957357924012,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91093015,R-5,0.021162265009258115,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093010,R-5,0.02104120411559627,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91150022,R-5,0.021022912622084527,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91150040,R-5,0.020990874955428975,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91093013,R-5,0.02089663059808312,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093008,R-5,0.020834227596148877,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093009,R-5,0.020753561628172032,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093014,R-5,0.020725848833899174,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093012,R-5,0.020668402218580368,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093011,R-5,0.02066353840058949,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093017,R-5,0.02054301888729031,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91038150,R-5,0.020528225086723348,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+94151003,R-5,0.020458402857292838,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91093019,R-5,0.020453493492413558,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91093018,R-5,0.020453066285272093,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+39094091,R-5,0.01998330837845988,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+91150045,R-5,0.019941638390372655,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+39105007,R-5,0.019829620017802026,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+45110009,R-5,0.019780004062946825,NA,Bayview,TRUE,R-5 Residential District,TRUE
+56002052,R-5,0.019680577933486487,8.567,Kahuku Golf Course,TRUE,R-5 Residential District,TRUE
+94158034,R-5,0.019553108503673863,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91136020,R-5,0.019167588245588556,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+45110008,R-5,0.018871633105037946,NA,Bayview,TRUE,R-5 Residential District,TRUE
+94151027,R-5,0.018582961164260923,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151026,R-5,0.018563440136263615,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91136019,R-5,0.01845435156669278,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91171006,R-5,0.018348811360777446,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94151031,R-5,0.01818751259638481,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151028,R-5,0.018064810691860885,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42047011,R-5,0.018045570403129946,NA,Unknown,TRUE,R-5 Residential District,TRUE
+94151025,R-5,0.017968934473813397,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+45110007,R-5,0.01796299598884532,NA,Bayview,TRUE,R-5 Residential District,TRUE
+94151030,R-5,0.01782602248068979,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151029,R-5,0.017781792569290352,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171028,R-5,0.017765803673971188,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94147123,R-5,0.017757877817879665,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91136018,R-5,0.017611115577622256,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91093007,R-5,0.017563712594479298,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91136028,R-5,0.01747228039660121,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136016,R-5,0.017400681270219532,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94151024,R-5,0.017267237211844796,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151023,R-5,0.017207829098295314,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91136017,R-5,0.01704393536151763,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94158031,R-5,0.01699125892987552,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158032,R-5,0.016924810037580184,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158053,R-5,0.016808277033263708,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151022,R-5,0.016784975857414553,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+39105006,R-5,0.01677663979475134,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+94158072,R-5,0.01655398348456155,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158055,R-5,0.016532714945513872,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+39093047,R-5,0.01653259012427098,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+94151021,R-5,0.016383910576774467,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158054,R-5,0.016382213872372577,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42047019,R-5,0.016245019971003888,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91171027,R-5,0.01618658285287354,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94158052,R-5,0.01609661450967678,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+39105005,R-5,0.016071670978985386,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+94158018,R-5,0.016038606244561784,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158051,R-5,0.015964036106189437,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151020,R-5,0.01596194881144765,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+39105004,R-5,0.01595126486916397,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+94147115,R-5,0.015846097339433866,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42048025,R-5,0.015614305740569556,NA,Unknown,TRUE,R-5 Residential District,TRUE
+39105003,R-5,0.015568000355763632,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+94151019,R-5,0.015543197259322966,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42054037,R-5,0.01544266234628293,NA,Unknown,TRUE,R-5 Residential District,TRUE
+94158030,R-5,0.015378064748693267,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91150041,R-5,0.015210032570168475,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94151018,R-5,0.015120312222094924,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91150044,R-5,0.014939726837193763,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94158033,R-5,0.014909952958895413,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158019,R-5,0.014896630120925063,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151017,R-5,0.014692620420555752,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91141053,R-5,0.014399524837702446,4.333,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94158017,R-5,0.014373139307543185,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151016,R-5,0.01426453625571803,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91136021,R-5,0.014254615165946937,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91038155,R-5,0.01386775519986927,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+94151005,R-5,0.01385028000794817,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151015,R-5,0.013840573269294025,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91150043,R-5,0.013799581088087026,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94147122,R-5,0.01369058770597432,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147116,R-5,0.01346288618510414,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151014,R-5,0.01341771099285996,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171026,R-5,0.01335969187642793,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+42046011,R-5,0.013247057661870523,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91171025,R-5,0.013192723522804652,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91171024,R-5,0.013025764972924712,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94151013,R-5,0.012994456440578579,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94159011,R-5,0.0129940135599254,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91150042,R-5,0.01298476759987617,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91171023,R-5,0.012859078177286806,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91171022,R-5,0.012692245628982482,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94151012,R-5,0.012572754140294403,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147114,R-5,0.01254005897385515,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171021,R-5,0.01252583698901677,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94147117,R-5,0.012489127704723185,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171020,R-5,0.012359390306844756,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91136022,R-5,0.01230098447186104,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136023,R-5,0.01221571654399289,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91171019,R-5,0.012192874087135503,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94151011,R-5,0.012170650495488487,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147118,R-5,0.012162592359053051,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91136024,R-5,0.012130514629837613,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91136025,R-5,0.01204671511493117,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91171018,R-5,0.01202622293846069,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91171017,R-5,0.011859989315105117,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94151010,R-5,0.011752535012072516,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147121,R-5,0.011740050853046219,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171016,R-5,0.0116939379548449,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91136026,R-5,0.011638959129269242,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94147119,R-5,0.011587310268009623,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171015,R-5,0.01152742312699104,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+45110006,R-5,0.011402669801716421,NA,Bayview,TRUE,R-5 Residential District,TRUE
+94158016,R-5,0.011401867287538807,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42047013,R-5,0.011396200141419413,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91171014,R-5,0.011361115466502225,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94151009,R-5,0.011330129311614775,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+11040032,R-5,0.011303075566134323,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+94158002,R-5,0.011265206438708776,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171013,R-5,0.011194811974215273,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94147095,R-5,0.0111484568940963,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147120,R-5,0.01113899350082797,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158007,R-5,0.011106478459071326,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171012,R-5,0.011028599248942443,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94147096,R-5,0.011000646977957973,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151008,R-5,0.010906360410311833,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147097,R-5,0.010873049938387608,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171011,R-5,0.010862258154466967,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91147063,R-5,0.010785433757160044,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94158006,R-5,0.010755226125355483,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147098,R-5,0.010740380453982247,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171010,R-5,0.0106962535483968,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94147099,R-5,0.010593959925270027,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171009,R-5,0.01053001096635295,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94151007,R-5,0.010490160870614926,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147100,R-5,0.010447626345174994,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91167017,R-5,0.010432638269136704,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91171008,R-5,0.010363969369332341,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94147101,R-5,0.010314371877388283,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91171007,R-5,0.010254165613937915,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91136027,R-5,0.01024752358611268,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+94147102,R-5,0.010186437165599095,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94151006,R-5,0.010091356601065032,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91136094,R-5,0.010063220667190164,NA,Hawaii Prince Golf Club,TRUE,R-5 Residential District,TRUE
+91038156,R-5,0.010046731336685596,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+94147103,R-5,0.01003800407934845,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158088,R-5,0.009988236474506999,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147104,R-5,0.009889625887616712,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147105,R-5,0.009761424682467474,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147106,R-5,0.009631094922625094,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91167016,R-5,0.009497413614582166,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94147107,R-5,0.009482634316852662,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147108,R-5,0.009335338230091469,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147109,R-5,0.00920431750702147,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147110,R-5,0.009076786595310849,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147094,R-5,0.009016968036309731,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147111,R-5,0.00892560454219043,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147112,R-5,0.008872219132366979,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94159010,R-5,0.008340793951587393,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42080047,R-5,0.0081892010185208,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91167015,R-5,0.0081845202631496,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91171108,R-5,0.008167764884941064,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+42046006,R-5,0.007817722909640598,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91167014,R-5,0.007699192680287954,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91147064,R-5,0.007351725065577508,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94147113,R-5,0.007315512363897369,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42054047,R-5,0.007172128235382253,NA,Unknown,TRUE,R-5 Residential District,TRUE
+42080034,R-5,0.0070574259834771365,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91038161,R-5,0.007053491212886884,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+39105067,R-5,0.007046441771866405,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+11032021,R-5,0.0069115255516337395,NA,Fort Shafter Golf Course,TRUE,R-5 Residential District,TRUE
+11032020,R-5,0.0066504668672459554,NA,Fort Shafter Golf Course,TRUE,R-5 Residential District,TRUE
+91167018,R-5,0.006566128017810672,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91038151,R-5,0.006494001358673999,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+11032022,R-5,0.006309609131907186,NA,Fort Shafter Golf Course,TRUE,R-5 Residential District,TRUE
+11032023,R-5,0.006091005312711897,NA,Fort Shafter Golf Course,TRUE,R-5 Residential District,TRUE
+94159012,R-5,0.005759842681424799,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91147065,R-5,0.005733742272198195,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94158005,R-5,0.00544536020210638,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+11032024,R-5,0.0053437107401491345,NA,Fort Shafter Golf Course,TRUE,R-5 Residential District,TRUE
+91171107,R-5,0.005110308847905181,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+42046007,R-5,0.005049567561962095,NA,Unknown,TRUE,R-5 Residential District,TRUE
+42047009,R-5,0.004980788663236965,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91147066,R-5,0.004725894348047224,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94159037,R-5,0.004535382367399399,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94158090,R-5,0.004091845733327496,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91147062,R-5,0.00389969925417992,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+91147138,R-5,0.0037181295117717,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94144044,R-5,0.003658543390779954,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+18012001,R-5,0.003612500438087377,0.135,Oʻahu Country Club,TRUE,R-5 Residential District,TRUE
+11046014,R-5,0.0035558118588326568,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+11046012,R-5,0.003464899394440513,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+11046013,R-5,0.003342200910755621,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+94159036,R-5,0.0032477856199594817,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91038162,R-5,0.0032327557683096216,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+91094077,R-5,0.0031656151314070373,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+42080045,R-5,0.0031581166140437537,NA,Unknown,TRUE,R-5 Residential District,TRUE
+45110012,R-5,0.0030019245935495676,NA,Bayview,TRUE,R-5 Residential District,TRUE
+45110014,R-5,0.002896553651794409,NA,Bayview,TRUE,R-5 Residential District,TRUE
+11046006,R-5,0.002895917486429071,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+11032025,R-5,0.002872003238438304,NA,Fort Shafter Golf Course,TRUE,R-5 Residential District,TRUE
+94159084,R-5,0.002858757955787257,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+95028044,R-5,0.0027975603465558827,NA,Mililani Golf Course,TRUE,R-5 Residential District,TRUE
+11046007,R-5,0.002783807858383161,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+11046015,R-5,0.002720492362128095,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+91147137,R-5,0.0027105856932952343,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+95028043,R-5,0.0026781188739887925,NA,Mililani Golf Course,TRUE,R-5 Residential District,TRUE
+94158073,R-5,0.0025343165221555267,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94144043,R-5,0.002505613510654053,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42047014,R-5,0.002463683204184273,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91094078,R-5,0.0023318172069665462,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94050047,R-5,0.0023113578530432797,2.835,Ted Makalena Golf Course,TRUE,R-5 Residential District,TRUE
+42047016,R-5,0.002273728321481647,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91167021,R-5,0.0022008409569902595,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+45110011,R-5,0.0021094450368748068,NA,Bayview,TRUE,R-5 Residential District,TRUE
+11046016,R-5,0.0020535719460509196,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+91147061,R-5,0.002044499113665227,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94142001,R-5,0.0020319759794660682,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42046008,R-5,0.002005916832262033,NA,Unknown,TRUE,R-5 Residential District,TRUE
+94150045,R-5,0.0017445958243270056,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91167020,R-5,0.0017279548463676713,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91094079,R-5,0.0017064033418300617,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91147136,R-5,0.0017030490255678986,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94150067,R-5,0.0016715535620717196,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+11046017,R-5,0.0016615757415359915,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+56002023,R-5,0.0016583358275942444,6.062,Kahuku Golf Course,TRUE,R-5 Residential District,TRUE
+91167022,R-5,0.0015985971198524637,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+42080048,R-5,0.0015863708494452914,NA,Unknown,TRUE,R-5 Residential District,TRUE
+42054046,R-5,0.0015079652482602559,NA,Unknown,TRUE,R-5 Residential District,TRUE
+95028042,R-5,0.0014187948377171109,NA,Mililani Golf Course,TRUE,R-5 Residential District,TRUE
+91167019,R-5,0.001378135166344652,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94150044,R-5,0.0013709123531136225,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94147093,R-5,0.0013117219403437363,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42046004,R-5,0.0012497441354095999,NA,Unknown,TRUE,R-5 Residential District,TRUE
+94144042,R-5,0.0012447952835591952,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94159085,R-5,0.0012023062060640746,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91101020,R-5,0.001182850221746992,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+45110010,R-5,0.0011752190404050484,NA,Bayview,TRUE,R-5 Residential District,TRUE
+91147060,R-5,0.0011359526595452446,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+91094080,R-5,0.0010792918420867428,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+45110013,R-5,0.0010623620033888578,NA,Bayview,TRUE,R-5 Residential District,TRUE
+91101016,R-5,0.001027970275806641,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+94159081,R-5,0.0010263758743869994,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94150046,R-5,9.556523780864929e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+11046018,R-5,9.163844525617766e-4,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+91101015,R-5,9.066923407230357e-4,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91101017,R-5,9.020450497162958e-4,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91101018,R-5,8.995274594741021e-4,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+94159080,R-5,8.808281280676859e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91101019,R-5,8.33409832444202e-4,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+42046002,R-5,8.247654512584676e-4,NA,Unknown,TRUE,R-5 Residential District,TRUE
+94144063,R-5,7.572468370869892e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94150049,R-5,7.451714568759586e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42047015,R-5,7.36497203270037e-4,NA,Unknown,TRUE,R-5 Residential District,TRUE
+94158004,R-5,7.300603811406432e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94150048,R-5,7.156539758080341e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91042027,R-5,7.123744240202114e-4,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+91147135,R-5,6.957423030295632e-4,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94150050,R-5,6.879059242766329e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91042028,R-5,6.716384242922422e-4,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+39094101,R-5,6.688749106004893e-4,NA,Championship Course,TRUE,R-5 Residential District,TRUE
+94159088,R-5,6.399209078505831e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94150051,R-5,6.30300452170235e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+18012046,R-5,6.001292990360062e-4,NA,Oʻahu Country Club,TRUE,R-5 Residential District,TRUE
+91162018,R-5,5.844298537155987e-4,3.808,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94158003,R-5,5.783082200933763e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94150052,R-5,5.551916676022929e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42046013,R-5,5.524361614228381e-4,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91101014,R-5,5.422252965012545e-4,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91101021,R-5,5.073504375923331e-4,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+95028045,R-5,4.8600769937492516e-4,NA,Mililani Golf Course,TRUE,R-5 Residential District,TRUE
+94150053,R-5,4.5441135029685337e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91094081,R-5,4.531476477808529e-4,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94143022,R-5,4.003650199657361e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94150054,R-5,3.614504876296746e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94150055,R-5,3.319437249759285e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+95028041,R-5,3.223150806384119e-4,NA,Mililani Golf Course,TRUE,R-5 Residential District,TRUE
+11046019,R-5,3.147155524998936e-4,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+91082028,R-5,2.948450332354235e-4,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91069048,R-5,2.587674334671623e-4,3.521,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+91038160,R-5,2.5713070162405004e-4,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+91042026,R-5,2.3399591440049664e-4,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+11046008,R-5,2.3127578158260067e-4,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+91045097,R-5,2.1714739717824624e-4,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91147059,R-5,1.8554116703153897e-4,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+94150047,R-5,1.6467795339601777e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42048009,R-5,1.638032974755401e-4,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91045087,R-5,1.6028776256650978e-4,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+94150056,R-5,1.5899921193371434e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94144045,R-5,1.5883125885160666e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94144041,R-5,1.4848785787755615e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91082027,R-5,1.3717092885067624e-4,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+11046005,R-5,1.3479526827526908e-4,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+94150065,R-5,1.0901039782103345e-4,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94143115,R-5,1.0689143365131636e-4,1.025,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94159033,R-5,8.661036042664434e-5,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+42048012,R-5,5.4055073613202214e-5,NA,Unknown,TRUE,R-5 Residential District,TRUE
+91045088,R-5,4.835035729402462e-5,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+91042025,R-5,4.63469970936866e-5,NA,Ewa Beach Golf Club,TRUE,R-5 Residential District,TRUE
+94142101,R-5,4.1147702175990784e-5,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94150057,R-5,3.3006356123788664e-5,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+94144030,R-5,2.5183939650393318e-5,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+91147134,R-5,1.8324047333404644e-5,NA,Hoakalei Country Club,TRUE,R-5 Residential District,TRUE
+91094082,R-5,1.576183878242637e-5,NA,Coral Creek Golf Course,TRUE,R-5 Residential District,TRUE
+94143023,R-5,3.963398441332976e-6,NA,Waikele Golf Club,TRUE,R-5 Residential District,TRUE
+11046011,R-5,1.979702283298844e-6,NA,Moanalua Golf Club,TRUE,R-5 Residential District,TRUE
+91045089,R-5,4.8694801920335006e-8,NA,Ewa Villages Golf Course,TRUE,R-5 Residential District,TRUE
+11012033,R-7.5,0.5314515320804124,NA,Moanalua Golf Club,TRUE,R-7.5 Residential District,TRUE
+35008026,R-7.5,0.235020448052783,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+42054002,R-7.5,0.15427662964572428,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+35058031,R-7.5,0.14224079074450532,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+35058029,R-7.5,0.11084027626135337,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+35058032,R-7.5,0.09725142205935071,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+42054001,R-7.5,0.09378818049689443,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+35058030,R-7.5,0.07913965476523559,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+35008025,R-7.5,0.07862827261324189,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+42054012,R-7.5,0.07713194534819197,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+35058033,R-7.5,0.07101430374121545,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+42054091,R-7.5,0.06799764992445408,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+43010082,R-7.5,0.04293166728734321,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+11066014,R-7.5,0.03981396355131273,NA,Honolulu Country Club,TRUE,R-7.5 Residential District,TRUE
+95015043,R-7.5,0.033988407661539,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015016,R-7.5,0.03278755300323648,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+11066013,R-7.5,0.030632130146253277,NA,Honolulu Country Club,TRUE,R-7.5 Residential District,TRUE
+95015017,R-7.5,0.02885910908798548,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015027,R-7.5,0.028755035129002925,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+11066015,R-7.5,0.023696013678800837,NA,Honolulu Country Club,TRUE,R-7.5 Residential District,TRUE
+95015056,R-7.5,0.023650195459031253,0,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+42054051,R-7.5,0.021763106387074696,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+42054050,R-7.5,0.021059894106621426,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+42054049,R-7.5,0.018463602571872604,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+95015044,R-7.5,0.016802441631665055,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015028,R-7.5,0.015588368624885357,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+43010072,R-7.5,0.013527548714312753,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+11066032,R-7.5,0.012387446473574565,NA,Honolulu Country Club,TRUE,R-7.5 Residential District,TRUE
+35058018,R-7.5,0.01053336349584837,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+42054011,R-7.5,0.010098688083814275,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+95015015,R-7.5,0.008423878062027783,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015045,R-7.5,0.007893223254336569,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015029,R-7.5,0.007541774137399032,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+42054052,R-7.5,0.006990091242424216,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+95015042,R-7.5,0.006851191296862098,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+35058027,R-7.5,0.006473058330600712,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+95015036,R-7.5,0.0063812304787262825,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+42054048,R-7.5,0.005866416736893664,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+95015014,R-7.5,0.00554947525643636,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+45059030,R-7.5,0.004035119029190541,NA,Bayview,TRUE,R-7.5 Residential District,TRUE
+95015026,R-7.5,0.003503759779275294,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+45029002,R-7.5,0.003306265742635723,NA,Bayview,TRUE,R-7.5 Residential District,TRUE
+43010064,R-7.5,0.0031203908491043834,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+95015019,R-7.5,0.0018727802949926662,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015035,R-7.5,0.001740405529522769,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015037,R-7.5,0.0016422304046596,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015007,R-7.5,0.0015278314598611636,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+95015046,R-7.5,0.0012599899295325397,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+43010063,R-7.5,9.264645523758678e-4,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+18010054,R-7.5,9.262396344244787e-4,NA,Oʻahu Country Club,TRUE,R-7.5 Residential District,TRUE
+35058028,R-7.5,9.1931835255109e-4,NA,Waiʻalae Country Club,TRUE,R-7.5 Residential District,TRUE
+42054053,R-7.5,9.102501191796421e-4,NA,Unknown,TRUE,R-7.5 Residential District,TRUE
+11066016,R-7.5,7.831066974326215e-4,NA,Honolulu Country Club,TRUE,R-7.5 Residential District,TRUE
+95015020,R-7.5,2.1990369528038372e-4,NA,Mililani Golf Course,TRUE,R-7.5 Residential District,TRUE
+11066012,R-7.5,1.6951914288448254e-4,NA,Honolulu Country Club,TRUE,R-7.5 Residential District,TRUE
+56003059,Resort,34.00646191523371,75.208,Kulima Golf Course,TRUE,Resort District,TRUE
+57001050,Resort,29.458517549882405,33.065,Kulima Golf Course,TRUE,Resort District,TRUE
+56003056,Resort,29.274628198421414,29.326,Kulima Golf Course,TRUE,Resort District,TRUE
+57001044,Resort,13.830062281203782,28.67,Kulima Golf Course,TRUE,Resort District,TRUE
+57001048,Resort,7.185065504217794,22.926,Kulima Golf Course,TRUE,Resort District,TRUE
+57006029,Resort,7.182484468465829,9.765,Kulima Golf Course,TRUE,Resort District,TRUE
+91134070,Resort,7.102666274944694,7.182,Hoakalei Country Club,TRUE,Resort District,TRUE
+84002054,Resort,2.5604476397201035,32.775,Makaha Valley Country Club,TRUE,Resort District,TRUE
+57006027,Resort,0.7275561133553166,21.104,Kulima Golf Course,TRUE,Resort District,TRUE
+57001046,Resort,0.4871515567232214,29.097,Kulima Golf Course,TRUE,Resort District,TRUE
+91134071,Resort,0.25372358601753886,0.276,Hoakalei Country Club,TRUE,Resort District,TRUE
