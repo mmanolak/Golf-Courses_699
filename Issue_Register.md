@@ -2509,7 +2509,7 @@ within a fraction of a percent.
 | Language | `strix` fresh (`VERIFIED`, this run's own `*_Rubins_Rules_Summary.csv`) | Windows frozen | Delta | Frozen source |
 |---|---:|---:|---:|---|
 | R | $935.036B | $935.573B | **−0.057%** | `Expected_Deltas.md:157`, `VERIFIED` — quoted directly |
-| Python | $940.950B | $941.101B (implied) | **−0.016%** | Author-relayed; not independently located in this repo — see below |
+| Python | $940.950B | $941.096B | **−0.016%** | Author-relayed (`repool.py` corrected run) — see below |
 | Julia | $951.119B | $951.092B | **+0.003%** | Author-relayed, `VERIFIED` — fresh figure matches to the dollar |
 
 **R and Julia's frozen figures are independently corroborated, not just taken on trust.** R's
@@ -2517,12 +2517,14 @@ $935.573B is quoted verbatim from `Expected_Deltas.md`'s own text ("R's fresh to
 Julia's $951.119B fresh figure was read directly from `Jl_Rubins_Rules_Summary.csv` on this
 machine — it matches the author-stated fresh figure to the dollar, which is strong indirect
 evidence the paired frozen figure ($951.092B) is accurate too, even though no file in this repo
-states it directly. **Python's frozen figure could not be independently located** — searched
-`Issue_Register.md`, `Expected_Deltas.md`, `Project roadmap.md`, and all `Archive/` snapshots;
-the closest candidates (`Expected_Deltas.md`'s Jun-12 baseline, $938.309B; the P2-04-corrected
-prediction, $940.099B) are both different runs, not this figure. $941.101B is backed out
-algebraically from the author's stated −0.016% delta against this run's own $940.950B, not
-confirmed from an independent source. Flagged, not treated as verified.
+states it directly. **Python's frozen figure ($941.096B) could not be independently located in
+this repo** — searched `Issue_Register.md`, `Expected_Deltas.md`, `Project roadmap.md`, and all
+`Archive/` snapshots; the closest candidates found in-repo (`Expected_Deltas.md`'s Jun-12
+baseline, $938.309B; the P2-04-corrected prediction, $940.099B) are both different runs, not this
+figure. $941.096B is author-relayed as sourced from the same `repool.py` corrected run that
+produced R's $935.573B and Julia's $951.092B frozen figures — a specific source, not a
+back-solved value, but still not one this repo can independently confirm. Flagged, not treated
+as verified.
 
 **Attribution, in two parts with different evidence strength:**
 
