@@ -35,12 +35,12 @@ still a wrong published number.
 | Phase 0 | 0 | 2 | 0 | 0 | 2 |
 | Cross-cutting | 3 | 5 | 1 | 0 | 9 |
 | Phase 1 | 0 | 2 | 6 | 2 | 10 |
-| Phase 2 | 0 | 1 | 4 | 0 | 5 |
+| Phase 2 | 0 | 1 | 5 | 0 | 6 |
 | Phase 3 | 2 | 2 | 4 | 0 | 8 |
 | Phase 4 | 0 | 2 | 1 | 1 | 4 |
 | Phase 5 | 0 | 3 | 6 | 1 | 10 |
 | Phase 6 | 0 | 2 | 1 | 2 | 5 |
-| **Total** | **5** | **19** | **23** | **6** | **53** |
+| **Total** | **5** | **19** | **24** | **6** | **54** |
 
 *(2026-07-27: +2 net — new **X-09** (vendoring policy, Major, Fixed) and **P1-10** (`extract_holes`
 fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as N/A/verified-sound,
@@ -80,6 +80,14 @@ below per the **P6-05**/**P6-07** N/A convention. Two further labels relayed sec
 turned out to already be logged with evidence under their real IDs — **P1-05** (`Semi Private`
 collapse) and **P1-06** (Python dedup) — both already `Fixed`; nothing new to log, not treated as
 open.)*
+
+*(2026-08-10: +1 net — new **P2-06** (`strix` re-run: R matches 11,604 vs Python/Julia's 11,605;
+Pass-1 counts diverge 5,463/5,501/5,458 across the three languages, Minor). Root cause of the N
+discrepancy fully traced (a single course, "Charlotte Golf Links," sits 500.55 m from the nearest
+polygon per R's own recomputed distance — 0.55 m past `MAX_NEAREST_M = 500`); the larger Pass-1
+divergence is only partially explained (Julia's CRS pipeline confirmed different; the R-vs-Python
+gap is not yet isolated). Manuscript impact: §4.1 footnote 2's 10,926 should read 10,925 for this
+R run, consistent with **P1-11**'s independent reproduction above.)*
 
 ---
 
@@ -1928,6 +1936,87 @@ below this project's own 1.65% cross-language spread — undetectable in the res
 not just individually small. **Not fixed. Freeze holds.** No candidate remediation designed —
 whether/how to correct the 572 (or the smaller `named-polygon` core) remains an author call if
 ever revisited, but this entry does not carry it forward as open defect-hunting work.
+
+### P2-06 — `strix` re-run: R matches 1 fewer course than Python/Julia (11,604 vs 11,605); Pass-1 direct-intersect counts diverge across all three (R 5,463 / Python 5,501 / Julia 5,458)
+**Severity:** Minor (0.006% of the course list; national-aggregate impact not separately
+quantified but bounded by the single-course scale) · **Status:** Confirmed root cause for the
+N discrepancy, `VERIFIED`; Pass-1 divergence partially explained, root cause not fully isolated
+· **Locus:** Code · **Relates to:** P2-02 (`MAX_NEAREST_M = 500` documentation gap)
+
+Surfaced by the author on the first post-migration `strix` run of Phase 2 in all three languages.
+The three final `acreage_source` counts (Python 11,605 `OSM` / Julia 11,605 `OSM` / R 11,604
+`OSM`) matter beyond their own small size because the manuscript's §4.1 footnote 2 cites
+`11,605 − 679 = 10,926` explicitly, and **P1-11**'s observed-subset reproduction (this file,
+above) used R's `acreage_source` directly and got N = 10,925 — the same off-by-one, now traced to
+its source rather than left as an unexplained 1-row gap.
+
+**1. The specific divergent course, `VERIFIED` by direct three-way join.** `course_id` is
+**not** a shared key across languages — joining Python/Julia/R Phase 2 output on `course_id`
+produces a 100% `Course_Name` mismatch rate (each language assigns it independently, in whatever
+order its own Phase 1 pipeline processes rows). `Course_Name` itself isn't a usable join key
+either: R stores the bare name (`"Seamountain Golf Course"`), Julia and Python both embed
+`"-City,State"` into the same field (`"Albertville Golf & Country Club-Albertville,AL"`), in two
+different row orderings. The only field that's genuinely shared and directly comparable is raw
+`Longitude`/`Latitude` — rounded to 6 decimals, 16,273 of 16,292 rows join cleanly across all
+three, confirming the underlying point coordinates are essentially identical across languages
+(ruling out independent Phase 1 coordinate drift as the explanation for anything below). Joined on
+that key: Python and Julia agree on `acreage_source` for every one of the 16,273 rows with zero
+exceptions. R disagrees with both on exactly one: **"Charlotte Golf Links"**
+(`-80.76979, 35.05457`) — `MICE_Target` in R, `OSM` in Python and Julia.
+
+**2. Why R alone drops it, `VERIFIED` by direct geometric recomputation.** Loaded R's own
+`R_Phase2_OSM_Golf_Polygons.gpkg` and computed `st_distance()` from Charlotte Golf Links' point
+(reprojected to the polygon layer's own CRS, `NAD83 / Conus Albers`) to the nearest polygon
+directly: **500.5466 m** — 0.55 m past `Phase_2.R`'s `MAX_NEAREST_M = 500` cutoff. This is a
+boundary case in the most literal sense: the course sits within rounding distance of the exact
+threshold, and Python/Julia's independently-computed distance evidently lands fractionally under
+500 m where R's lands fractionally over. (Separately worth noting, not the subject of this entry:
+the nearest polygon is named `"Providence Country Club"`, not `"Charlotte Golf Links"` — the
+500 m fallback tier doesn't check name similarity, so even the languages that "match" this course
+are assigning it a neighboring course's polygon, not its own. `Phase_2.R`'s own polygon set has no
+feature named `"Charlotte Golf Links"` at all — the real polygon for this course is apparently
+unmapped in OSM, and every language's Pass-2 match for it is a same-class approximation, not a
+correct identification.)
+
+**3. Ruled out: the three languages' polygon sets are not the source of the Pass-1 gap,
+`VERIFIED`.** Loaded all three languages' own `*_Phase2_OSM_Golf_Polygons.gpkg` files directly:
+identical polygon count (15,166), identical CRS (`NAD83 / Conus Albers`), identical acreage range
+(5.014678–1326.852), and identical acreage sum (2,033,208.0) to the precision checked, across all
+three. Whatever is causing the Pass-1 intersect-count spread, it is not a language-specific
+difference in which polygons exist or how large they are.
+
+**4. Partially explained, `VERIFIED` at the code level — Julia's point reprojection uses a
+different CRS pipeline than R and Python's, though this alone does not fully account for the
+larger R-vs-Python gap.** `Phase_2.jl`'s point reprojection (`match_osm_to_courses`, ~line 163)
+builds its target CRS from a **manually specified PROJ4 string**:
+`+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +ellps=GRS80
++towgs84=0,0,0,0,0,0,0 +units=m +no_defs` — a hand-rolled Albers Equal Area with an explicit
+zero-shift WGS84→NAD83 datum approximation. `Phase_2.R` (`sf`) and `Phase_2.py` (`pyproj`) both
+instead resolve `EPSG:5070` by its authoritative code, going through PROJ's real NAD83
+transformation pipeline rather than a null-shift stand-in. WGS84 and NAD83 differ by roughly 1–2 m
+across CONUS depending on location — small, but exactly the right order of magnitude to flip a
+handful of near-boundary Pass-1 matches, and Julia's Pass-1 count (5,458) is the lowest of the
+three, consistent with this being a real contributor. **What this does not explain:** R and Python
+both use the authoritative EPSG:5070 path and should, in principle, reproject the same input
+points near-identically — yet their Pass-1 counts differ by 38 courses (5,463 vs 5,501), the
+largest of the three pairwise gaps. Polygon-set differences are ruled out (item 3), raw input
+coordinates are confirmed near-identical (item 1), so the remaining candidates — different
+GEOS/GDAL binding behavior between `sf` and `geopandas`/`shapely` at exact polygon boundaries, or
+a difference in how each language's spatial join resolves a point matching multiple overlapping
+polygons before the largest-area tie-break is applied — are not yet isolated. **Not chased
+further here; flagged as open, not resolved.**
+
+**Impact on the manuscript.** §4.1 footnote 2's `11,605 − 679 = 10,926` should read `11,604 − 679
+= 10,925` for R specifically, on this run — consistent with **P1-11**'s independent reproduction
+above (N = 10,925). Whether the footnote should be updated to 10,925, re-derived from a future
+run, or left as an order-of-magnitude citation is an author call, not decided here. The underlying
+mechanism (item 2) is a single course sitting 0.55 m past a hard 500 m cutoff — not a systematic
+defect — so this does not, on its own, suggest the 71.2%/28.8% split is unstable beyond this one
+course. The unresolved R-vs-Python Pass-1 gap (item 4) is a genuine open question about
+cross-language geometric non-determinism that Phase 2's `X-02`/`P2-02` discussion of
+`MAX_NEAREST_M = 500` being "a defensible-but-arbitrary threshold" (`Project roadmap.md` §2.2)
+already anticipated as a defense-relevant weak point; this entry is concrete evidence for that
+concern rather than a new one.
 
 ---
 
