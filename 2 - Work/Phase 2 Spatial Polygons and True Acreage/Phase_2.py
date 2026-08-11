@@ -18,6 +18,7 @@ import pandas as pd
 import geopandas as gpd
 import shapely.wkb as wkblib
 import osmium
+import psutil
 
 
 # === 2. GLOBALS & PATHS ===
@@ -41,6 +42,19 @@ MAX_NEAREST_M = 500
 
 
 # === 3. FUNCTIONS ===
+
+_MEM_T0 = time.time()
+_PROC   = psutil.Process()
+
+
+def log_mem(stage):
+    """[DIAGNOSTIC, author-requested 2026-08-10] Resident memory + elapsed time
+    at each major Phase 2 stage boundary, to localize the 19.4 GB memory growth
+    reported on the 32 GB machine. Not part of the pipeline's computational logic."""
+    rss_gb = _PROC.memory_info().rss / 1e9
+    elapsed_min = (time.time() - _MEM_T0) / 60
+    print(f"    [MEM] {stage:<28s} RSS={rss_gb:6.2f} GB  |  t={elapsed_min:6.1f} min")
+
 
 class GolfCourseHandler(osmium.SimpleHandler):
     """Stream through every OSM area; keep only leisure=golf_course."""
@@ -76,6 +90,7 @@ def extract_osm_polygons():
     print(f"1 Streaming {PBF_FILE.stat().st_size / 1e9:.1f} GB PBF through pyosmium handler")
     print(f"    File: {PBF_FILE}")
     t0 = time.time()
+    log_mem("PBF parse: start")
 
     handler = GolfCourseHandler()
     # sparse_mem_array allocates per node seen, not by max node ID - avoids the
@@ -86,6 +101,7 @@ def extract_osm_polygons():
     print(f"    Done in {elapsed/60:.1f} minutes.")
     print(f"    Raw polygons captured: {len(handler.records):,}")
     print(f"    Geometry build errors: {handler.errors}")
+    log_mem("PBF parse: end")
 
     if not handler.records:
         print("    ERROR: No polygons extracted. Aborting Step 1.")
@@ -107,6 +123,7 @@ def extract_osm_polygons():
     ].copy()
     filtered_count = len(osm_golf_geo)
     dropped        = raw_count - filtered_count
+    log_mem("polygon filter")
 
     # 4. Report
     print(f"\n=== STEP 1 OUTPUT STATISTICS ===")
@@ -126,6 +143,7 @@ def extract_osm_polygons():
     OUT_GPKG.parent.mkdir(parents=True, exist_ok=True)
     osm_golf_geo.to_file(str(OUT_GPKG), driver="GPKG")  # [METHODOLOGY]
     print(f"  [OK] Saved -> {OUT_GPKG}")
+    log_mem("GPKG write: end")
 
     return osm_golf_geo
 
@@ -153,6 +171,7 @@ def match_osm_to_courses(osm_golf_geo):
     if osm_golf_geo.crs.to_epsg() != 5070:
         osm_golf_geo = osm_golf_geo.to_crs(epsg=5070)  # [METHODOLOGY]
     print(f"    OSM polygons: {len(osm_golf_geo):,}")
+    log_mem("spatial join: pass 1 start")
 
     # 3a. Primary join: intersects
     print("3a Spatial join (intersects)")
@@ -164,6 +183,7 @@ def match_osm_to_courses(osm_golf_geo):
     )
     if "index_right" in courses_geo.columns:
         courses_geo.drop(columns=["index_right"], inplace=True)
+    log_mem("spatial join: pass 1 end")
 
     # [METHODOLOGY] tie-break: when a point falls inside >1 candidate polygon,
     # keep the largest-area match (matches R's explicit largest-area-wins rule)
@@ -178,6 +198,7 @@ def match_osm_to_courses(osm_golf_geo):
     # 3b. Fallback: nearest within 500 m
     if n_miss > 0:
         print(f"3b Nearest-neighbor fallback (max {MAX_NEAREST_M} m)")
+        log_mem("spatial join: pass 2 start")
         miss_geo = courses_geo.loc[courses_geo["osm_acreage"].isna()].copy()
 
         nearest = gpd.sjoin_nearest(  # [METHODOLOGY] nearest-feature fallback for unmatched courses
@@ -194,6 +215,7 @@ def match_osm_to_courses(osm_golf_geo):
 
         n_recovered = nearest["osm_acreage"].notna().sum()
         print(f"    Recovered via nearest:   {n_recovered:,}")
+        log_mem("spatial join: pass 2 end")
 
     # 4. De-duplicate (a point inside overlapping polygons creates dupes)
     courses_geo = courses_geo[~courses_geo.index.duplicated(keep="first")]
@@ -225,11 +247,13 @@ def match_osm_to_courses(osm_golf_geo):
     out = courses_geo.drop(columns=["geometry"])
     out.to_csv(str(OUT_CSV), index=False)
     print(f"\n  [OK] Saved -> {OUT_CSV}")
+    log_mem("CSV write: end")
 
     return out
 
 
 def main():
+    log_mem("main: start")
     if not PHASE1_CSV.exists():
         raise FileNotFoundError(f"Phase 1 CSV not found: {PHASE1_CSV}")
 
@@ -237,6 +261,7 @@ def main():
         print(f"  [CACHE] GPKG found — skipping PBF parse.")
         print(f"          Loading: {OUT_GPKG}")
         osm_golf_geo = gpd.read_file(str(OUT_GPKG))
+        log_mem("GPKG cache load: end")
     else:
         if not PBF_FILE.exists():
             raise FileNotFoundError(f"PBF file not found: {PBF_FILE}")
