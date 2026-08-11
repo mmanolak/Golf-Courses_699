@@ -1,24 +1,21 @@
 \begin{table}[!h]
 \centering
-\caption{\label{tab:regression_results}MICE-Pooled OLS Regression Results (Rubin's Rules, $M = 300$: 100 Python, 100 R, 100 Julia). Dep.\ var.: $\log(\text{Opportunity\_Cost})$.}
+\caption{\label{tab:regression_results}R-Canonical MICE-Pooled OLS Regression Results (Rubin's Rules, $M = 100$). Dep.\ var.: $\log(\text{Opportunity\_Cost})$. $N = 16,292$, $R^2 = 0.699$.}
 \centering
-\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\fontsize{9}{11}\selectfont
+\fontsize{10}{12}\selectfont
 \begin{threeparttable}
-\begin{tabular}[t]{lllllllllllll}
+\begin{tabular}[t]{lllll}
 \toprule
-\multicolumn{1}{c}{ } & \multicolumn{4}{c}{Python} & \multicolumn{4}{c}{R} & \multicolumn{4}{c}{Julia} \\
-\cmidrule(l{3pt}r{3pt}){2-5} \cmidrule(l{3pt}r{3pt}){6-9} \cmidrule(l{3pt}r{3pt}){10-13}
-Parameter & Coef. & SE & $p$ & Sig. & Coef. & SE & $p$ & Sig. & Coef. & SE & $p$ & Sig.\\
+Parameter & Coef. & SE & $p$ & Sig.\\
 \midrule
-Intercept & 12.278 & 0.038 & $<$ 0.001 & *** & 12.223 & 0.042 & $<$ 0.001 & *** & 12.354 & 0.036 & $<$ 0.001 & ***\\
-Urban County & 4.169 & 0.019 & $<$ 0.001 & *** & 4.005 & 0.022 & $<$ 0.001 & *** & 4.195 & 0.019 & $<$ 0.001 & ***\\
-Holes & 0.048 & 0.002 & $<$ 0.001 & *** & 0.053 & 0.003 & $<$ 0.001 & *** & 0.046 & 0.002 & $<$ 0.001 & ***\\
+Intercept & 12.223 & 0.042 & $<$ 0.001 & ***\\
+Holes & 0.053 & 0.003 & $<$ 0.001 & ***\\
+Urban County & 4.005 & 0.022 & $<$ 0.001 & ***\\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \item \textit{Note: } 
-\item Sig. codes: *** $p < 0.001$. Rubin's Rules applied independently per language group ($M = 100$ each). Grand Mean = arithmetic mean of three independently pooled estimates.
+\item Sig. codes: *** $p < 0.001$. Rubin's Rules pooling ($M = 100$). $N = 16,292$ per imputation; mean $R^2 = 0.6987$ across imputations. Holes is also a MICE predictor for the imputed acreage/value columns this model's dependent variable is built from; see the observed-subset estimate (Appendix A.4) for the estimate free of that dependency.
 \end{tablenotes}
-\end{threeparttable}}
+\end{threeparttable}
 \end{table}

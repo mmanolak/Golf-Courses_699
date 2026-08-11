@@ -103,6 +103,12 @@ flagged as a tokenization-method gap, not a data-driven revision — 572/9.3% re
 figure. Charlotte Golf Links added as a concrete example, via Python/Julia (R doesn't match it at
 all, per `P2-06`).)*
 
+*(2026-08-10, same day: **+1 net — new P3-10** (cross-platform reproduction: R/Python/Julia's
+fresh `strix` national totals reproduce the Windows-frozen figures to −0.057%/−0.016%/+0.003%,
+N/A/Confirmatory), the empirical backing for Appendix A.5. R's frozen and Julia's frozen/fresh
+pair independently verified; Python's frozen figure backed out from the author's stated delta,
+not independently located in this repo — flagged, not treated as confirmed.)*
+
 ---
 
 ## Phase 0 — Package Installation & Environment Bootstrap
@@ -2487,6 +2493,62 @@ recur:**
 | "R seed doesn't reach `future` workers; needs `furrr_options(seed=TRUE)`" | **Not a defect.** `Phase_3.R` uses `futuremice(..., parallelseed = 42, ...)` — the package's own dedicated parallel-safe seed mechanism. No bare `future_map()` call exists that would need it. |
 | "Julia `m_datasets` default is 5" | **Already covered by P3-02** (fixed 2026-07-25) — current default is `m_datasets::Int = M`, `const M = 100`, and every call site passes `M` explicitly. Only `Phase_3.jl`'s header comment still said "m=5"; corrected here (2026-07-29) as a pure documentation fix, no computational effect. |
 | "Julia thread `ENV` is a no-op" | **Real pattern, but not present in Phase 3.** No `ENV["JULIA_NUM_THREADS"]` assignment exists in `Phase_3.jl`. Already found and fixed in `Phase_1.jl`/`Phase_2.jl` 2026-07-27 (see entries above, lines ~1268-1284). |
+
+### P3-10 — Cross-platform reproduction: all three languages' Windows-frozen national totals reproduce on `strix` to within 0.06%; empirical backing for Appendix A.5
+**Severity:** N/A (positive/confirmatory result, not a defect) · **Status:** `VERIFIED` where stated
+below, one figure relayed and not independently located · **Locus:** N/A (cross-cutting
+reproducibility result) · **Relates to:** **P0-02**, **P2-06**, **P3-09**
+
+The `strix` migration's first full tri-language M=100 cascade re-run reproduces the prior
+Windows-frozen national aggregates closely enough to serve as the empirical backing for
+Appendix A.5's reproducibility claim — a lockfile-driven `renv::restore()` that never once
+succeeded on Windows (**P0-02**), run fresh on different hardware, a different OS, and (per
+**P2-06**) partially different GEOS/GDAL/PROJ library versions, reproducing the frozen figures to
+within a fraction of a percent.
+
+| Language | `strix` fresh (`VERIFIED`, this run's own `*_Rubins_Rules_Summary.csv`) | Windows frozen | Delta | Frozen source |
+|---|---:|---:|---:|---|
+| R | $935.036B | $935.573B | **−0.057%** | `Expected_Deltas.md:157`, `VERIFIED` — quoted directly |
+| Python | $940.950B | $941.101B (implied) | **−0.016%** | Author-relayed; not independently located in this repo — see below |
+| Julia | $951.119B | $951.092B | **+0.003%** | Author-relayed, `VERIFIED` — fresh figure matches to the dollar |
+
+**R and Julia's frozen figures are independently corroborated, not just taken on trust.** R's
+$935.573B is quoted verbatim from `Expected_Deltas.md`'s own text ("R's fresh total: $935.573B").
+Julia's $951.119B fresh figure was read directly from `Jl_Rubins_Rules_Summary.csv` on this
+machine — it matches the author-stated fresh figure to the dollar, which is strong indirect
+evidence the paired frozen figure ($951.092B) is accurate too, even though no file in this repo
+states it directly. **Python's frozen figure could not be independently located** — searched
+`Issue_Register.md`, `Expected_Deltas.md`, `Project roadmap.md`, and all `Archive/` snapshots;
+the closest candidates (`Expected_Deltas.md`'s Jun-12 baseline, $938.309B; the P2-04-corrected
+prediction, $940.099B) are both different runs, not this figure. $941.101B is backed out
+algebraically from the author's stated −0.016% delta against this run's own $940.950B, not
+confirmed from an independent source. Flagged, not treated as verified.
+
+**Attribution, in two parts with different evidence strength:**
+
+1. **The Pass-2 boundary case (`P2-06`), `VERIFIED` and R-specific.** R's fresh run matches 11,604
+   OSM-sourced courses against Python/Julia's 11,605 — one course, Charlotte Golf Links, sits
+   500.5466 m from its nearest polygon, 0.55 m past `MAX_NEAREST_M = 500`. Directly verified by
+   recomputing the distance in R's own geometry (`P2-06` item 2). This is R-specific, consistent
+   with R carrying the largest of the three deltas (0.057% vs Julia's 0.003%), but the magnitude
+   of $537M this delta represents is well beyond what one course's own acreage (≈194 ac at the
+   matched neighbor's size) could produce directly — the plausible mechanism is that flipping one
+   course's `MICE_Target` status changes the random-forest imputer's training population for the
+   other ~4,688 imputed courses, not a simple one-row swap. **Not independently isolated or
+   quantified here** — flagged as the most likely single contributor, not a proven one.
+2. **GEOS/GDAL/PROJ version differences between the Windows and `strix` environments, author-
+   stated, not independently verified.** Plausible in principle — this migration exists precisely
+   because Windows could never complete `renv::restore()` for the geospatial stack (`sf`/`s2`/
+   `units`/`Rcpp`), so the Windows environment's exact library versions are unknown and
+   unreachable from `strix` to compare directly. Cannot be checked further without access to the
+   retired Windows machine.
+
+**Reading the ordering, not just the magnitudes:** all three deltas are an order of magnitude
+below this project's own established cross-language spread (~1.6-1.7%, `X-01`/`P3-01`), so none
+of them are individually alarming. The ordering (Julia smallest → Python middle → R largest)
+is directionally consistent with R being the one language with a *known, verified* extra defect
+(the Pass-2 boundary case) that Python and Julia don't share — a plausible, not proven,
+explanation for why R's gap is the largest.
 
 ---
 
