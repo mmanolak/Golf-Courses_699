@@ -1574,7 +1574,7 @@ run_8_LaTeX_Tables <- function() {
             "99\\% CI Lower", "99\\% CI Upper"
         )
     ) |>
-        kable_styling(latex_options = c("hold_position")) |>
+        kable_styling(latex_options = c("hold_position", "scale_down")) |>
         footnote(
             general = paste0(
                 "99\\% confidence intervals reported (t-distribution, $df = M-1 = 99$, ",
