@@ -123,8 +123,8 @@ tbl1 <- kable(
     kable_styling(latex_options = c("hold_position")) |>
     footnote(
         general = paste0(
-            "99\\% confidence intervals reported; ",
-            "95\\% intervals available in the replication package."
+            "99\\\\% confidence intervals reported; ",
+            "95\\\\% intervals available in the replication package."
         ),
         general_title     = "",
         footnote_as_chunk = TRUE,
@@ -185,7 +185,7 @@ tbl2 <- kable(
             "FMI = Fraction of Missing Information from MICE imputation. ",
             "Covariance terms omitted from delta-method prediction CIs. ",
             "Holes is also a MICE predictor for the imputed acreage/value columns ",
-            "that this model's dependent variable is built from (28.8\\% of courses ",
+            "that this model's dependent variable is built from (28.8\\\\% of courses ",
             "imputed for acreage, a further subset for value); the Holes coefficient ",
             "above is estimated on the full sample and is not free of that dependency ",
             "for the imputed rows. See Appendix A.4 for the estimate restricted to ",
