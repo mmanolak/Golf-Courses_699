@@ -33,14 +33,14 @@ still a wrong published number.
 | Phase | Critical | Major | Minor | Cosmetic | Total |
 |---|---|---|---|---|---|
 | Phase 0 | 0 | 2 | 0 | 0 | 2 |
-| Cross-cutting | 3 | 5 | 1 | 0 | 9 |
+| Cross-cutting | 3 | 6 | 1 | 0 | 10 |
 | Phase 1 | 0 | 2 | 6 | 2 | 10 |
 | Phase 2 | 0 | 1 | 6 | 0 | 7 |
 | Phase 3 | 2 | 2 | 4 | 0 | 8 |
 | Phase 4 | 0 | 2 | 1 | 1 | 4 |
 | Phase 5 | 0 | 4 | 6 | 1 | 11 |
 | Phase 6 | 0 | 2 | 1 | 2 | 5 |
-| **Total** | **5** | **20** | **25** | **6** | **56** |
+| **Total** | **5** | **21** | **25** | **6** | **57** |
 
 *(2026-07-27: +2 net — new **X-09** (vendoring policy, Major, Fixed) and **P1-10** (`extract_holes`
 fallback residual, Minor, Open). P6-05/P6-07 remain excluded from this count as N/A/verified-sound,
@@ -185,6 +185,19 @@ round-trip tested with real `pdflatex` runs, not inference, to confirm rather th
 escaping fix applied to the legacy script's source for hygiene; its stale output file remains
 un-regenerable and broken as committed — flagged for the author to check whether their actual
 manuscript build references the stale path.)*
+
+*(2026-08-10, same day: **P6-01 addendum closed, +0 net.** Author confirmed directly against the
+manuscript source (`Ostrich.tex`, supplied ad hoc as `secret/Ostrich.tex`): all three table
+`\input{}` calls point at `Final_Thesis_Figures/`, never the Bulk tier. Nothing further to chase.
+`Final_Thesis_Figures/8.141`/`8.241`/`8.301` confirmed as the manuscript-facing table paths.)*
+
+*(2026-08-10, same day: **+1 net — new X-11** (the manuscript itself is not under version
+control and is not in this repository, Major/infrastructure). Root-cause candidate for the
+project's recurring v4/v5 version-confusion findings; every prior "what the manuscript says"
+claim in this register was necessarily author-relayed or inferred, not independently verified,
+until a manuscript copy was supplied ad hoc to resolve **P6-01**. Recommendation logged, not
+implemented: version-control the manuscript, each version recording the pipeline commit its
+numbers came from.)*
 
 ---
 
@@ -1104,6 +1117,39 @@ across languages is exactly the mechanism that produced X-10. All three language
 imputation method explicitly rather than relying on a package default — R (`method="rf"`,
 pre-existing), Python (`miceforest`, RF-only by construction, no implicit default to diverge on),
 Julia (`methods["osm_acreage"|"Baseline_Value_Per_Acre"] = "rf"`, added here).
+
+### X-11 — The manuscript itself is not under version control and is not in this repository
+**Severity:** Major (infrastructure/process) · **Status:** Open · **Locus:** Process, not code
+
+**Confirmed 2026-08-10, while tracing P6-01's Table 1 LaTeX report to its actual cause.** The
+manuscript source (`Ostrich.tex`) lives only on the Windows machine, at
+`E:\Research_Ideas\1 - Ostrich Effect\Paper - Publishment\5 - Rough v5\Ostrich.tex` — outside
+this repository, outside git entirely. A copy was supplied to this audit ad hoc as
+`secret/Ostrich.tex` (gitignored) specifically to resolve the P6-01 question; that's the first
+time this audit has had direct access to manuscript text rather than author-relayed summaries of
+what it says.
+
+**This is very likely the root cause of the earlier v4/v5 confusion** (multiple entries this
+audit flagged uncertainty about which manuscript version cited which figures, e.g. the Section
+4.4.2/coverage-ratio framing question in **P5-19**, the observed-subset caveat placement in
+**P1-11**, the Appendix-A.4-vs-§4.3 footnote drift just fixed under **P6-10**) — without the
+manuscript in version control, there is no way to know which pipeline commit's numbers a given
+paragraph was actually written against, and no diff history to distinguish "this figure is
+stale" from "this figure was always different from what the pipeline currently produces."
+
+**Practical consequence for this audit specifically:** every claim this register has made about
+"what the manuscript says" before 2026-08-10 was necessarily author-relayed or inferred from
+context, not independently verified against manuscript text — because there was no manuscript
+text available to check against. That doesn't make those findings wrong, but it's a different
+evidentiary standing than the `VERIFIED`-against-code findings elsewhere in this register, and
+is worth remembering when weighing older entries against newer ones now that direct manuscript
+access exists (even if only as a point-in-time snapshot, not a live, diffable source).
+
+**Recommendation, not implemented here (a process/infrastructure decision for the author, not a
+code fix):** bring the manuscript under version control, either as a `manuscript/` directory in
+this repository or as its own linked repository, with each tagged version recording the pipeline
+commit hash its cited numbers came from. Without that link, "does the manuscript match the
+pipeline" will keep needing an ad hoc file drop to answer, as it did here.
 
 ---
 
@@ -4408,6 +4454,30 @@ and broken as committed. If the author's actual manuscript build references
 that's the fix needed — redirect the `\input{}` path, not further chase the canonical generator,
 which was already correct. No manuscript `.tex`/`.qmd` source file exists in this repo to confirm
 which path is actually referenced; flagged for the author to check on their end.
+
+**Closed 2026-08-10 (author-confirmed against the actual manuscript source).** The manuscript
+lives outside this repo, on the Windows machine at
+`E:\Research_Ideas\1 - Ostrich Effect\Paper - Publishment\5 - Rough v5\Ostrich.tex`, and was
+supplied to this audit as `secret/Ostrich.tex` (gitignored, matches the existing `*secret*`
+pattern) for verification. Its three table `\input{}` calls all confirmed to point at the
+canonical path, none at the Bulk tier:
+
+```
+\input{../../00 - Figures/Final_Thesis_Figures/8.141_Table1_Acreage}
+\input{../../00 - Figures/Final_Thesis_Figures/8.241_Table2_Regression}
+\input{../../00 - Figures/Final_Thesis_Figures/8.301_Table3_Hawaii_Geo}
+```
+
+`Bulk/R/output/8.1_Table1_Acreage.tex` was never in the build chain — confirmed, not just
+inferred from absence of a reference in this repo. Source-hygiene fix to
+`Bulk/R/8_LaTeX_Tables.R` stands (harmless, not undone); no redirect needed; nothing further to
+chase on this specific report. **`Final_Thesis_Figures/8.141_Table1_Acreage.tex`,
+`8.241_Table2_Regression.tex`, and `8.301_Table3_Hawaii_Geo.tex` are hereby the confirmed
+manuscript-facing table paths** — cross-reference this line rather than re-deriving it if the
+question comes up again. The Bulk-tier "Script 8" output is legacy, not manuscript-facing, and
+its input (`Bulk Tests/R/National_Acreage_Summary.csv`) no longer exists on `strix`, so it
+cannot be regenerated at all on this machine — noted explicitly so a future pass doesn't mistake
+that stale `.tex` for live output or spend time trying to refresh it.
 
 ---
 
